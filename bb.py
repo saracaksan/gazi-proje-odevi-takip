@@ -358,9 +358,27 @@ span[data-baseweb="tag"] {
 
 DATA_FILE = "veritabani.csv"
 
-# YENİ VE GÜNCEL GEMINI API BİLGİLERİ
-GEMINI_API_KEY = "AIzaSyDR59-y8bOekDJBHjSN9vvFfjhWXQfPRUM"
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
+# ==========================================
+# GÜVENLİ API VE BAĞLANTI AYARLARI
+# ==========================================
+
+# 1. Eğer yerel bilgisayarında çalışıyorsan, streamlit secrets.toml dosyası yoksa diye
+# aşağıdaki satır hata vermemesi için "try-except" yapısına alındı.
+try:
+    API_KEY = st.secrets["API_KEY"]
+except:
+    # Yerel geliştirmede anahtarı doğrudan buraya yazabilirsin, 
+    # ama GitHub'a yüklerken mutlaka anahtarı silip secrets'a ekle!
+    API_KEY = "AIzaSyDR59-y8bOekDJBHjSN9vvFfjhWXQfPRUM" 
+
+# Google Generative AI kütüphanesini en yeni beta URL ile kullanmak için yapılandırma
+genai.configure(api_key=API_KEY)
+
+# Yapay Zeka Modeli (En güncel model)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# Eğer manuel API çağrısı yapacaksan (url üzerinden) kullanacağın yapı:
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
 KRITERLER = [
     {"id": "k1", "baslik": "İçerik ve Bilgi Doğruluğu",  "max": 40, "icon": "📚",
