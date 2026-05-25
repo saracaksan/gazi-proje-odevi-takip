@@ -13,7 +13,7 @@ import requests
 st.set_page_config(page_title="Gazi Ortaokulu | Proje Sistemi", page_icon="🏫", layout="wide", initial_sidebar_state="collapsed")
 
 # ─── GÜVENLİ API ÇAĞRISI (Kod içine anahtar yazılmaz) ───
-
+tr:
    # app.py dosyanızın en üstündeki API kısmı SADECE bu kadar olmalı:
 
 API_KEY = st.secrets["API_KEY"]
