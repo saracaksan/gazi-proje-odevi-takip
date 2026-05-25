@@ -407,16 +407,26 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 
                 with c_ai:
                     if st.button("✨ Yapay Zeka Doldursun"):
-                        with st.spinner("AI Değerlendiriyor..."):
+                        with st.spinner("Yapay Zeka Değerlendiriyor... Lütfen Bekleyin..."):
                             try:
                                 p_dict = {k['id']: st.session_state[f"puan_wg_{idx}_{k['id']}"] for k in KRITERLER}
                                 json_data = ai_degerlendirme_yap(bilgi.to_dict(), ham_metin, p_dict, o_ad, o_brans)
                                 
+                                # HATA ÇÖZÜMÜ: Hem değişkeni hem de KUTUNUN KENDİ HAFIZASINI (txt_...) güncelliyoruz
                                 for k in KRITERLER:
-                                    if k['id'] in json_data: st.session_state[f"aciklama_wg_{idx}_{k['id']}"] = json_data[k['id']]
-                                if "genel" in json_data: st.session_state[gk] = json_data["genel"]
-                                st.rerun()
-                            except Exception as e: st.error(f"AI Hatası: {e}")
+                                    if k['id'] in json_data: 
+                                        ak_key = f"aciklama_wg_{idx}_{k['id']}"
+                                        st.session_state[ak_key] = json_data[k['id']]
+                                        st.session_state[f"txt_{ak_key}"] = json_data[k['id']] # Kutuyu zorla günceller
+                                        
+                                if "genel" in json_data: 
+                                    gk_key = f"genel_wg_{idx}"
+                                    st.session_state[gk_key] = json_data["genel"]
+                                    st.session_state[f"txt_{gk_key}"] = json_data["genel"] # Kutuyu zorla günceller
+                                    
+                                st.rerun() # Sayfayı yenile ve kutulara metni bas!
+                            except Exception as e: 
+                                st.error(f"AI Hatası: {e}")
                             
                 with c_sav:
                     if st.button("💾 Kaydet"):
