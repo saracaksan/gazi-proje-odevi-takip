@@ -1,10 +1,25 @@
 import streamlit as st
 import pandas as pd
+import google.generativeai as genai
 import io
 import os
 import json
-import requests
-import time
+
+# ==========================================
+# 1. BÖLÜM: GÜVENLİ API VE BAĞLANTI AYARLARI
+# ==========================================
+
+# Streamlit Cloud üzerinde Secrets'dan anahtarı alıyoruz
+# Eğer yerel bilgisayarında çalışıyorsan, 'try' bloğu anahtarı koddan okur.
+try:
+    API_KEY = st.secrets["API_KEY"]
+except:
+    # Yerel bilgisayarın için varsayılan (Yayınlarken burası silinecek)
+    API_KEY = "AIzaSyDR59-y8bOekDJBHjSN9vvFfjhWXQfPRUM"
+
+# Google Generative AI konfigürasyonu (Hata burada oluşuyordu, artık API_KEY tanımlı!)
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # ==========================================
 # SAYFA YAPILANDIRMASI VE TEMA
