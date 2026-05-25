@@ -155,10 +155,8 @@ GÖREV:
 2) "genel" kısmında önce {ogrt_brans.lower()} dersinin günlük hayattaki öneminden bahset, sonra öğrenciyi motive et.
 SADECE GEÇERLİ JSON VER:
 {{ "k1": "...", "k2": "...", "k3": "...", "k4": "...", "k5": "...", "genel": "..." }}"""
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
-    response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-    response.raise_for_status()
-    raw = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    cevap = model.generate_content(prompt)
+    raw = cevap.text.replace('```json', '').replace('```', '').strip()
     return json.loads(raw)
 
 # ==========================================
