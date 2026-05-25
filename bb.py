@@ -12,10 +12,8 @@ import requests
 # ==========================================
 st.set_page_config(page_title="Gazi Ortaokulu | Proje Sistemi", page_icon="🏫", layout="wide", initial_sidebar_state="collapsed")
 
-# ─── GÜVENLİ API ÇAĞRISI (Kod içine anahtar yazılmaz) ───
-tr:
-   # app.py dosyanızın en üstündeki API kısmı SADECE bu kadar olmalı:
-
+# ─── %100 GÜVENLİ VE HİZALANMIŞ API BAĞLANTISI ───
+# Kodun içinde asla açık anahtar barınmaz, doğrudan kasadan okunur.
 API_KEY = st.secrets["API_KEY"]
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
@@ -208,12 +206,12 @@ def ogrenci_paneli(df):
                     st.download_button("🖨️ Detaylı Karnemi İndir (PDF/HTML)", data=html_cikti, 
                                        file_name=f"{okul_no}_Karne.html", mime="text/html", use_container_width=True)
                                        # ==========================================
-# 6. BÖLÜM: YÖNETİCİ (ADMIN) VE ÖĞRETMEN PANELLERİ
+# 6. BÖLÜM: YÖNETİCİ VE ÖĞRETMEN PANELLERİ
 # ==========================================
 
 def admin_paneli(df):
-    st.markdown("### 👑 Okul Yöneticisi Paneli (Admin)")
-    if st.button("🚪 Admin Çıkışı", key="admin_cikis"):
+    st.markdown("### 👑 Okul Yöneticisi Paneli")
+    if st.button("🚪 Admin Çıkışı", key="admin_cikis_btn"):
         st.session_state["aktif_kullanici"] = None
         st.rerun()
         
@@ -225,18 +223,18 @@ def admin_paneli(df):
         
         with st.form("yeni_ogretmen_ekle"):
             c1, c2 = st.columns(2)
-            y_user = c1.text_input("Kullanıcı Adı (Sisteme giriş için, örn: ahmet_hoca)")
+            y_user = c1.text_input("Kullanıcı Adı (Giriş için, örn: ahmet_hoca)")
             y_pass = c2.text_input("Şifre", type="password")
             y_ad = c1.text_input("Öğretmen Adı Soyadı")
             y_brans = c2.text_input("Branşı (Örn: Matematik)")
             
             if st.form_submit_button("Öğretmen Ekle"):
                 if not y_user or not y_pass or not y_ad or not y_brans:
-                    st.error("Tüm alanları doldurun!")
+                    st.error("❌ Tüm alanları doldurun!")
                 elif y_user in ogretmenler or y_user == "admin":
-                    st.error("Bu kullanıcı adı zaten var!")
+                    st.error("❌ Bu kullanıcı adı zaten var!")
                 else:
-                    ogretmenler[y_user] = {"sifre": y_pass, "ad": y_ad, "brans": y_brans}
+                    ogretmenler[y_user] = {"sifre": y_pass, "ad": y_ad.strip(), "brans": y_brans.strip()}
                     ogretmenleri_kaydet(ogretmenler)
                     st.success(f"✅ {y_ad} sisteme başarıyla eklendi!")
                     time.sleep(1)
@@ -250,7 +248,7 @@ def admin_paneli(df):
                 if st.button(f"🗑️ {k_adi} Sil", key=f"sil_{k_adi}"):
                     del ogretmenler[k_adi]
                     ogretmenleri_kaydet(ogretmenler)
-                    st.success("Öğretmen silindi.")
+                    st.success("✅ Öğretmen silindi.")
                     time.sleep(1)
                     st.rerun()
         else:
@@ -261,18 +259,15 @@ def admin_paneli(df):
         st.write("Yönetici olarak tüm öğretmenlerin girdiği kayıtları görebilirsiniz.")
         st.dataframe(df, use_container_width=True)
 
-# ==========================================
-# ÖĞRETMEN PANELİ
-# ==========================================
 def ogretmen_paneli(df, k_adi, o_ad, o_brans):
     st.markdown(f"### 👋 Hoş Geldiniz, {o_ad} ({o_brans} Öğretmeni)")
-    if st.button("🚪 Çıkış Yap", key="ogretmen_cikis"):
+    if st.button("🚪 Çıkış Yap", key="ogretmen_cikis_btn"):
         st.session_state["aktif_kullanici"] = None
         st.rerun()
         
     df_hoca = df[df['Öğretmen_Kullanıcı'] == k_adi].copy()
 
-    otab1, otab2, otab3, otab4 = st.tabs(["📂 Veri Yükle", "👤 Öğrenci İşlemleri", "🤖 Puanlama & AI", "📊 Rapor & Çıktı"])
+    otab1, otab2, otab3, otab4 = st.tabs(["📂 Veri Yükle", "👤 Öğrenci İşlemleri", "🤖 Puanlama & AI", "📊 Çıktı"])
 
     with otab1:
         st.markdown("#### 📥 Şablon İndirme ve Veri Yükleme")
@@ -289,7 +284,7 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 eklenecek = y_df[~y_df['Okul No'].isin(mevcut_tumu)].copy()
                 
                 if eklenecek.empty:
-                    st.warning("⚠️ Bu öğrenciler sistemde zaten kayıtlı! Çift kayıt engellendi.")
+                    st.warning("⚠️ Bu öğrenciler sistemde (sizde veya başka bir öğretmende) zaten kayıtlı! Çift kayıt engellendi.")
                 else:
                     eklenecek['Öğretmen_Kullanıcı'] = k_adi
                     for s in GEREKLI_SUTUNLAR:
@@ -369,33 +364,34 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 idx = df.index[df['Okul No'] == ogr_no].tolist()[0]
                 bilgi = df.iloc[idx]
                 
-                puanlar, toplam = {}, 0
+                toplam_anlik = 0
                 for k in KRITERLER:
                     pk = f"puan_wg_{idx}_{k['id']}"
                     ak = f"aciklama_wg_{idx}_{k['id']}"
                     
-                    # -------------------------------------------------------------------
-                    # HATA BURADA ÇÖZÜLDÜ: Boşluk veya harf hatası (NaN) güvenlik zırhı
-                    # -------------------------------------------------------------------
+                    # -------------------------------------------------------------
+                    # HATA BURADA KÖKÜNDEN ÇÖZÜLDÜ: GÜVENLİ SAYI ÇEVİRME (NaN Koruması)
+                    # -------------------------------------------------------------
                     if pk not in st.session_state: 
-                        ham_puan = df.at[idx, f"{k['baslik']} Puanı"]
-                        guvenli_puan = pd.to_numeric(ham_puan, errors='coerce')
-                        st.session_state[pk] = int(guvenli_puan) if pd.notna(guvenli_puan) else 0
+                        raw_p = df.at[idx, f"{k['baslik']} Puanı"]
+                        conv_p = pd.to_numeric(raw_p, errors='coerce')
+                        st.session_state[pk] = int(conv_p) if pd.notna(conv_p) else 0
                         
                     if ak not in st.session_state: 
-                        ham_aciklama = df.at[idx, f"{k['baslik']} Açıklaması"]
-                        st.session_state[ak] = str(ham_aciklama) if pd.notna(ham_aciklama) else ""
-                    # -------------------------------------------------------------------
+                        raw_a = df.at[idx, f"{k['baslik']} Açıklaması"]
+                        st.session_state[ak] = str(raw_a) if pd.notna(raw_a) else ""
+                    # -------------------------------------------------------------
                     
                     c1, c2 = st.columns([1, 4])
                     st.session_state[pk] = c1.number_input(k['baslik'], 0, k['max'], st.session_state[pk], key=f"num_{pk}")
-                    toplam += st.session_state[pk]
+                    toplam_anlik += st.session_state[pk]
                     st.session_state[ak] = c2.text_input(f"Açıklama:", value=st.session_state[ak], key=f"txt_{ak}")
                 
                 gk = f"genel_wg_{idx}"
                 if gk not in st.session_state: 
-                    ham_genel = df.at[idx, 'Genel Değerlendirme Yorumu']
-                    st.session_state[gk] = str(ham_genel) if pd.notna(ham_genel) else ""
+                    raw_g = df.at[idx, 'Genel Değerlendirme Yorumu']
+                    st.session_state[gk] = str(raw_g) if pd.notna(raw_g) else ""
+                    
                 st.session_state[gk] = st.text_area("Genel Yorum:", value=st.session_state[gk], key=f"txt_{gk}")
                 
                 ham_metin = st.text_area("Yapay Zekaya Özel Notunuz (Boş bırakırsanız sadece puanlara göre yorum yapar):")
@@ -420,7 +416,7 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                             df.at[idx, f"{k['baslik']} Puanı"] = st.session_state[f"puan_wg_{idx}_{k['id']}"]
                             df.at[idx, f"{k['baslik']} Açıklaması"] = st.session_state[f"aciklama_wg_{idx}_{k['id']}"]
                         df.at[idx, 'Genel Değerlendirme Yorumu'] = st.session_state[gk]
-                        df.at[idx, 'Toplam Puan'] = toplam
+                        df.at[idx, 'Toplam Puan'] = toplam_anlik
                         veriyi_kaydet(df)
                         st.success("✅ Kayıt Başarılı! Karneden kontrol edebilirsiniz.")
 
@@ -437,7 +433,6 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 cikti_df = df_hoca[df_hoca['Sınıf'] == secili_sinif]
                 html_karne = toplu_karne_html_dosyasi_uret(cikti_df, o_ad, o_brans)
                 st.download_button("⬇️ İndir (Çıktı almak için tarayıcıda açıp Ctrl+P yapın)", data=html_karne, file_name=f"{secili_sinif.replace('/','_')}_Karneler.html", mime="text/html")
-
 
 # ==========================================
 # 7. BÖLÜM: GİRİŞ KONTROLÜ VE ANA YAPI
