@@ -16,7 +16,7 @@ st.set_page_config(page_title="Gazi Ortaokulu | Proje Sistemi", page_icon="🏫"
 # Kodun içinde asla açık anahtar barınmaz, doğrudan kasadan okunur.
 API_KEY = st.secrets["API_KEY"]
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-1.5-flash')
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
 # ─── ÖZEL CSS TASARIM ───
