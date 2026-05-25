@@ -73,18 +73,28 @@ def ogretmenleri_kaydet(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 @st.cache_data(ttl=0)
+@st.cache_data(ttl=0)
 def veri_yukle():
     if os.path.exists(DATA_FILE):
         try:
             df = pd.read_csv(DATA_FILE, dtype={"Okul No": str})
             df.dropna(subset=['Okul No'], inplace=True)
             df['Okul No'] = df['Okul No'].astype(str).str.strip().str.replace('.0', '', regex=False)
+            
             for s in GEREKLI_SUTUNLAR:
-                if s not in df.columns: df[s] = 'admin' if s == 'Öğretmen_Kullanıcı' else None
+                if s not in df.columns: 
+                    df[s] = 'admin' if s == 'Öğretmen_Kullanıcı' else None
+            
+            # ==========================================
+            # HATA ÇÖZÜMÜ: Sütunları "metin" (object) olarak kilitliyoruz
+            # ==========================================
+            for c in df.columns:
+                if "Açıklaması" in c or "Yorumu" in c or c in ["Proje", "Durum", "Öğrenci Adı Soyadı"]:
+                    df[c] = df[c].astype('object')
+                    
             return df
         except Exception: return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
     return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
-
 def veriyi_kaydet(df):
     df['Okul No'] = df['Okul No'].astype(str).str.strip().str.replace('.0', '', regex=False)
     df.to_csv(DATA_FILE, index=False)
