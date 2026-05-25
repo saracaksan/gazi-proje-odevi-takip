@@ -262,13 +262,15 @@ def admin_paneli(df):
         st.write("Yönetici olarak tüm öğretmenlerin girdiği kayıtları görebilirsiniz.")
         st.dataframe(df, use_container_width=True)
 
+# ==========================================
+# ÖĞRETMEN PANELİ
+# ==========================================
 def ogretmen_paneli(df, k_adi, o_ad, o_brans):
     st.markdown(f"### 👋 Hoş Geldiniz, {o_ad} ({o_brans} Öğretmeni)")
     if st.button("🚪 Çıkış Yap", key="ogretmen_cikis"):
         st.session_state["aktif_kullanici"] = None
         st.rerun()
         
-    # Öğretmenin SADECE kendi öğrencilerini görmesi için filtreleme
     df_hoca = df[df['Öğretmen_Kullanıcı'] == k_adi].copy()
 
     otab1, otab2, otab3, otab4 = st.tabs(["📂 Veri Yükle", "👤 Öğrenci İşlemleri", "🤖 Puanlama & AI", "📊 Rapor & Çıktı"])
@@ -284,12 +286,11 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 y_df['Okul No'] = y_df['Okul No'].astype(str).str.strip().str.replace('.0', '', regex=False)
                 y_df.dropna(subset=['Okul No'], inplace=True)
                 
-                # Sistemin genelinde var mı kontrol et
                 mevcut_tumu = df['Okul No'].tolist()
                 eklenecek = y_df[~y_df['Okul No'].isin(mevcut_tumu)].copy()
                 
                 if eklenecek.empty:
-                    st.warning("⚠️ Bu öğrenciler sistemde (sizde veya başka bir öğretmende) zaten kayıtlı! Çift kayıt engellendi.")
+                    st.warning("⚠️ Bu öğrenciler sistemde zaten kayıtlı! Çift kayıt engellendi.")
                 else:
                     eklenecek['Öğretmen_Kullanıcı'] = k_adi
                     for s in GEREKLI_SUTUNLAR:
@@ -351,7 +352,6 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 if s_ogr != "Seçiniz":
                     if st.button("🗑️ Kalıcı Olarak Sil"):
                         ogr_no = s_ogr.split(" - ")[0]
-                        # df'den sil ve kaydet
                         global DATA_FILE
                         df_yeni = df[df['Okul No'] != ogr_no].reset_index(drop=True)
                         veriyi_kaydet(df_yeni)
@@ -370,26 +370,33 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 idx = df.index[df['Okul No'] == ogr_no].tolist()[0]
                 bilgi = df.iloc[idx]
                 
-                # Widget Hatası İçin Zırhlı Session State Yönetimi
                 puanlar, toplam = {}, 0
                 for k in KRITERLER:
                     pk = f"puan_wg_{idx}_{k['id']}"
                     ak = f"aciklama_wg_{idx}_{k['id']}"
                     
+                    # -------------------------------------------------------------------
+                    # HATA BURADA ÇÖZÜLDÜ: Boşluk veya harf hatası (NaN) güvenlik zırhı
+                    # -------------------------------------------------------------------
                     if pk not in st.session_state: 
-                        st.session_state[pk] = int(pd.to_numeric(df.at[idx, f"{k['baslik']} Puanı"] or 0))
+                        ham_puan = df.at[idx, f"{k['baslik']} Puanı"]
+                        guvenli_puan = pd.to_numeric(ham_puan, errors='coerce')
+                        st.session_state[pk] = int(guvenli_puan) if pd.notna(guvenli_puan) else 0
+                        
                     if ak not in st.session_state: 
-                        st.session_state[ak] = str(df.at[idx, f"{k['baslik']} Açıklaması"] or "")
+                        ham_aciklama = df.at[idx, f"{k['baslik']} Açıklaması"]
+                        st.session_state[ak] = str(ham_aciklama) if pd.notna(ham_aciklama) else ""
+                    # -------------------------------------------------------------------
                     
                     c1, c2 = st.columns([1, 4])
-                    # Değerleri güncelliyoruz
                     st.session_state[pk] = c1.number_input(k['baslik'], 0, k['max'], st.session_state[pk], key=f"num_{pk}")
                     toplam += st.session_state[pk]
                     st.session_state[ak] = c2.text_input(f"Açıklama:", value=st.session_state[ak], key=f"txt_{ak}")
                 
                 gk = f"genel_wg_{idx}"
                 if gk not in st.session_state: 
-                    st.session_state[gk] = str(df.at[idx, 'Genel Değerlendirme Yorumu'] or "")
+                    ham_genel = df.at[idx, 'Genel Değerlendirme Yorumu']
+                    st.session_state[gk] = str(ham_genel) if pd.notna(ham_genel) else ""
                 st.session_state[gk] = st.text_area("Genel Yorum:", value=st.session_state[gk], key=f"txt_{gk}")
                 
                 ham_metin = st.text_area("Yapay Zekaya Özel Notunuz (Boş bırakırsanız sadece puanlara göre yorum yapar):")
@@ -397,21 +404,16 @@ def ogretmen_paneli(df, k_adi, o_ad, o_brans):
                 
                 with c_ai:
                     if st.button("✨ Yapay Zeka Doldursun"):
-                        with st.spinner("Yapay Zeka Değerlendiriyor..."):
+                        with st.spinner("AI Değerlendiriyor..."):
                             try:
                                 p_dict = {k['id']: st.session_state[f"puan_wg_{idx}_{k['id']}"] for k in KRITERLER}
                                 json_data = ai_degerlendirme_yap(bilgi.to_dict(), ham_metin, p_dict, o_ad, o_brans)
                                 
-                                # Gelen AI yanıtlarını session state'e yaz
                                 for k in KRITERLER:
-                                    if k['id'] in json_data: 
-                                        st.session_state[f"aciklama_wg_{idx}_{k['id']}"] = json_data[k['id']]
-                                if "genel" in json_data: 
-                                    st.session_state[gk] = json_data["genel"]
-                                
-                                st.rerun() # Kutulara yansıt
-                            except Exception as e: 
-                                st.error(f"AI Hatası (Lütfen API Key ve interneti kontrol edin): {e}")
+                                    if k['id'] in json_data: st.session_state[f"aciklama_wg_{idx}_{k['id']}"] = json_data[k['id']]
+                                if "genel" in json_data: st.session_state[gk] = json_data["genel"]
+                                st.rerun()
+                            except Exception as e: st.error(f"AI Hatası: {e}")
                             
                 with c_sav:
                     if st.button("💾 Kaydet"):
