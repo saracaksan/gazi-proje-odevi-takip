@@ -21,7 +21,7 @@ st.set_page_config(
 # ==========================================
 # YENİ VE GÜNCEL GEMINI API BİLGİLERİ
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 # ==========================================
 # 3. YÜKSEK KONTRASTLI MODERN CSS TASARIMI
