@@ -15,12 +15,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+try:
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"].strip()
+except Exception:
+    GEMINI_API_KEY = "YOK" # Kasa bulunamazsa uygulamanın tamamen çökmesini önler
 
-# ==========================================
-# 2. GÜVENLİ API AYARLARI (404 HATASI KÖKÜNDEN ÇÖZÜLDÜ)
-# ==========================================
-# YENİ VE GÜNCEL GEMINI API BİLGİLERİ
-GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
 
 # ==========================================
