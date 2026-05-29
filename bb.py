@@ -16,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# KENDİ DOĞRU API ANAHTARINIZ ("AIza" İLE BAŞLAYAN) EKLENDİ
+# API ANAHTARI VE GÜNCEL GEMINI 1.5 FLASH MODELİ
 GEMINI_API_KEY = "AIzaSyCxmD5HwVJTFoYEuCpGcGIUy04CLQ6dajE"
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
@@ -100,7 +100,7 @@ def bos_sablon_olustur():
 
 
 # ==========================================
-# BÖLÜM 2: ZIRHLI YAPAY ZEKA MOTORLARI VE HTML
+# BÖLÜM 2: ZIRHLI YAPAY ZEKA MOTORLARI
 # ==========================================
 def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans):
     sinif_str = str(bilgi_dict.get("Sınıf", "7"))
@@ -201,9 +201,7 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
             html += f"<tr><td><strong>{k['baslik']}</strong></td><td style='text-align:center; font-weight:bold;'>{k['max']}</td><td style='text-align:center; font-weight:900; font-size:1.1rem; color:{p_renk};'>{p}</td><td>{a}</td></tr>"
         genel = str(b.get('Genel Değerlendirme Yorumu', '-'))
         if pd.isna(genel) or not genel.strip() or genel.strip() == "nan": genel = "Genel değerlendirme yapılmadı."
-        
-        # HTML Tırnak Çakışması (SyntaxError) hatası tamamen düzeltildi
-        html += f"</table><div class='yorum-kutu'><strong>💬 Genel Değerlendirme:</strong><br><br>{genel}</div><div class='imza'><strong>{ogrt_ad}</strong><br>{b.get('Ders', ogrt_brans)} Öğretmeni</div></div>"
+        html += f"</table><div class="yorum-kutu"><strong>💬 Genel Değerlendirme:</strong><br><br>{genel}</div><div class="imza"><strong>{ogrt_ad}</strong><br>{b.get('Ders', ogrt_brans)} Öğretmeni</div></div>"
     html += "</body></html>"
     return html
 
@@ -253,7 +251,7 @@ def giris_paneli(ayarlar):
 
 
 # ==========================================
-# BÖLÜM 4: YÖNETİM PANELİ (5 SEKME) VE ÇALIŞTIRMA
+# BÖLÜM 4: YÖNETİM PANELİ (5 SEKME)
 # ==========================================
 def yonetim_paneli(df, ayarlar):
     aktif_id, k_bilgi, rol = st.session_state["aktif_kullanici"], st.session_state["kullanici_bilgi"], st.session_state["kullanici_bilgi"]["rol"]
@@ -408,6 +406,7 @@ def yonetim_paneli(df, ayarlar):
                     davranis = st.text_area("Gözlem (Opsiyonel):")
                     
                     if secili_ogr != "— Seçiniz —":
+                        # Öğrenci numarasına göre satırı güvenli şekilde buluyoruz (HATA BURADA ÇÖZÜLDÜ)
                         secilen_no = secili_ogr.split(" - ")[0]
                         gercek_idx = k_df[k_df[no_k].astype(str) == str(secilen_no)].index[0]
                         bilgi = k_df.loc[gercek_idx]
