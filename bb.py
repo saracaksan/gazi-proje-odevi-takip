@@ -131,15 +131,19 @@ def bos_sablon_olustur():
     return output.getvalue()
 
 # ==========================================
-# 7. ZIRHLI YAPAY ZEKA BAĞLANTISI (DEĞERLENDİRME)
+# 7. ZIRHLI YAPAY ZEKA BAĞLANTISI
 # ==========================================
 def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans):
     if GEMINI_API_KEY == "YOK":
         raise Exception("API Anahtarı eksik! Lütfen Streamlit Secrets paneline (API_KEY) ekleyin.")
 
+    # 404 HATASINI KÖKÜNDEN ÇÖZEN DOĞRU URL TANIMLAMASI
+    DOGRU_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+
     sinif_str = str(bilgi_dict.get("Sınıf", "7"))
     seviye = "".join(filter(str.isdigit, sinif_str))
     seviye = seviye if seviye else "7" 
+    
     kriter_ozeti = "\n".join([f"  - {k['id']}: {k['baslik']} (Max: {k['max']} Puan)" for k in kriterler])
     
     prompt = f"""Sen çok tecrübeli bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}.
@@ -150,14 +154,17 @@ Değerlendirme Kriterleri ve Maksimum Puanları şunlardır:
 GÖREV MODU: """
 
     if mod == "A":
-        prompt += f"""YORUMDAN PUAN ÜRETME MODU. Öğretmenin serbest notu: "{ham_metin}"
+        prompt += f"""YORUMDAN PUAN ÜRETME MODU.
+Öğretmenin serbest notu: "{ham_metin}"
 Görev: Öğretmenin bu notunu analiz et. Öğrencinin yaşına uygun bir dille her kritere ait alt açıklamaları yaz. Öğretmenin notundaki vurgulara göre her kriter için MANTIKLI BİR PUAN (max puana göre) belirle."""
     elif mod == "B":
-        prompt += f"""HEDEF PUANDAN YORUM ÜRETME MODU. Öğretmenin belirlediği Hedef Toplam Puan: {hedef_puan} / 100
+        prompt += f"""HEDEF PUANDAN YORUM ÜRETME MODU.
+Öğretmenin belirlediği Hedef Toplam Puan: {hedef_puan} / 100
 Görev: Bu hedef toplam puana ulaşacak şekilde her kritere mantıklı puanlar dağıt. Verdiğin bu puanlara uygun olarak öğrenciye motive edici açıklamalar yaz."""
     else: 
         mevcut_puan_ozeti = "\n".join([f"  - {k['id']} Kriteri: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
-        prompt += f"""MANUEL PUANLAMA MODU. Öğretmen puanları kendi girdi:
+        prompt += f"""MANUEL PUANLAMA MODU.
+Öğretmen puanları kendi girdi:
 {mevcut_puan_ozeti}
 Öğretmenin ekstra notu (varsa): "{ham_metin}"
 Görev: Sadece verilen bu puanlara bakarak, öğrenci seviyesine uygun motive edici açıklamalar yaz. Puanları KESİNLİKLE DEĞİŞTİRME, sana ne verildiyse aynısını JSON formatına geçir."""
@@ -177,10 +184,15 @@ DİKKAT: SADECE GEÇERLİ JSON FORMATINDA CEVAP VER. BAŞKA HİÇBİR METİN VEY
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     
     try:
-        response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+        # GLOBAL URL YERİNE DOĞRUDAN YUKARIDAKİ DOĞRU URL'Yİ KULLANIYORUZ
+        response = requests.post(DOGRU_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
         response.raise_for_status()
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-        raw_text = raw_text.replace('```json', '').replace('```', '').strip()
+        
+        raw_text = raw_text.replace('```json', '')
+        raw_text = raw_text.replace('```', '')
+        raw_text = raw_text.strip()
+        
         return json.loads(raw_text)
     except Exception as e:
         raise Exception(f"Google AI Hatası: {e}")
