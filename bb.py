@@ -22,10 +22,9 @@ st.set_page_config(
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"].strip()
 except Exception:
-    GEMINI_API_KEY = "YOK" 
+    GEMINI_API_KEY = "YOK" # Kasa bulunamazsa uygulamanın tamamen çökmesini önler
 
-# Dünya çapında en stabil çalışan ve hata vermeyen 'gemini-pro' modeline sabitlendi
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
 
 # ==========================================
 # 3. YÜKSEK KONTRASTLI MODERN CSS TASARIMI
