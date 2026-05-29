@@ -185,9 +185,6 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
     if GEMINI_API_KEY == "YOK":
         raise Exception("API Anahtarı eksik! Lütfen Streamlit Secrets paneline (API_KEY) ekleyin.")
 
-    # 404 HATASINI KÖKÜNDEN ÇÖZEN DOĞRU URL TANIMLAMASI
-    DOGRU_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-
     sinif_str = str(bilgi_dict.get("Sınıf", "7"))
     seviye = "".join(filter(str.isdigit, sinif_str))
     seviye = seviye if seviye else "7" 
@@ -232,11 +229,11 @@ DİKKAT: SADECE GEÇERLİ JSON FORMATINDA CEVAP VER. BAŞKA HİÇBİR METİN VEY
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     
     try:
-        # GLOBAL URL YERİNE DOĞRUDAN YUKARIDAKİ DOĞRU URL'Yİ KULLANIYORUZ
-        response = requests.post(DOGRU_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+        response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
         response.raise_for_status()
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         
+        # Zırhlı JSON temizleme (Kopma veya syntax hatasını kesin engeller)
         raw_text = raw_text.replace('```json', '')
         raw_text = raw_text.replace('```', '')
         raw_text = raw_text.strip()
