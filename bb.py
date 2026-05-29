@@ -201,7 +201,7 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
             html += f"<tr><td><strong>{k['baslik']}</strong></td><td style='text-align:center; font-weight:bold;'>{k['max']}</td><td style='text-align:center; font-weight:900; font-size:1.1rem; color:{p_renk};'>{p}</td><td>{a}</td></tr>"
         genel = str(b.get('Genel Değerlendirme Yorumu', '-'))
         if pd.isna(genel) or not genel.strip() or genel.strip() == "nan": genel = "Genel değerlendirme yapılmadı."
-       html += f"</table><div class='yorum-kutu'><strong>💬 Genel Değerlendirme:</strong><br><br>{genel}</div><div class='imza'><strong>{ogrt_ad}</strong><br>{b.get('Ders', ogrt_brans)} Öğretmeni</div></div>"
+    html += f"</table><div class='yorum-kutu'><strong>💬 Genel Değerlendirme:</strong><br><br>{genel}</div><div class='imza'><strong>{ogrt_ad}</strong><br>{b.get('Ders', ogrt_brans)} Öğretmeni</div></div>"
     html += "</body></html>"
     return html
 
