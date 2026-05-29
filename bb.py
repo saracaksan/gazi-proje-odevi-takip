@@ -963,18 +963,15 @@ def yonetim_paneli(df, ayarlar):
                     st.markdown("#### 👤 Öğrenci Seçimi")
                     ogr_liste = k_df.apply(lambda r: f"{r[no_kolonu]} - {r[ad_kolonu]}", axis=1).tolist()
                     secili_ogr = st.selectbox("Görüş Yazılacak Öğrenci:", ["— Seçiniz —"] + ogr_liste)
-                    
-                    davranis_notu = st.text_area("Öğretmen Gözlemi (Opsiyonel):", placeholder="Örn: Derslerde çok sessiz ama sorumluluklarını biliyor. Arkadaşlarıyla uyumlu.")
+                    davranis_notu = st.text_area("Öğretmen Gözlemi (Opsiyonel):", placeholder="Örn: Sınıfta aktif, ödevlerini aksatmıyor.")
                     
                     if secili_ogr != "— Seçiniz —":
-                        idx = ogr_liste.index(secili_ogr) - 1
+                        idx = ogr_liste.index(secili_ogr)  # <--- HATA BURADAYDI, '- 1' SİLİNDİ
                         bilgi = k_df.iloc[idx]
-                        
                         if st.button("✨ Yapay Zekaya Görüş Yazdır", use_container_width=True):
-                            with st.spinner("Notlar analiz ediliyor, öğrencinin yaşına uygun karne görüşü yazılıyor..."):
+                            with st.spinner("Notlar analiz ediliyor, görüş yazılıyor..."):
                                 notlar_dict = {ders: bilgi[ders] for ders in ders_kolonlari}
                                 ogrt_isim = k_bilgi.get("ad", "Öğretmen")
-                                
                                 try:
                                     gorus = ai_karne_gorusu_yaz(bilgi[ad_kolonu], bilgi[sinif_kolonu], notlar_dict, davranis_notu, ogrt_isim)
                                     st.session_state["karne_df"].at[idx, "AI_Karne_Gorusu"] = gorus
@@ -986,14 +983,12 @@ def yonetim_paneli(df, ayarlar):
                 with c_sag:
                     st.markdown("#### 📝 Karne Görüşü ve Kayıt")
                     if secili_ogr != "— Seçiniz —":
-                        idx = ogr_liste.index(secili_ogr) - 1
+                        idx = ogr_liste.index(secili_ogr)  # <--- HATA BURADAYDI, '- 1' SİLİNDİ
                         mevcut_gorus = st.session_state["karne_df"].at[idx, "AI_Karne_Gorusu"]
-                        
-                        yeni_gorus = st.text_area("Düzenle ve Onayla:", value=mevcut_gorus, height=180)
-                        
+                        yeni_gorus = st.text_area("Düzenle ve Onayla:", value=mevcut_gorus, height=150)
                         if st.button("💾 Bu Görüşü Kaydet (Listeye İşle)", use_container_width=True):
                             st.session_state["karne_df"].at[idx, "AI_Karne_Gorusu"] = yeni_gorus
-                            st.success("✅ Öğrencinin özel karne görüşü E-Okul listesine işlendi!")
+                            st.success("✅ Öğrencinin görüşü listeye işlendi!")
                 
                 st.markdown("---")
                 st.markdown("#### 📊 Oluşturulan Karne Görüşleri Listesi")
