@@ -25,7 +25,7 @@ except Exception:
     GEMINI_API_KEY = "YOK" 
 
 # Dünya çapında en stabil çalışan ve hata vermeyen 'gemini-pro' modeline sabitlendi
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={GEMINI_API_KEY}"
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
 
 # ==========================================
 # 3. YÜKSEK KONTRASTLI MODERN CSS TASARIMI
