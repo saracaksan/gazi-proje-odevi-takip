@@ -958,6 +958,64 @@ def yonetim_paneli(df, ayarlar):
                 st.success(f"✅ Dosya başarıyla yüklendi ve {len(ders_kolonlari)} farklı ders tespit edildi!")
                 
                 # NOT: 4. Bölüm kodları tam bu satırın altına gelecek.
+                c_sol, c_sag = st.columns([1, 2])
+                with c_sol:
+                    st.markdown("#### 👤 Öğrenci Seçimi")
+                    ogr_liste = k_df.apply(lambda r: f"{r[no_kolonu]} - {r[ad_kolonu]}", axis=1).tolist()
+                    secili_ogr = st.selectbox("Görüş Yazılacak Öğrenci:", ["— Seçiniz —"] + ogr_liste)
+                    
+                    davranis_notu = st.text_area("Öğretmen Gözlemi (Opsiyonel):", placeholder="Örn: Derslerde çok sessiz ama sorumluluklarını biliyor. Arkadaşlarıyla uyumlu.")
+                    
+                    if secili_ogr != "— Seçiniz —":
+                        idx = ogr_liste.index(secili_ogr) - 1
+                        bilgi = k_df.iloc[idx]
+                        
+                        if st.button("✨ Yapay Zekaya Görüş Yazdır", use_container_width=True):
+                            with st.spinner("Notlar analiz ediliyor, öğrencinin yaşına uygun karne görüşü yazılıyor..."):
+                                notlar_dict = {ders: bilgi[ders] for ders in ders_kolonlari}
+                                ogrt_isim = k_bilgi.get("ad", "Öğretmen")
+                                
+                                try:
+                                    gorus = ai_karne_gorusu_yaz(bilgi[ad_kolonu], bilgi[sinif_kolonu], notlar_dict, davranis_notu, ogrt_isim)
+                                    st.session_state["karne_df"].at[idx, "AI_Karne_Gorusu"] = gorus
+                                    st.success("Görüş başarıyla oluşturuldu!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(e)
+
+                with c_sag:
+                    st.markdown("#### 📝 Karne Görüşü ve Kayıt")
+                    if secili_ogr != "— Seçiniz —":
+                        idx = ogr_liste.index(secili_ogr) - 1
+                        mevcut_gorus = st.session_state["karne_df"].at[idx, "AI_Karne_Gorusu"]
+                        
+                        yeni_gorus = st.text_area("Düzenle ve Onayla:", value=mevcut_gorus, height=180)
+                        
+                        if st.button("💾 Bu Görüşü Kaydet (Listeye İşle)", use_container_width=True):
+                            st.session_state["karne_df"].at[idx, "AI_Karne_Gorusu"] = yeni_gorus
+                            st.success("✅ Öğrencinin özel karne görüşü E-Okul listesine işlendi!")
+                
+                st.markdown("---")
+                st.markdown("#### 📊 Oluşturulan Karne Görüşleri Listesi")
+                st.dataframe(st.session_state["karne_df"][[no_kolonu, ad_kolonu, "AI_Karne_Gorusu"]], use_container_width=True)
+                
+                # E-Okul İçin Excel Çıktısı Al
+                output_karne = io.BytesIO()
+                with pd.ExcelWriter(output_karne, engine='xlsxwriter') as writer:
+                    st.session_state["karne_df"].to_excel(writer, index=False, sheet_name='Karne_Gorusleri')
+                    # Excel hücresindeki yazıların sığması için sütunları genişletiyoruz
+                    worksheet = writer.sheets['Karne_Gorusleri']
+                    worksheet.set_column(0, 10, 15)
+                    gorus_sutun_index = st.session_state["karne_df"].columns.get_loc("AI_Karne_Gorusu")
+                    worksheet.set_column(gorus_sutun_index, gorus_sutun_index, 60)
+                
+                st.download_button(
+                    "📥 Tüm Listeyi Excel Olarak İndir (E-Okula Hazır)", 
+                    data=output_karne.getvalue(), 
+                    file_name="Karne_Gorusleri_Listesi.xlsx", 
+                    mime="application/vnd.ms-excel", 
+                    use_container_width=True
+                )
 # ==========================================
 # 12. ANA ÇALIŞTIRMA MODÜLÜ
 # ==========================================
