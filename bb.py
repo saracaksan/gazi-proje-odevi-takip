@@ -19,12 +19,8 @@ st.set_page_config(
 # ==========================================
 # 2. GÜVENLİ API AYARLARI (404 HATASI KÖKÜNDEN ÇÖZÜLDÜ)
 # ==========================================
-try:
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"].strip()
-except Exception:
-    GEMINI_API_KEY = "YOK" 
-
-# Dünya çapında en stabil çalışan ve hata vermeyen 'gemini-pro' modeline sabitlendi
+# YENİ VE GÜNCEL GEMINI API BİLGİLERİ
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
 
 # ==========================================
