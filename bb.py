@@ -467,7 +467,7 @@ def yonetim_paneli(df, ayarlar):
                     st.rerun()
             
             st.markdown("---")
-           c_mevcut, c_ogrt, c_sistem = st.columns(3)
+            c_mevcut, c_ogrt, c_sistem = st.columns(3)
             
             with c_mevcut:
                 st.markdown("#### ⚙️ Şablon Düzenle / Sil")
