@@ -887,4 +887,57 @@ def yonetim_paneli(df, ayarlar):
                 ders_kolonlari = [col for col in kolonlar if col not in [ad_kolonu, sinif_kolonu, no_kolonu, "AI_Karne_Gorusu"]]
 
                 c_sol, c_sag = st.columns([1, 2])
-                with c_
+                with c_sol:
+                    st.markdown("#### 👤 Öğrenci Seçimi")
+                    ogr_liste = k_df.apply(lambda r: f"{r[no_kolonu]} - {r[ad_kolonu]}", axis=1).tolist()
+                    secili_ogr = st.selectbox("Görüş Yazılacak Öğrenci:", ["— Seçiniz —"] + ogr_liste)
+                    davranis_notu = st.text_area("Öğretmen Gözlemi (Opsiyonel):", placeholder="Örn: Sınıfta aktif, ödevlerini aksatmıyor.")
+                    
+                    if secili_ogr != "— Seçiniz —":
+                        secilen_no = secili_ogr.split(" - ")[0]
+                        gercek_idx = k_df[k_df[no_kolonu].astype(str) == str(secilen_no)].index[0]
+                        bilgi = k_df.loc[gercek_idx]
+                        
+                        if st.button("✨ Değerlendirme Üret", use_container_width=True):
+                            with st.spinner("Sistem yazıyor..."):
+                                notlar_dict = {ders: bilgi[ders] for ders in ders_kolonlari}
+                                try:
+                                    gorus = ai_karne_gorusu_yaz(bilgi[ad_kolonu], bilgi[sinif_kolonu], notlar_dict, davranis_notu, k_bilgi.get("ad", "Öğretmen"))
+                                    st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"] = gorus
+                                    st.success("Oluşturuldu!")
+                                    st.rerun()
+                                except Exception as e: st.error(e)
+
+                with c_sag:
+                    st.markdown("#### 📝 Görüş ve Kayıt")
+                    if secili_ogr != "— Seçiniz —":
+                        gercek_idx = k_df[k_df[no_kolonu].astype(str) == str(secili_ogr.split(" - ")[0])].index[0]
+                        mevcut_gorus = st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"]
+                        yeni_gorus = st.text_area("Düzenle/Onayla:", value=mevcut_gorus, height=150)
+                        if st.button("💾 İşle", use_container_width=True):
+                            st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"] = yeni_gorus
+                            st.success("Kaydedildi!")
+            
+            st.markdown("---")
+            st.dataframe(st.session_state["karne_df"][[no_kolonu, ad_kolonu, "AI_Karne_Gorusu"]], use_container_width=True)
+            
+            output_karne = io.BytesIO()
+            with pd.ExcelWriter(output_karne, engine='xlsxwriter') as writer:
+                st.session_state["karne_df"].to_excel(writer, index=False, sheet_name='Gorusler')
+            st.download_button("📥 E-Okul Listesini İndir", data=output_karne.getvalue(), file_name="Ogrenci_Gorusleri.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
+
+# ==========================================
+# 12. ANA ÇALIŞTIRMA MODÜLÜ
+# ==========================================
+def main():
+    ayarlar, df = ayar_yukle(), veri_yukle()
+    # Ana giriş ekranındaki yazılar resmi kuruma uyarlandı, AI ibareleri silindi.
+    st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe Milli Eğitim Müdürlüğü</div><div class="hero-subtitle">Proje ve Performans Değerlendirme Sistemi</div></div>', unsafe_allow_html=True)
+    t1, t2 = st.tabs(["🎓 Öğrenci Girişi", "👨‍🏫 Öğretmen Paneli"])
+    with t1: ogrenci_paneli(df, ayarlar)
+    with t2:
+        if not st.session_state.get("giris_yapti", False): giris_paneli(ayarlar)
+        else: yonetim_paneli(df, ayarlar)
+
+if __name__ == "__main__":
+    main()
