@@ -300,10 +300,9 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
 # 9. ÖĞRENCİ PANELİ
 # ==========================================
 def ogrenci_paneli(df, ayarlar):
-    st.markdown("<h2 style='text-align:center; color:#1e293b; font-weight:900; margin-bottom: 30px;'>🎓 Akıllı Karne Sorgulama Paneli</h2>", unsafe_allow_html=True)
-    if df.empty:
-        st.warning("⚠️ Sisteme henüz veri yüklenmemiştir.")
-        return
+    # Öğrencilerin göreceği kısımdan "Akıllı Karne" ibaresi kaldırıldı.
+    st.markdown("<h2 style='text-align:center; color:#1e293b; font-weight:900; margin-bottom: 30px;'>🎓 Öğrenci Proje Sorgulama Paneli</h2>", unsafe_allow_html=True)
+    if df.empty: return st.warning("⚠️ Sisteme henüz veri yüklenmemiştir.")
 
     col_m = st.columns([1, 2, 1])[1]
     with col_m:
