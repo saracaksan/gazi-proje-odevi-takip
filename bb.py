@@ -72,26 +72,6 @@ GEREKLI_SUTUNLAR = [
 for _k in CEKIRDEK_SABLON:
     GEREKLI_SUTUNLAR.extend([f"{_k['baslik']} Puanı", f"{_k['baslik']} Açıklaması"])
 
-# ==========================================
-# 5. DOSYA VE VERİ YÖNETİMİ
-# ==========================================
-def ayar_yukle():
-    if not os.path.exists(CONFIG_FILE):
-        varsayilan = {
-            "okullar": ["Gazi Ortaokulu"],
-            "sablonlar": {"Gazi Matematik Şablonu": CEKIRDEK_SABLON},
-            "kullanicilar": {
-                "admin": {"sifre": "Sarac.47", "rol": "admin", "ad": "Sistem Yöneticisi", "brans": "Tüm Dersler"}
-            }
-        }
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(varsayilan, f, ensure_ascii=False, indent=4)
-        return varsayilan
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        if "sablonlar" not in data: data["sablonlar"] = {"Gazi Matematik Şablonu": CEKIRDEK_SABLON}
-        return data
-
 def ayar_kaydet(ayarlar):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(ayarlar, f, ensure_ascii=False, indent=4)
@@ -360,15 +340,24 @@ def giris_paneli(ayarlar):
     with col_m:
         st.markdown('<div class="glass-card" style="padding:40px; text-align:center;">', unsafe_allow_html=True)
         st.markdown("<h2 style='color:#2563eb; font-weight:900;'>🔐 Sisteme Giriş</h2>", unsafe_allow_html=True)
+        
+        # SİSTEM KİLİTLİYSE UYARI VER
+        if ayarlar.get("sistem_kilitli", False):
+            st.error("🔒 Sistem şu anda idare tarafından güncelleme/bakım amacıyla öğretmen girişine kapatılmıştır. Sadece yöneticiler giriş yapabilir.")
+
         k_adi = st.text_input("Kullanıcı Adı")
         sifre = st.text_input("Şifre", type="password")
         if st.button("🚀 Giriş Yap", use_container_width=True):
             kullanici = ayarlar["kullanicilar"].get(k_adi)
             if kullanici and kullanici["sifre"] == sifre:
-                st.session_state["giris_yapti"] = True
-                st.session_state["aktif_kullanici"] = k_adi
-                st.session_state["kullanici_bilgi"] = kullanici
-                st.rerun()
+                # EĞER SİSTEM KİLİTLİYSE VE GİREN KİŞİ ADMİN DEĞİLSE İÇERİ ALMA
+                if ayarlar.get("sistem_kilitli", False) and kullanici["rol"] != "admin":
+                    st.error("❌ Sistem kilitli olduğu için giriş yapamazsınız.")
+                else:
+                    st.session_state["giris_yapti"] = True
+                    st.session_state["aktif_kullanici"] = k_adi
+                    st.session_state["kullanici_bilgi"] = kullanici
+                    st.rerun()
             else: 
                 st.error("❌ Hatalı kullanıcı adı veya şifre!")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -478,7 +467,7 @@ def yonetim_paneli(df, ayarlar):
                     st.rerun()
             
             st.markdown("---")
-            c_mevcut, c_ogrt = st.columns(2)
+           c_mevcut, c_ogrt, c_sistem = st.columns(3)
             
             with c_mevcut:
                 st.markdown("#### ⚙️ Şablon Düzenle / Sil")
@@ -508,12 +497,12 @@ def yonetim_paneli(df, ayarlar):
                             st.rerun()
             
             with c_ogrt:
-                st.markdown("#### 👨‍🏫 Gelişmiş Öğretmen Yönetimi")
+                st.markdown("#### 👨‍🏫 Öğretmen Yönetimi")
                 ogretmenler = {k: v for k, v in ayarlar["kullanicilar"].items() if v.get("rol") == "ogretmen"}
                 t_ekle, t_liste, t_duzenle = st.tabs(["➕ Ekle", "📋 Listele / Sil", "✏️ Düzenle"])
                 
                 with t_ekle:
-                    st.info("💡 Bir öğretmene birden fazla branş atamak için aralarına virgül koyun")
+                    st.info("💡 Birden fazla branş için aralarına virgül koyun.")
                     with st.form("ogrt_ekle_form"):
                         o_okul = st.selectbox("Okulu", ayarlar["okullar"])
                         c1, c2 = st.columns(2)
@@ -527,7 +516,7 @@ def yonetim_paneli(df, ayarlar):
                             elif o_kadi in ayarlar["kullanicilar"]:
                                 st.error("❌ Bu kullanıcı adı sistemde zaten kayıtlı!")
                             else:
-                                ayarlar["kullanicilar"][o_kadi] = {"sifre": o_sifre, "rol": "ogretmen", "ad": o_ad, "okul": o_okul, "brans": o_brans}
+                                ayarlar["kullanicilar"][o_kadi] = {"sifre": o_sifre, "rol": "ogretmen", "ad": o_ad, "okul": o_okul, "brans": o_brans if o_brans else "Genel"}
                                 ayar_kaydet(ayarlar)
                                 st.success(f"✅ {o_ad} başarıyla eklendi!")
                                 time.sleep(1)
@@ -565,6 +554,46 @@ def yonetim_paneli(df, ayarlar):
                                     st.success("✅ Güncellendi!")
                                     time.sleep(1)
                                     st.rerun()
+                                    
+            with c_sistem:
+                st.markdown("#### 🏢 Okul Yönetimi")
+                yeni_okul = st.text_input("Yeni Okul Ekle", placeholder="Örn: Cumhuriyet Ortaokulu")
+                if st.button("➕ Sisteme Okul Ekle", use_container_width=True) and yeni_okul:
+                    if yeni_okul.strip() not in ayarlar["okullar"]:
+                        ayarlar["okullar"].append(yeni_okul.strip())
+                        ayar_kaydet(ayarlar)
+                        st.success(f"✅ '{yeni_okul}' eklendi!")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.warning("Bu okul sistemde zaten var!")
+                
+                sil_okul = st.selectbox("Okul Sil", ["— Seçiniz —"] + ayarlar["okullar"])
+                if st.button("🗑️ Okulu Sil", use_container_width=True) and sil_okul != "— Seçiniz —":
+                    if sil_okul == "Gazi Ortaokulu":
+                        st.error("❌ Ana okul silinemez!")
+                    else:
+                        ayarlar["okullar"].remove(sil_okul)
+                        ayar_kaydet(ayarlar)
+                        st.success(f"✅ '{sil_okul}' silindi!")
+                        time.sleep(1)
+                        st.rerun()
+                
+                st.markdown("---")
+                st.markdown("#### 🔒 Güvenlik Paneli")
+                kilit_durumu = ayarlar.get("sistem_kilitli", False)
+                if kilit_durumu:
+                    st.warning("⚠️ Sistem şu an öğretmenlere KAPALI.")
+                    if st.button("🔓 Sistemi Öğretmenlere AÇ", use_container_width=True):
+                        ayarlar["sistem_kilitli"] = False
+                        ayar_kaydet(ayarlar)
+                        st.rerun()
+                else:
+                    st.success("✅ Sistem şu an öğretmenlere AÇIK.")
+                    if st.button("🔒 Sistemi Öğretmenlere KAPAT", use_container_width=True):
+                        ayarlar["sistem_kilitli"] = True
+                        ayar_kaydet(ayarlar)
+                        st.rerun()
 
     # --- SEKME 2: ÖĞRENCİ YÜKLEME VE EKLEME ---
     sekme_veri = sekmeler[1] if rol == "admin" else sekmeler[0]
