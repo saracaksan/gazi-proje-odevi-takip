@@ -818,14 +818,13 @@ def yonetim_paneli(df, ayarlar):
 # 12. ANA ÇALIŞTIRMA MODÜLÜ
 # ==========================================
 def main():
-    ayarlar = ayar_yukle()
-    df = veri_yukle()
-    st.markdown("""<div class="hero-header"><div class="hero-title">🏫 Proje ve Karne Yönetim Sistemi</div><div class="hero-subtitle">Yapay Zeka Destekli Otomasyon</div></div>""", unsafe_allow_html=True)
-    t1, t2 = st.tabs(["🎓 Öğrenci Girişi", "👨‍🏫 Yönetim Paneli"])
+    ayarlar, df = ayar_yukle(), veri_yukle()
+    # Ana giriş ekranındaki yazılar resmi kuruma uyarlandı, AI ibareleri silindi.
+    st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe Milli Eğitim Müdürlüğü</div><div class="hero-subtitle">Proje ve Performans Değerlendirme Sistemi</div></div>', unsafe_allow_html=True)
+    t1, t2 = st.tabs(["🎓 Öğrenci Girişi", "👨‍🏫 Öğretmen Paneli"])
     with t1: ogrenci_paneli(df, ayarlar)
     with t2:
-        if "giris_yapti" not in st.session_state: st.session_state["giris_yapti"] = False
-        if not st.session_state["giris_yapti"]: giris_paneli(ayarlar)
+        if not st.session_state.get("giris_yapti", False): giris_paneli(ayarlar)
         else: yonetim_paneli(df, ayarlar)
 
 if __name__ == "__main__":
