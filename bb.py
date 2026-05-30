@@ -385,7 +385,26 @@ def yonetim_paneli(df, ayarlar):
     if st.button("🚪 Güvenli Çıkış Yap"):
         st.session_state.clear()
         st.rerun()
-
+# ÖĞRETMENLER İÇİN KULLANIM KILAVUZU (SADECE ÖĞRETMEN GÖRÜR)
+    if rol == "ogretmen":
+        with st.expander("📖 Öğretmen Kullanım Kılavuzu (Başlamak İçin Tıklayın)", expanded=True):
+            st.markdown("""
+            **Sisteme Hoş Geldiniz! İşlemlerinizi kolayca yapmak için aşağıdaki adımları izleyebilirsiniz:**
+            
+            **1. Öğrenci Yükle/Ekle:**
+            - Öğrencileriniz idare tarafından atanmamışsa, kendi Excel listenizi yükleyebilir veya tek tek manuel öğrenci ekleyebilirsiniz.
+            
+            **2. AI Değerlendirme (Proje Notu Verme):**
+            - Listeden öğrencinizi ve ders şablonunu seçin.
+            - Puanlarınızı kendiniz verin veya sistemin otomatik dağıtmasını sağlayın. İşlemi bitirince mutlaka en alttaki **Kaydet** butonuna basın.
+            
+            **3. Raporlar:**
+            - İdareye teslim edilecek Excel formlarını (Not Çizelgesini) buradan anında indirebilirsiniz.
+            - Velilere göndermek üzere sınıfın PDF/HTML renkli karnelerini tek tıkla alabilirsiniz.
+            
+            **4. Akıllı Karne Görüşü:**
+            - E-Okul not listesini sisteme yükleyerek, öğrencinin notlarına göre e-Okul'a hazır karne görüşleri oluşturabilirsiniz.
+            """)
     if rol == "admin": 
         df_yetkili = df
         sekmeler = st.tabs(["🏢 Şablon ve Sistem", "📂 Öğrenci Yükle/Ekle", "🤖 Akıllı Değerlendirme & AI", "📊 Dar / Geniş Raporlar", "📝 Akıllı Karne Görüşü"])
