@@ -10,14 +10,14 @@ import time
 # 1. SAYFA YAPILANDIRMASI
 # ==========================================
 st.set_page_config(
-    page_title="Gazi Ortaokulu | Proje Değerlendirme Sistemi",
+    page_title="Dargeçit MEB | Proje Değerlendirme Sistemi",
     page_icon="🏫",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # ==========================================
-# 2. GÜVENLİ API AYARLARI 
+# 2. GÜVENLİ API AYARLARI
 # ==========================================
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"].strip()
@@ -64,13 +64,34 @@ CEKIRDEK_SABLON = [
   { "id": "k5", "baslik": "Zamanında Teslim", "max": 15, "icon": "⏰", "aciklama": "Projenin belirtilen tarihte teslim edilmesi." }
 ]
 
-# YENİ EKLENEN 'Atanan_Ogretmen' SÜTUNU BURADA
 GEREKLI_SUTUNLAR = [
     'Okul', 'Ekleyen', 'Atanan_Ogretmen', 'Ders', 'S.No', 'Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 
     '1. Dönem Puanı', 'Proje', 'Durum', 'Toplam Puan', 'Genel Değerlendirme Yorumu', 'Dinamik_JSON'
 ]
 for _k in CEKIRDEK_SABLON:
     GEREKLI_SUTUNLAR.extend([f"{_k['baslik']} Puanı", f"{_k['baslik']} Açıklaması"])
+
+# ==========================================
+# 5. DOSYA VE VERİ YÖNETİMİ
+# ==========================================
+def ayar_yukle():
+    if not os.path.exists(CONFIG_FILE):
+        varsayilan = {
+            "okullar": ["Gazi Ortaokulu"],
+            "sablonlar": {"Gazi Matematik Şablonu": CEKIRDEK_SABLON},
+            "kullanicilar": {
+                "admin": {"sifre": "Sarac.47", "rol": "admin", "ad": "Sistem Yöneticisi", "brans": "Tüm Dersler"}
+            },
+            "sistem_kilitli": False
+        }
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(varsayilan, f, ensure_ascii=False, indent=4)
+        return varsayilan
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        if "sablonlar" not in data: data["sablonlar"] = {"Gazi Matematik Şablonu": CEKIRDEK_SABLON}
+        if "sistem_kilitli" not in data: data["sistem_kilitli"] = False
+        return data
 
 def ayar_kaydet(ayarlar):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
@@ -114,7 +135,7 @@ def bos_sablon_olustur():
     return output.getvalue()
 
 # ==========================================
-# 7. ZIRHLI YAPAY ZEKA BAĞLANTISI (DEĞERLENDİRME)
+# 7. YAPAY ZEKA BAĞLANTISI (DEĞERLENDİRME)
 # ==========================================
 def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans):
     if GEMINI_API_KEY == "YOK":
@@ -287,7 +308,6 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
 # 9. ÖĞRENCİ PANELİ
 # ==========================================
 def ogrenci_paneli(df, ayarlar):
-    # Dışarıdan girenlerin AI veya Karne ibaresi görmemesi için başlık resmi yapıldı
     st.markdown("<h2 style='text-align:center; color:#1e293b; font-weight:900; margin-bottom: 30px;'>🎓 Öğrenci Proje Sorgulama Paneli</h2>", unsafe_allow_html=True)
     if df.empty: return st.warning("⚠️ Sisteme henüz veri yüklenmemiştir.")
 
@@ -341,7 +361,6 @@ def giris_paneli(ayarlar):
         st.markdown('<div class="glass-card" style="padding:40px; text-align:center;">', unsafe_allow_html=True)
         st.markdown("<h2 style='color:#2563eb; font-weight:900;'>🔐 Sisteme Giriş</h2>", unsafe_allow_html=True)
         
-        # SİSTEM KİLİTLİYSE UYARI VER
         if ayarlar.get("sistem_kilitli", False):
             st.error("🔒 Sistem şu anda idare tarafından güncelleme/bakım amacıyla öğretmen girişine kapatılmıştır. Sadece yöneticiler giriş yapabilir.")
 
@@ -350,7 +369,6 @@ def giris_paneli(ayarlar):
         if st.button("🚀 Giriş Yap", use_container_width=True):
             kullanici = ayarlar["kullanicilar"].get(k_adi)
             if kullanici and kullanici["sifre"] == sifre:
-                # EĞER SİSTEM KİLİTLİYSE VE GİREN KİŞİ ADMİN DEĞİLSE İÇERİ ALMA
                 if ayarlar.get("sistem_kilitli", False) and kullanici["rol"] != "admin":
                     st.error("❌ Sistem kilitli olduğu için giriş yapamazsınız.")
                 else:
@@ -383,7 +401,6 @@ def yonetim_paneli(df, ayarlar):
         st.session_state.clear()
         st.rerun()
 
-    # ÖĞRETMENLER İÇİN KULLANIM KILAVUZU
     if rol == "ogretmen":
         with st.expander("📖 Öğretmen Kullanım Kılavuzu (Başlamak İçin Tıklayın)", expanded=True):
             st.markdown("""
@@ -398,7 +415,7 @@ def yonetim_paneli(df, ayarlar):
             
             **3. Raporlar:**
             - İdareye teslim edilecek Excel formlarını (Not Çizelgesini) buradan anında indirebilirsiniz.
-            - Velilere göndermek üzere sınıfın PDF/HTML renkli karnelerini tek tıkla alabilirsiniz.
+            - Velilere göndermek üzere sınıfın PDF/HTML renkli belgelerini tek tıkla alabilirsiniz.
             
             **4. Genel Görüşler:**
             - E-Okul not listesini sisteme yükleyerek, öğrencinin notlarına göre e-Okul'a hazır değerlendirme metinleri oluşturabilirsiniz.
@@ -408,7 +425,6 @@ def yonetim_paneli(df, ayarlar):
         df_yetkili = df
         sekmeler = st.tabs(["🏢 Şablon ve Sistem", "📂 Öğrenci Yükle/Ekle", "🤖 Performans Değerlendirme", "📊 Raporlar", "📝 Akıllı Değerlendirme"])
     else: 
-        # Öğretmenler sadece KENDİSİNE ATANAN öğrencileri görür
         df_yetkili = df[(df['Okul'] == k_bilgi.get("okul")) & (df['Atanan_Ogretmen'] == aktif_id)]
         sekmeler = st.tabs(["📂 Öğrenci Yükle/Ekle", "🤖 Performans Değerlendirme", "📊 Raporlar", "📝 Akıllı Değerlendirme"])
 
@@ -767,7 +783,6 @@ def yonetim_paneli(df, ayarlar):
                 else:
                     st.info("Bu okulda henüz kayıtlı öğrenci/sınıf yok.")
 
-
     # --- SEKME 3: AI DEĞERLENDİRME ---
     sekme_puan = sekmeler[2] if rol == "admin" else sekmeler[1]
     with sekme_puan:
@@ -946,21 +961,20 @@ def yonetim_paneli(df, ayarlar):
                         if st.button("💾 İşle", use_container_width=True):
                             st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"] = yeni_gorus
                             st.success("Kaydedildi!")
-            
-            st.markdown("---")
-            st.dataframe(st.session_state["karne_df"][[no_kolonu, ad_kolonu, "AI_Karne_Gorusu"]], use_container_width=True)
-            
-            output_karne = io.BytesIO()
-            with pd.ExcelWriter(output_karne, engine='xlsxwriter') as writer:
-                st.session_state["karne_df"].to_excel(writer, index=False, sheet_name='Gorusler')
-            st.download_button("📥 E-Okul Listesini İndir", data=output_karne.getvalue(), file_name="Ogrenci_Gorusleri.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
+                
+                st.markdown("---")
+                st.dataframe(st.session_state["karne_df"][[no_kolonu, ad_kolonu, "AI_Karne_Gorusu"]], use_container_width=True)
+                
+                output_karne = io.BytesIO()
+                with pd.ExcelWriter(output_karne, engine='xlsxwriter') as writer:
+                    st.session_state["karne_df"].to_excel(writer, index=False, sheet_name='Gorusler')
+                st.download_button("📥 E-Okul Listesini İndir", data=output_karne.getvalue(), file_name="Ogrenci_Gorusleri.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
 
 # ==========================================
 # 12. ANA ÇALIŞTIRMA MODÜLÜ
 # ==========================================
 def main():
     ayarlar, df = ayar_yukle(), veri_yukle()
-    # Ana giriş ekranındaki yazılar resmi kuruma uyarlandı, AI ibareleri silindi.
     st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe Milli Eğitim Müdürlüğü</div><div class="hero-subtitle">Proje ve Performans Değerlendirme Sistemi</div></div>', unsafe_allow_html=True)
     t1, t2 = st.tabs(["🎓 Öğrenci Girişi", "👨‍🏫 Öğretmen Paneli"])
     with t1: ogrenci_paneli(df, ayarlar)
