@@ -774,7 +774,9 @@ def yonetim_paneli(df, ayarlar):
 # ==========================================
 def main():
     ayarlar, df = ayar_yukle(), veri_yukle()
-    st.markdown('<div class="hero-header"><div class="hero-title">🏫 PUSULA 360 Bütüncül Değerlendirme Platformu</div><div class="hero-subtitle">Proje, Performans ve Karne Yönetimi</div></div>', unsafe_allow_html=True)
+    
+    # 🏫 İkonu 'font-size: 4rem' ile büyütüldü (İsterseniz bu sayıyı 5rem, 6rem yaparak daha da büyütebilirsiniz)
+    st.markdown('<div class="hero-header"><div class="hero-title"><span style="font-size: 4.5rem; vertical-align: middle; margin-right: 15px;">🏫</span> PUSULA 360 Bütüncül Değerlendirme Platformu</div><div class="hero-subtitle">Proje, Performans ve Karne Yönetimi</div></div>', unsafe_allow_html=True)
     
     if not st.session_state.get("giris_yapti", False): 
         ana_giris_ekranlari(df, ayarlar)
