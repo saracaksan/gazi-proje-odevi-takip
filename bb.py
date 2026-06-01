@@ -971,13 +971,19 @@ def yonetim_paneli(df, ayarlar):
                     {'👁️ Gözatma: ' if admin_bakis else '👋 '}{kb['ad']}
                     {f'<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">ADMİN GÖZATMA → {admin_bakis_ogrt}</span>' if admin_bakis else ''}
                 </div>
-                <div style="font-size:0.9rem; color:#64748b; font-weight:600;">
-                    {kb.get('okul','') or 'Yönetici'} &nbsp;|&nbsp; {kb.get('brans','')}
-                    {'&nbsp;|&nbsp; <span style="color:#ef4444;">🔴 ADMİN</span>' if rol == 'admin' and not admin_bakis else ''}
-                </div>
+                st.markdown(f"""
+    <div style="background: white; padding: 15px 25px; border-radius: 12px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #2563eb;">
+        <div>
+            <div style="font-size: 1.3rem; font-weight: 900; color: #1e293b;">
+                {'👁️ Gözatma: ' if admin_bakis else '👋 '} {kb['ad']}
+            </div>
+            <div style="font-size: 0.95rem; color: #64748b; font-weight: 600;">
+                {kb.get('okul','')} &nbsp;|&nbsp; {kb.get('brans','')}
+                {f'&nbsp;|&nbsp; <span style="color:#ef4444;">🔴 ADMİN</span>' if rol == 'admin' and not admin_bakis else ''}
             </div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True))
 
     with col_profil2:
         if admin_bakis:
