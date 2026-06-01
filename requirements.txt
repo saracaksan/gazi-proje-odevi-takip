@@ -5,3 +5,8 @@ xlsxwriter
 openpyxl
 requests
 xlrd>=2.0.1
+streamlit
+pandas
+xlsxwriter
+requests
+supabase
