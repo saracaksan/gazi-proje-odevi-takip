@@ -495,9 +495,13 @@ def yonetim_paneli(df, ayarlar):
                     
                     st.markdown(f"**Hesaplanan Toplam: {toplam_h} / 100**")
                     if st.form_submit_button("💾 Veritabanına Kaydet"):
-                        d_k = {f"{k['id']}_puan": st.session_state[f"vp_{k['id']}"], f"{k['id']}_aciklama": st.session_state[f"va_{k['id']}"]} for k in aktif_sablon
                         d_k_flat = {}
-                        for k in aktif_sablon: d_k_flat.update({f"{k['id']}_puan": st.session_state[f"vp_{k['id']}"], f"{k['id']}_aciklama": st.session_state[f"va_{k['id']}"]})
+                        for k in aktif_sablon: 
+                            d_k_flat.update({
+                                f"{k['id']}_puan": st.session_state[f"vp_{k['id']}"], 
+                                f"{k['id']}_aciklama": st.session_state[f"va_{k['id']}"]
+                            })
+                        
                         df.at[idx, 'Dinamik_JSON'] = json.dumps(d_k_flat, ensure_ascii=False)
                         df.at[idx, 'Genel Değerlendirme Yorumu'] = gv
                         df.at[idx, 'Toplam Puan'] = toplam_h
