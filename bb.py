@@ -105,7 +105,7 @@ def ayar_yukle():
         else:
             varsayilan = {
                 "okullar": DARGEÇIT_OKULLARI.copy(), "sablonlar": {SABLON_ADI: CEKIRDEK_SABLON},
-                "kullanicilar": {"admin": {"sifre": "Sarac.47", "rol": "admin", "ad": "Sistem Yöneticisi", "brans": "Tüm Dersler", "okul": "İlçe MEM", "onayli": True}},
+                "kullanicilar": {"admin": {"sifre": "Sarac.47", "rol": "admin", "ad": "Sistem Yöneticisi", "brans": "Tüm Dersler", "okul": "onayli": True}},
                 "sistem_kilitli": False, "otomatik_onay": True
             }
             supabase.table('ayarlar').insert({'id': 1, 'veri': varsayilan}).execute()
