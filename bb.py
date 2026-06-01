@@ -752,7 +752,7 @@ def ogrenci_sorgu_ekrani(df):
                 for _, row in sonuclar.iterrows():
                     toplam_val = pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')
 p = int(toplam_val) if pd.notna(toplam_val) else 0
-                renk_cls = puan_renk(p)
+        renk_cls = puan_renk(p)
                     with st.expander(f"📌 {row['Gorev_Adi']} ({row['Ders']}) — Puan: {p}/100"):
                         st.markdown(f"""
                         <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:12px;">
