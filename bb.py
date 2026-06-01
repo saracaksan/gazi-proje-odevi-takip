@@ -960,19 +960,20 @@ def yonetim_paneli(df, ayarlar):
     admin_bakis = st.session_state.get("admin_bakis_modu", False)
     admin_bakis_ogrt = st.session_state.get("admin_bakis_ogretmen", None)
 
-    # Profil bar
+    # Profil bar - YENİ VE DÜZELTİLMİŞ
     col_profil1, col_profil2 = st.columns([3, 1])
     with col_profil1:
+        admin_etiket = f'<span style="color:#ef4444;">🔴 ADMİN</span>' if rol == 'admin' and not admin_bakis else ''
+        gozatma_etiket = f'<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">ADMİN GÖZATMA → {admin_bakis_ogrt}</span>' if admin_bakis else ''
+        
         st.markdown(f"""
         <div class="profil-bar">
             <div>
                 <div style="font-size:1.2rem; font-weight:900; color:#1e293b;">
-                    {'👁️ Gözatma: ' if admin_bakis else '👋 '}{kb['ad']}
-                    {f'<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:6px;font-size:0.75rem;margin-left:8px;">ADMİN GÖZATMA → {admin_bakis_ogrt}</span>' if admin_bakis else ''}
+                    {'👁️ Gözatma: ' if admin_bakis else '👋 '} {kb['ad']} {gozatma_etiket}
                 </div>
                 <div style="font-size:0.9rem; color:#64748b; font-weight:600;">
-                    {kb.get('okul','') or 'Yönetici'} &nbsp;|&nbsp; {kb.get('brans','')}
-                    {'&nbsp;|&nbsp; <span style="color:#ef4444;">🔴 ADMİN</span>' if rol == 'admin' and not admin_bakis else ''}
+                    {kb.get('okul','') or 'Yönetici'} &nbsp;|&nbsp; {kb.get('brans','')} {admin_etiket}
                 </div>
             </div>
         </div>
