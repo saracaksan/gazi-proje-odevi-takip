@@ -495,19 +495,30 @@ def yonetim_paneli(df, ayarlar):
                         except Exception as e: st.error(f"AI Hatası: {e}")
                 st.markdown('</div>', unsafe_allow_html=True)
 
-                st.markdown("#### 📝 Kayıt ve Onay Formu")
+                st.markdown("#### 📝 Puanlama ve Onay Formu")
                 with st.form("kayit_formu"):
                     toplam_h = 0
                     for k in aktif_sablon:
-                        cc1, cc2 = st.columns([1, 4])
-                        pv = cc1.number_input(k['baslik'], 0, k['max'], key=f"vp_{k['id']}")
-                        av = cc2.text_area("Açıklama", key=f"va_{k['id']}", height=68)
+                        
+                        # Kriter başlığı, maksimum puanı ve alt açıklaması görsel olarak çok net bir kutuda gösteriliyor
+                        st.markdown(f"""
+                        <div style='background-color:#f0f9ff; padding:12px; border-radius:8px; border-left: 5px solid #2563eb; margin-bottom:10px;'>
+                            <strong style='color:#1e3a8a; font-size:1.1rem;'>{k.get('icon', '📌')} {k['baslik']} (Maksimum: {k['max']} Puan)</strong><br>
+                            <span style='color:#475569; font-size:0.9rem;'><i>{k['aciklama']}</i></span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        cc1, cc2 = st.columns([1.5, 4])
+                        # number_input içindeki (0, k['max']) ayarı sayesinde öğretmen istese de max puandan fazlasını giremez.
+                        pv = cc1.number_input(f"Verilen Puan (Max: {k['max']})", 0, k['max'], key=f"vp_{k['id']}")
+                        av = cc2.text_area("Öğretmen Değerlendirmesi", key=f"va_{k['id']}", height=68)
                         toplam_h += pv
-                    gv = st.text_area("Genel Yorum", key="vg")
+                        st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px dashed #cbd5e1;'>", unsafe_allow_html=True)
+                        
+                    gv = st.text_area("💬 Genel Yorum ve Gelecek Tavsiyeleri", key="vg", height=100)
                     
-                    st.markdown(f"**Hesaplanan Toplam: {toplam_h} / 100**")
+                    st.markdown(f"**Hesaplanan Toplam Puan: {toplam_h} / 100**")
                     
-                    # DÜZELTİLMİŞ KAYIT KODU BURADA
                     if st.form_submit_button("💾 Veritabanına Kaydet"):
                         d_k_flat = {}
                         for k in aktif_sablon: 
