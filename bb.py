@@ -8,7 +8,7 @@ import time
 from supabase import create_client, Client
 
 # ==========================================
-# 1. SAYFA YAPILANDIRMASI VE CSS
+# 1. SAYFA YAPILANDIRMASI
 # ==========================================
 st.set_page_config(
     page_title="PRO-PER-KAR | Bütüncül Değerlendirme Portalı",
@@ -17,21 +17,27 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- GÜVENLİ API VE VERİTABANI BAĞLANTILARI ---
-# Şifreler kodda yer almaz, Streamlit Secrets üzerinden okunur.
+# ==========================================
+# 2. GİZLİ KASA (SECRETS) VE API BAĞLANTILARI
+# ==========================================
+# 1. Gemini API Bağlantısı
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"].strip()
+    GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 except Exception:
-    GEMINI_API_KEY = "YOK" 
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    st.error("⚠️ HATA: GEMINI_API_KEY gizli kasada (secrets) bulunamadı!")
+    st.stop()
 
+# 2. Supabase Veritabanı Bağlantısı
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"].strip()
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"].strip()
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
-    st.error("⚠️ Lütfen Streamlit Secrets paneline SUPABASE_URL ve SUPABASE_KEY bilgilerinizi ekleyin!")
+    st.error(f"⚠️ HATA: Supabase bilgileri gizli kasada bulunamadı veya yanlış! Detay: {e}")
     st.stop()
+
+# (Kodunuzun geri kalanı buradan itibaren aynı şekilde devam edecek...)
 
 st.markdown("""
 <style>
