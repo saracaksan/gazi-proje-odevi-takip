@@ -10,7 +10,7 @@ import time
 # 1. SAYFA YAPILANDIRMASI
 # ==========================================
 st.set_page_config(
-    page_title="Dargeçit MEB | Proje Değerlendirme Sistemi",
+    page_title="Dargeçit MEB | Gelişmiş Ölçme Değerlendirme Sistemi",
     page_icon="🏫",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -33,7 +33,7 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Inter:wght@400;500;700&display=swap');
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
-.hero-header { background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%); border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); margin-bottom: 25px; border: 1px solid #bfdbfe; }
+.hero-header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.2); margin-bottom: 25px; border: 1px solid #93c5fd; }
 .hero-title { font-family: 'Nunito', sans-serif; font-size: 2.4rem; font-weight: 900; color: #ffffff; margin: 0; text-shadow: 1px 2px 4px rgba(0,0,0,0.1); }
 .hero-subtitle { font-size: 1.1rem; color: #e0f2fe; margin-top: 8px; font-weight: 600; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] { background: #e2e8f0; border-radius: 10px; padding: 5px; gap: 5px; }
@@ -51,25 +51,40 @@ div[data-baseweb="select"] > div { background-color: #f8fafc !important; border:
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. SABİTLER VE ÇEKİRDEK ŞABLON
+# 4. SABİTLER, GÖMÜLÜ DARGEÇİT OKULLARI VE ŞABLONLAR
 # ==========================================
 CONFIG_FILE = "sistem_ayarlari.json"
-DATA_FILE = "veritabani.csv"
+DATA_FILE = "veritabani_v2.csv"
+
+# Sisteme gömülü (hardcoded) Dargeçit okul listesi
+DARGEÇIT_OKULLARI = [
+    "Alayurt İlkokulu", "Alayurt Ortaokulu", "Altınoluk İlkokulu", "Altıyol İlkokulu",
+    "Altıyol İmam Hatip Ortaokulu", "Anadolu Kız İmam Hatip Lisesi", "Atatürk Ortaokulu",
+    "Bostanlı İlkokulu", "Cumhuriyet İlkokulu", "Dargeçit Anadolu İmam Hatip Lisesi",
+    "Dargeçit Anadolu Lisesi", "Dargeçit Ilısu Anadolu Lisesi", "Dargeçit İmam Hatip Ortaokulu",
+    "Dargeçit Yunus Emre İlkokulu", "Gazi Ortaokulu", "Ilısu İlkokulu", "Ilısu İlk-Ortaokulu",
+    "Karabayır İlkokulu", "Karabayır İlkokulu İHO", "Kartalkaya İlkokulu", "Kılavuz İlkokulu",
+    "Kılavuz Ortaokulu", "Nizamülmülk MTAL", "Sakarya İlkokulu", "Selahaddin Eyyubi İlkokulu",
+    "Selahaddin Eyyubi İlkokulu/İHO", "Suçatı İlkokulu -", "Suçatı İlkokulu - İmam Hatip Ortaokulu",
+    "Süleyman Altınkaynak Ortaokulu", "Sümer Beldesi İstiklal İlkokulu", "Sümer İlkokulu",
+    "Sümer İmam Hatip Ortaokulu", "Tavşanlı İlk", "Tavşanlı İlk İHO", "Temelli İlkokulu",
+    "Temelli İlkokulu/Ortaokulu", "Vatan İlkokulu", "Yılmaz İlkokulu", "Yoncalı İlkokulu",
+    "Yoncalı İlkokulu-İmam Hatip Ortaokulu"
+]
 
 CEKIRDEK_SABLON = [
-  { "id": "k1", "baslik": "İçerik ve Bilgi Doğruluğu", "max": 40, "icon": "📚", "aciklama": "Soruların doğru çözülmesi, işlem basamaklarının net gösterilmesi." },
-  { "id": "k2", "baslik": "Düzen ve Tertip", "max": 15, "icon": "📐", "aciklama": "Ödevin temiz, okunaklı ve düzenli hazırlanmış olması." },
-  { "id": "k3", "baslik": "Araştırma ve Zenginleştirme", "max": 15, "icon": "🔍", "aciklama": "Verilen sorular dışında konuyu destekleyen ekstra örnekler." },
-  { "id": "k4", "baslik": "Yaratıcılık ve Sunum", "max": 15, "icon": "🎨", "aciklama": "Kapak tasarımı, renk kullanımı ve görsel materyaller." },
-  { "id": "k5", "baslik": "Zamanında Teslim", "max": 15, "icon": "⏰", "aciklama": "Projenin belirtilen tarihte teslim edilmesi." }
+    { "id": "k1", "baslik": "İçerik ve Bilgi Doğruluğu", "max": 40, "icon": "📚", "aciklama": "Soruların doğru çözülmesi, işlem basamaklarının net gösterilmesi." },
+    { "id": "k2", "baslik": "Düzen ve Tertip", "max": 15, "icon": "📐", "aciklama": "Ödevin temiz, okunaklı ve düzenli hazırlanmış olması." },
+    { "id": "k3", "baslik": "Araştırma ve Zenginleştirme", "max": 15, "icon": "🔍", "aciklama": "Verilen sorular dışında konuyu destekleyen ekstra örnekler." },
+    { "id": "k4", "baslik": "Yaratıcılık ve Sunum", "max": 15, "icon": "🎨", "aciklama": "Kapak tasarımı, renk kullanımı ve görsel materyaller." },
+    { "id": "k5", "baslik": "Zamanında Teslim", "max": 15, "icon": "⏰", "aciklama": "Projenin belirtilen tarihte teslim edilmesi." }
 ]
 
+# Yeni Dinamik Yapı: Her satır spesifik bir değerlendirme görevine (Proje-1, Performans-2 vb.) aittir.
 GEREKLI_SUTUNLAR = [
-    'Okul', 'Ekleyen', 'Atanan_Ogretmen', 'Ders', 'S.No', 'Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 
-    '1. Dönem Puanı', 'Proje', 'Durum', 'Toplam Puan', 'Genel Değerlendirme Yorumu', 'Dinamik_JSON'
+    'Okul', 'Ekleyen', 'Atanan_Ogretmen', 'Ders', 'Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 
+    'Gorev_Turu', 'Gorev_Adi', 'Toplam Puan', 'Genel Değerlendirme Yorumu', 'Dinamik_JSON'
 ]
-for _k in CEKIRDEK_SABLON:
-    GEREKLI_SUTUNLAR.extend([f"{_k['baslik']} Puanı", f"{_k['baslik']} Açıklaması"])
 
 # ==========================================
 # 5. DOSYA VE VERİ YÖNETİMİ
@@ -77,10 +92,10 @@ for _k in CEKIRDEK_SABLON:
 def ayar_yukle():
     if not os.path.exists(CONFIG_FILE):
         varsayilan = {
-            "okullar": ["Gazi Ortaokulu"],
+            "okullar": DARGEÇIT_OKULLARI.copy(),
             "sablonlar": {"Gazi Matematik Şablonu": CEKIRDEK_SABLON},
             "kullanicilar": {
-                "admin": {"sifre": "Sarac.47", "rol": "admin", "ad": "Sistem Yöneticisi", "brans": "Tüm Dersler"}
+                "admin": {"sifre": "Sarac.47", "rol": "admin", "ad": "Sistem Yöneticisi", "brans": "Tüm Dersler", "okul": "İlçe MEM"}
             },
             "sistem_kilitli": False
         }
@@ -91,6 +106,7 @@ def ayar_yukle():
         data = json.load(f)
         if "sablonlar" not in data: data["sablonlar"] = {"Gazi Matematik Şablonu": CEKIRDEK_SABLON}
         if "sistem_kilitli" not in data: data["sistem_kilitli"] = False
+        if "okullar" not in data or not data["okullar"]: data["okullar"] = DARGEÇIT_OKULLARI.copy()
         return data
 
 def ayar_kaydet(ayarlar):
@@ -105,18 +121,12 @@ def veri_yukle():
             df.dropna(subset=['Okul No'], inplace=True)
             df['Okul No'] = df['Okul No'].astype(str).str.strip().str.replace('.0', '', regex=False)
             
-            for col in ['Okul', 'Ekleyen', 'Atanan_Ogretmen', 'Ders', 'Dinamik_JSON']:
+            for col in GEREKLI_SUTUNLAR:
                 if col not in df.columns:
-                    if col == 'Atanan_Ogretmen': df[col] = df['Ekleyen'] if 'Ekleyen' in df.columns else "admin"
-                    else: df[col] = "Gazi Ortaokulu" if col == 'Okul' else ("admin" if col == 'Ekleyen' else ("Matematik" if col == 'Ders' else "{}"))
-            
-            for s in GEREKLI_SUTUNLAR:
-                if s not in df.columns: df[s] = None
-            for c in df.columns:
-                if "Açıklaması" in c or "Yorumu" in c or "JSON" in c or c in ["Ders", "Öğrenci Adı Soyadı"]:
-                    df[c] = df[c].astype('object')
+                    df[col] = "" if col not in ['Toplam Puan'] else None
             return df
-        except Exception: return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
+        except Exception: 
+            return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
     return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
 
 def veriyi_kaydet(df):
@@ -125,53 +135,57 @@ def veriyi_kaydet(df):
     st.cache_data.clear()
 
 def bos_sablon_olustur():
-    sablon_df = pd.DataFrame(columns=['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Ders', '1. Dönem Puanı', 'Proje', 'Durum'])
+    sablon_df = pd.DataFrame(columns=['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf'])
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        sablon_df.to_excel(writer, index=False, sheet_name='Ogrenci_Sablonu')
-        worksheet = writer.sheets['Ogrenci_Sablonu']
+        sablon_df.to_excel(writer, index=False, sheet_name='Ogrenci_Yukleme_Listesi')
+        worksheet = writer.sheets['Ogrenci_Yukleme_Listesi']
         for col_num, _ in enumerate(sablon_df.columns.values):
-            worksheet.set_column(col_num, col_num, 20)
+            worksheet.set_column(col_num, col_num, 25)
+    return output.getvalue()
+
+def eokul_sablon_olustur():
+    sablon_df = pd.DataFrame(columns=['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Matematik Notu', 'Türkçe Notu', 'Fen Bilimleri Notu'])
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        sablon_df.to_excel(writer, index=False, sheet_name='E_Okul_Karne_Listesi')
     return output.getvalue()
 
 # ==========================================
-# 7. YAPAY ZEKA BAĞLANTISI (DEĞERLENDİRME)
+# 6. YAPAY ZEKA BAĞLANTILARI
 # ==========================================
 def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans):
     if GEMINI_API_KEY == "YOK":
-        raise Exception("API Anahtarı eksik! Lütfen Streamlit Secrets paneline (API_KEY) ekleyin.")
+        raise Exception("API Anahtarı eksik! Lütfen Streamlit Secrets paneline ekleyin.")
 
     sinif_str = str(bilgi_dict.get("Sınıf", "7"))
     seviye = "".join(filter(str.isdigit, sinif_str))
     seviye = seviye if seviye else "7" 
     kriter_ozeti = "\n".join([f"  - {k['id']}: {k['baslik']} (Max: {k['max']} Puan)" for k in kriterler])
     
-    prompt = f"""Sen çok tecrübeli bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}.
-Karşında {seviye}. Sınıfa giden, yaklaşık {int(seviye)+5} yaşında bir öğrenci var. Öğrenciyle doğrudan 'sen' diliyle konuşacaksın. Dilin çok akademik olmamalı, çocuğun yaşına uygun, şefkatli, eksikleri kırmadan anlatan ve onu gelişime teşvik eden bir tonda olmalı.
+    prompt = f"""Sen tecrübeli bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}.
+Öğrenci {seviye}. Sınıfa gidiyor. Öğrenciyle doğrudan şefkatli bir 'sen' diliyle konuşacaksın.
 Değerlendirme Kriterleri ve Maksimum Puanları şunlardır:
 {kriter_ozeti}
 
 GÖREV MODU: """
 
     if mod == "A":
-        prompt += f"""YORUMDAN PUAN ÜRETME MODU. Öğretmenin serbest notu: "{ham_metin}"
-Görev: Öğretmenin bu notunu analiz et. Öğrencinin yaşına uygun bir dille her kritere ait alt açıklamaları yaz. Öğretmenin notundaki vurgulara göre her kriter için MANTIKLI BİR PUAN (max puana göre) belirle."""
+        prompt += f"""YORUMDAN PUAN ÜRETME MODU. Öğretmenin notu: "{ham_metin}"
+Görev: Öğretmenin bu notunu analiz et. Öğrencinin yaşına uygun her kritere ait alt açıklamaları yaz. Nottaki vurgulara göre her kriter için MANTIKLI BİR PUAN belirle."""
     elif mod == "B":
         prompt += f"""HEDEF PUANDAN YORUM ÜRETME MODU. Öğretmenin belirlediği Hedef Toplam Puan: {hedef_puan} / 100
-Görev: Bu hedef toplam puana ulaşacak şekilde her kritere mantıklı puanlar dağıt. Verdiğin bu puanlara uygun olarak öğrenciye motive edici açıklamalar yaz."""
+Görev: Bu hedef toplam puana ulaşacak şekilde kriterlere mantıklı puanlar dağıt ve motivasyonel açıklamalar yaz."""
     else: 
         mevcut_puan_ozeti = "\n".join([f"  - {k['id']} Kriteri: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
         prompt += f"""MANUEL PUANLAMA MODU. Öğretmen puanları kendi girdi:
 {mevcut_puan_ozeti}
-Öğretmenin ekstra notu (varsa): "{ham_metin}"
-Görev: Sadece verilen bu puanlara bakarak, öğrenci seviyesine uygun motive edici açıklamalar yaz. Puanları KESİNLİKLE DEĞİŞTİRME, sana ne verildiyse aynısını JSON formatına geçir."""
+Görev: Sadece verilen puanlara bakarak pedagojik ve motive edici açıklamalar yaz. Puanları KESİNLİKLE DEĞİŞTİRME."""
 
     prompt += f"""
 
-EKSTRA İSTENEN:
-"genel": Öğrenciye bu dersin hayatındaki öneminden kısaca bahseden, eksiklerini düzeltmezse neler olabileceğini tatlıca anlatan ve başarılar dileyen genel bir yorum.
-
-DİKKAT: SADECE GEÇERLİ JSON FORMATINDA CEVAP VER. BAŞKA HİÇBİR METİN VEYA İŞARET KULLANMA. JSON FORMATI ŞU ŞEKİLDE OLMALI:
+"genel": Gelecek tavsiyelerini içeren genel bir yorum.
+SADECE GEÇERLİ JSON FORMATINDA CEVAP VER. BAŞKA HİÇBİR METİN YAZMA:
 {{
   "puanlar": {{ "{kriterler[0]['id']}": 40 }},
   "aciklamalar": {{ "{kriterler[0]['id']}": "Açıklama..." }},
@@ -179,209 +193,161 @@ DİKKAT: SADECE GEÇERLİ JSON FORMATINDA CEVAP VER. BAŞKA HİÇBİR METİN VEY
 }}"""
 
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
-    
-    try:
-        response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-        response.raise_for_status()
-        raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-        raw_text = raw_text.replace('```json', '').replace('```', '').strip()
-        return json.loads(raw_text)
-    except Exception as e:
-        raise Exception(f"Google AI Hatası: {e}")
+    response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+    response.raise_for_status()
+    raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    return json.loads(raw_text)
 
-# ==========================================
-# 7.5. YAPAY ZEKA KARNE GÖRÜŞÜ MOTORU
-# ==========================================
 def ai_karne_gorusu_yaz(ogrenci_adi, sinifi, notlar_sozlugu, davranis_notu, ogrt_ad):
-    if GEMINI_API_KEY == "YOK":
-        raise Exception("API Anahtarı eksik!")
-
-    seviye_str = "".join(filter(str.isdigit, str(sinifi)))
-    seviye = int(seviye_str) if seviye_str else 4
-    notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if pd.notna(notu) and str(notu).strip() != ""])
-
-    prompt = f"""Sen bir sınıf rehber öğretmenisin. Adın {ogrt_ad}.
-Karşında {sinifi} sınıfından (yaklaşık {seviye+5} yaşında) {ogrenci_adi} adında bir öğrencin var. 
-Dönem sonu karnesini veriyorsun. Öğrenciyle doğrudan 'sen' diliyle konuşarak şefkatli, pedagojik ve yaşına uygun bir karne görüşü yazacaksın.
-
-Öğrencinin Ders Notları (100 Üzerinden):
-{notlar_metni}
-
-Öğretmenin Davranış Gözlemi: "{davranis_notu if davranis_notu else 'Genel iyi hal.'}"
-
-Görev:
-1. Yüksek notları överek motive et.
-2. Düşük notları kırmadan "toparlarız" tarzında yol göstererek yorumla.
-3. Davranış gözlemini çok doğal bir şekilde yedir.
-4. Toplam 3-4 cümlelik, doğrudan karneye yapıştırılabilecek bir metin olsun.
-
-SADECE KARNE GÖRÜŞÜ METNİNİ YAZ. Başka hiçbir açıklama kullanma."""
-
+    if GEMINI_API_KEY == "YOK": raise Exception("API Anahtarı eksik!")
+    notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if pd.notna(notu)])
+    prompt = f"""Sınıf rehber öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_adi} isimli öğrenciye dönem sonu karne görüşü yaz.
+Ders Notları:\n{notlar_metni}\nGözlem: {davranis_notu}\nDoğrudan öğrenciye hitap eden 3-4 cümlelik şefkatli bir e-okul karne görüşü metni üret."""
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
-    
-    try:
-        response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-        response.raise_for_status()
-        return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    except Exception as e:
-        raise Exception(f"Google AI Hatası: {e}")
+    response = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+    response.raise_for_status()
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 # ==========================================
-# 8. CANLI VE DİNAMİK HTML KARNE OLUŞTURUCU
+# 7. CANLI VE DİNAMİK HTML REPORT OLUŞTURUCU
 # ==========================================
 def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler):
-    html = f"""<!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8"><title>Proje Karneleri</title>
-<style>
-  body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }}
-  .page {{ background: white; width: 210mm; margin: 0 auto 20px; padding: 15mm; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); page-break-after: always; border-top: 8px solid #3b82f6; }}
-  table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-  th {{ background: #f8fafc; color: #1e293b; padding: 12px; text-align: left; font-size: 0.9rem; border-bottom: 2px solid #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; }}
-  td {{ padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; vertical-align: top; line-height: 1.6; color: #334155; }}
-  .header {{ background: linear-gradient(135deg, #2563eb, #38bdf8); color: white; padding: 25px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }}
-  .student-info {{ display: flex; gap: 20px; margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #38bdf8; }}
-  .info-item {{ display: flex; flex-direction: column; }}
-  .info-label {{ font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; }}
-  .info-value {{ font-size: 1.05rem; font-weight: 800; color: #0f172a; }}
-  .yorum-kutu {{ background: #fffbeb; padding: 20px; margin-top: 25px; border-radius: 8px; border-left: 5px solid #f59e0b; line-height: 1.7; color: #78350f; font-size: 0.95rem; }}
-  .imza {{ text-align: right; margin-top: 40px; color: #475569; font-size: 1rem; }}
-  @media print {{ body {{ background: white; padding: 0; }} .page {{ box-shadow: none; margin: 0; border-top: none; }} .header {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }} }}
-</style></head><body>"""
+    html = """<!DOCTYPE html>
+    <html lang="tr"><head><meta charset="UTF-8"><title>Ölçme Değerlendirme Raporu</title>
+    <style>
+      body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
+      .page { background: white; width: 210mm; margin: 0 auto 20px; padding: 15mm; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); page-break-after: always; border-top: 8px solid #2563eb; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th { background: #f8fafc; color: #1e293b; padding: 12px; text-align: left; font-size: 0.9rem; border-bottom: 2px solid #cbd5e1; }
+      td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; line-height: 1.6; color: #334155; }
+      .header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 25px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+      .student-info { display: flex; gap: 20px; margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6; }
+      .info-item { display: flex; flex-direction: column; }
+      .info-label { font-size: 0.75rem; color: #64748b; font-weight: bold; }
+      .info-value { font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+      .yorum-kutu { background: #fffbeb; padding: 20px; margin-top: 25px; border-radius: 8px; border-left: 5px solid #f59e0b; color: #78350f; }
+    </style></head><body>"""
 
     for i in range(len(df_sinif)):
         b = df_sinif.iloc[i]
-        top_raw = b.get('Toplam Puan', 0)
-        toplam = int(pd.to_numeric(top_raw, errors='coerce')) if pd.notna(top_raw) else 0
-        renk = "#10b981" if toplam >= 85 else ("#f59e0b" if toplam >= 60 else "#ef4444")
+        toplam = int(pd.to_numeric(b.get('Toplam Puan', 0), errors='coerce')) if pd.notna(b.get('Toplam Puan', 0)) else 0
+        dinamik_puanlar = json.loads(str(b.get('Dinamik_JSON', '{}'))) if pd.notna(b.get('Dinamik_JSON', '{}')) else {}
         
-        dinamik_puanlar = {}
-        try:
-            din_json = str(b.get('Dinamik_JSON', '{}'))
-            if din_json.strip() and din_json != "nan":
-                dinamik_puanlar = json.loads(din_json)
-        except: pass
-
         html += f"""
-<div class="page">
-  <div class="header">
-    <div>
-        <div style="font-size:0.9rem; opacity:0.9; letter-spacing:1px; text-transform:uppercase; font-weight:bold;">{b.get('Okul', 'Okul')}</div>
-        <h1 style="margin: 5px 0 0; font-size:1.8rem;">{b.get('Ders', ogrt_brans)} Proje Raporu</h1>
-    </div>
-    <div style="text-align: center;">
-        <div style="font-size: 2.8rem; font-weight: 900; background: white; color: {renk}; padding: 5px 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">{toplam}</div>
-        <div style="font-size: 0.8rem; margin-top: 8px; opacity: 0.9; font-weight: bold;">TOPLAM PUAN</div>
-    </div>
-  </div>
-  
-  <div class="student-info">
-    <div class="info-item"><span class="info-label">Öğrenci Adı Soyadı</span><span class="info-value">{b.get('Öğrenci Adı Soyadı','')}</span></div>
-    <div class="info-item"><span class="info-label">Sınıf</span><span class="info-value">{b.get('Sınıf','')}</span></div>
-    <div class="info-item"><span class="info-label">Okul No</span><span class="info-value">{b.get('Okul No','')}</span></div>
-  </div>
+        <div class="page">
+          <div class="header">
+            <div>
+                <div style="font-weight:bold; text-transform:uppercase;">{b.get('Okul', '')}</div>
+                <h1 style="margin: 5px 0 0; font-size:1.6rem;">{b.get('Gorev_Adi', 'Değerlendirme')} ({b.get('Ders', ogrt_brans)}) Raporu</h1>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 900; background: white; color: #2563eb; padding: 5px 25px; border-radius: 12px;">{toplam}</div>
+                <div style="font-size: 0.8rem; margin-top: 5px; font-weight: bold;">ALINAN PUAN</div>
+            </div>
+          </div>
+          
+          <div class="student-info">
+            <div class="info-item"><span class="info-label">Öğrenci Adı Soyadı</span><span class="info-value">{b.get('Öğrenci Adı Soyadı','')}</span></div>
+            <div class="info-item"><span class="info-label">Sınıf</span><span class="info-value">{b.get('Sınıf','')}</span></div>
+            <div class="info-item"><span class="info-label">Okul No</span><span class="info-value">{b.get('Okul No','')}</span></div>
+            <div class="info-item"><span class="info-label">Görev Türü</span><span class="info-value">{b.get('Gorev_Turu','')}</span></div>
+          </div>
 
-  <table>
-    <tr><th style="width:25%;">Değerlendirme Kriteri</th><th style="width:10%; text-align:center;">Max</th><th style="width:10%; text-align:center;">Puan</th><th style="width:55%;">Öğretmen Değerlendirmesi</th></tr>
-"""
+          <table>
+            <tr><th>Kriter</th><th style="text-align:center;">Maksimum</th><th style="text-align:center;">Alınan</th><th>Öğretmen Değerlendirmesi</th></tr>
+        """
         for k in aktif_kriterler:
-            p_raw = dinamik_puanlar.get(f"{k['id']}_puan", b.get(f"{k['baslik']} Puanı", 0))
-            p = int(pd.to_numeric(p_raw, errors='coerce')) if pd.notna(p_raw) else 0
-            a = dinamik_puanlar.get(f"{k['id']}_aciklama", b.get(f"{k['baslik']} Açıklaması", "-"))
-            if pd.isna(a) or str(a).strip() == "" or str(a).strip() == "nan": a = "Değerlendirme girilmedi."
-            
-            p_renk = "#10b981" if (p/k['max']) >= 0.8 else ("#f59e0b" if (p/k['max']) >= 0.5 else "#ef4444")
-            html += f"<tr><td><strong>{k['baslik']}</strong></td><td style='text-align:center; color:#64748b; font-weight:bold;'>{k['max']}</td><td style='text-align:center; font-weight:900; font-size:1.1rem; color:{p_renk};'>{p}</td><td>{a}</td></tr>"
-        
-        genel = str(b.get('Genel Değerlendirme Yorumu', '-'))
-        if pd.isna(genel) or not genel.strip() or genel.strip() == "nan": genel = "Genel değerlendirme yapılmadı."
+            p = dinamik_puanlar.get(f"{k['id']}_puan", 0)
+            a = dinamik_puanlar.get(f"{k['id']}_aciklama", "Açıklama girilmedi.")
+            html += f"<tr><td><strong>{k['baslik']}</strong></td><td style='text-align:center;'>{k['max']}</td><td style='text-align:center; font-weight:bold; color:#2563eb;'>{p}</td><td>{a}</td></tr>"
         
         html += f"""
-  </table>
-  <div class='yorum-kutu'><strong>💬 Genel Değerlendirme & Gelecek Tavsiyeleri:</strong><br><br>{genel}</div>
-  <div class='imza'><strong>{ogrt_ad}</strong><br>{b.get('Ders', ogrt_brans)} Öğretmeni</div>
-</div>
-"""
+          </table>
+          <div class='yorum-kutu'><strong>💬 Değerlendirme Yorumu & Gelişim Tavsiyesi:</strong><br><br>{b.get('Genel Değerlendirme Yorumu', 'Geri bildirim yok.')}</div>
+          <div style="text-align:right; margin-top:30px;"><strong>{ogrt_ad}</strong><br>{b.get('Ders', ogrt_brans)} Öğretmeni</div>
+        </div>"""
     html += "</body></html>"
     return html
 
 # ==========================================
-# 9. ÖĞRENCİ PANELİ
+# 8. ÖĞRENCİ PANELİ
 # ==========================================
 def ogrenci_paneli(df, ayarlar):
-    st.markdown("<h2 style='text-align:center; color:#1e293b; font-weight:900; margin-bottom: 30px;'>🎓 Öğrenci Proje Sorgulama Paneli</h2>", unsafe_allow_html=True)
-    if df.empty: return st.warning("⚠️ Sisteme henüz veri yüklenmemiştir.")
+    st.markdown("<h2 style='text-align:center; color:#1e293b; font-weight:900;'>🎓 Öğrenci Proje & Performans Sorgulama</h2>", unsafe_allow_html=True)
+    if df.empty: return st.warning("⚠️ Sistemde henüz ilan edilmiş performans/proje kaydı bulunmamaktadır.")
 
     col_m = st.columns([1, 2, 1])[1]
     with col_m:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        okullar = ["— Okul Seçiniz —"] + ayarlar["okullar"]
-        secili_okul = st.selectbox("🏫 Okulunuz", okullar)
-        siniflar = ["— Sınıf Seçiniz —"] + sorted(df[df['Okul'] == secili_okul]['Sınıf'].dropna().unique().tolist()) if secili_okul != "— Okul Seçiniz —" else ["Önce okul seçin"]
-        secili_sinif = st.selectbox("📚 Sınıfınız", siniflar)
+        secili_okul = st.selectbox("🏫 Okulunuz", ["— Okul Seçiniz —"] + sorted(df['Okul'].unique().tolist()))
+        siniflar = ["— Sınıf Seçiniz —"] + sorted(df[df['Okul'] == secili_okul]['Sınıf'].dropna().unique().tolist()) if secili_okul != "— Okul Seçiniz —" else []
+        secili_sinif = st.selectbox("📚 Sınıfınız", siniflar if siniflar else ["Önce okul seçin"])
         okul_no = st.text_input("🔢 Okul Numaranız")
-        sorgula = st.button("🔍 Projemi Bul ve Göster", use_container_width=True)
+        sorgula = st.button("🔍 Değerlendirmelerimi Listele", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    if sorgula:
-        if secili_okul == "— Okul Seçiniz —" or secili_sinif in ["— Sınıf Seçiniz —", "Önce okul seçin"] or not okul_no.strip():
-            st.error("❌ Lütfen okulunuzu, sınıfınızı seçin ve numaranızı eksiksiz girin.")
+    if sorgula and secili_okul != "— Okul Seçiniz —" and okul_no.strip():
+        op = df[(df['Okul'] == secili_okul) & (df['Sınıf'] == secili_sinif) & (df['Okul No'] == okul_no.strip())]
+        if op.empty:
+            st.error("❌ Kayıt bulunamadı. Lütfen bilgilerinizi kontrol edin.")
         else:
-            ogrenci_projeleri = df[(df['Okul'] == secili_okul) & (df['Sınıf'] == secili_sinif) & (df['Okul No'] == okul_no.strip())]
-            if ogrenci_projeleri.empty:
-                st.error("❌ Sistemde bu bilgilere ait kayıt bulunamadı.")
-            else:
-                bilgi = ogrenci_projeleri.iloc[0] 
-                
-                atanan_id = bilgi.get('Atanan_Ogretmen', 'admin')
-                ogrt_ad, ogrt_brans = "Proje Öğretmeni", bilgi.get('Ders', "Genel")
-                if atanan_id != 'admin':
-                     user_data = ayarlar["kullanicilar"].get(atanan_id, {})
-                     ogrt_ad = user_data.get("ad", "Öğretmen")
-                     ogrt_brans = user_data.get("brans", ogrt_brans)
-
-                st.success(f"🎉 Harika! Hoş geldin, {bilgi.get('Öğrenci Adı Soyadı', '')}!")
-                st.info("💡 Proje raporunu renkli formatta cihazına indirmek veya yazdırmak için aşağıdaki butonu kullanabilirsin.")
-                
-                kullanilan_sablon = CEKIRDEK_SABLON 
-                tek_df = pd.DataFrame([bilgi])
-                html_karne = toplu_karne_html_dosyasi_uret(tek_df, ogrt_ad, ogrt_brans, kullanilan_sablon)
-                
-                st.components.v1.html(html_karne, height=700, scrolling=True)
-                
-                col_indir = st.columns([1, 2, 1])[1]
-                with col_indir:
-                    st.download_button("🖨️ PDF / HTML Olarak İndir", data=html_karne, file_name=f"{bilgi['Ders']}_Proje_{bilgi['Okul No']}.html", mime="text/html", use_container_width=True)
+            st.success(f"🎉 Hoş geldin, {op.iloc[0]['Öğrenci Adı Soyadı']}! Senin için tanımlanmış {len(op)} adet görev bulundu:")
+            for idx, row in op.iterrows():
+                with st.expander(f"📌 {row['Gorev_Adi']} - {row['Ders']} ({row['Gorev_Turu']}) — Puan: {row['Toplam Puan']}"):
+                    tek_df = pd.DataFrame([row])
+                    html_k = toplu_karne_html_dosyasi_uret(tek_df, "Ders Öğretmeni", row['Ders'], CEKIRDEK_SABLON)
+                    st.components.v1.html(html_k, height=500, scrolling=True)
 
 # ==========================================
-# 10. YETKİLİ GİRİŞ PANELİ
+# 9. YETKİLİ GİRİŞ & ÖĞRETMEN KAYIT PANELİ
 # ==========================================
 def giris_paneli(ayarlar):
-    col_m = st.columns([1, 1.2, 1])[1]
+    col_m = st.columns([1, 1.3, 1])[1]
     with col_m:
-        st.markdown('<div class="glass-card" style="padding:40px; text-align:center;">', unsafe_allow_html=True)
-        st.markdown("<h2 style='color:#2563eb; font-weight:900;'>🔐 Sisteme Giriş</h2>", unsafe_allow_html=True)
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        g_sekme1, g_sekme2 = st.tabs(["🔐 Giriş Yap", "📝 Öğretmen Kayıt Ol"])
         
-        if ayarlar.get("sistem_kilitli", False):
-            st.error("🔒 Sistem şu anda idare tarafından güncelleme/bakım amacıyla öğretmen girişine kapatılmıştır. Sadece yöneticiler giriş yapabilir.")
-
-        k_adi = st.text_input("Kullanıcı Adı")
-        sifre = st.text_input("Şifre", type="password")
-        if st.button("🚀 Giriş Yap", use_container_width=True):
-            kullanici = ayarlar["kullanicilar"].get(k_adi)
-            if kullanici and kullanici["sifre"] == sifre:
-                if ayarlar.get("sistem_kilitli", False) and kullanici["rol"] != "admin":
-                    st.error("❌ Sistem kilitli olduğu için giriş yapamazsınız.")
+        with g_sekme1:
+            if ayarlar.get("sistem_kilitli", False):
+                st.error("🔒 Sistem idare kilitli modundadır. Sadece yöneticiler girebilir.")
+            k_adi = st.text_input("Kullanıcı Adı", key="login_kadi")
+            sifre = st.text_input("Şifre", type="password", key="login_sifre")
+            
+            if st.button("🚀 Giriş Yap", use_container_width=True):
+                user = ayarlar["kullanicilar"].get(k_adi)
+                if user and user["sifre"] == sifre:
+                    if ayarlar.get("sistem_kilitli", False) and user["rol"] != "admin":
+                        st.error("❌ Sistem öğretmen girişine kapalıdır.")
+                    else:
+                        st.session_state["giris_yapti"] = True
+                        st.session_state["aktif_kullanici"] = k_adi
+                        st.session_state["kullanici_bilgi"] = user
+                        st.rerun()
+                else: st.error("❌ Hatalı Giriş Verileri!")
+                
+        with g_sekme2:
+            st.markdown("#### Yeni Öğretmen Hesabı Oluştur")
+            reg_okul = st.selectbox("🏫 Görev Yaptığınız Okul", ayarlar["okullar"])
+            reg_kadi = st.text_input("👤 Kullanıcı Adı (Benzersiz)")
+            reg_ad = st.text_input("📛 Adınız Soyadınız")
+            reg_brans = st.text_input("📚 Branşınız (Örn: Matematik)")
+            reg_sifre = st.text_input("🔑 Giriş Şifresi", type="password")
+            
+            if st.button("💾 Kayıt İşlemini Tamamla", use_container_width=True):
+                if not reg_kadi or not reg_sifre or not reg_ad:
+                    st.error("❌ Lütfen alanları boş bırakmayın.")
+                elif reg_kadi in ayarlar["kullanicilar"]:
+                    st.error("❌ Bu kullanıcı adı kullanımda!")
                 else:
-                    st.session_state["giris_yapti"] = True
-                    st.session_state["aktif_kullanici"] = k_adi
-                    st.session_state["kullanici_bilgi"] = kullanici
-                    st.rerun()
-            else: 
-                st.error("❌ Hatalı kullanıcı adı veya şifre!")
+                    ayarlar["kullanicilar"][reg_kadi] = {
+                        "sifre": reg_sifre, "rol": "ogretmen", "ad": reg_ad, "okul": reg_okul, "brans": reg_brans
+                    }
+                    ayar_kaydet(ayarlar)
+                    st.success("🎉 Başarıyla kayıt oldunuz! Giriş Yap sekmesinden sisteme bağlanabilirsiniz.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 11. YÖNETİM VE ÖĞRETMEN ANA PANELİ
+# 10. ÖĞRETMEN & ADMİN ANA KONTROL PANELİ
 # ==========================================
 def yonetim_paneli(df, ayarlar):
     aktif_id = st.session_state["aktif_kullanici"]
@@ -389,598 +355,341 @@ def yonetim_paneli(df, ayarlar):
     rol = k_bilgi["rol"]
 
     st.markdown(f"""
-    <div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, #dbeafe, #bfdbfe); border:2px solid #93c5fd; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-      <div>
-        <div style="font-weight:900; color:#1e40af; font-size:1.3rem;">👋 Hoş Geldiniz, {k_bilgi['ad']}</div>
-        <div style="color:#2563eb; font-size:0.95rem; font-weight:700;">Yetki: {'Sistem Yöneticisi' if rol == 'admin' else f"{k_bilgi.get('okul', '')} - {k_bilgi.get('brans', '')} Öğretmeni"}</div>
-      </div>
+    <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 15px; border-radius:12px; border:1px solid #bfdbfe; margin-bottom:20px;">
+        <span style="font-weight:900; color:#1e3a8a; font-size:1.2rem;">👋 Hoş Geldiniz: {k_bilgi['ad']}</span> | 
+        <span style="font-weight:700; color:#2563eb;">Okul/Yetki: {k_bilgi.get('okul','')} - { 'Süper Admin' if rol=='admin' else 'Öğretmen'} ({k_bilgi.get('brans','')})</span>
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🚪 Güvenli Çıkış Yap"):
+    if st.button("🚪 Sistemden Güvenli Çıkış"):
         st.session_state.clear()
         st.rerun()
 
-    if rol == "ogretmen":
-        with st.expander("📖 Öğretmen Kullanım Kılavuzu (Başlamak İçin Tıklayın)", expanded=True):
-            st.markdown("""
-            **Sisteme Hoş Geldiniz! İşlemlerinizi kolayca yapmak için aşağıdaki adımları izleyebilirsiniz:**
-            
-            **1. Öğrenci Yükle/Ekle:**
-            - Öğrencileriniz idare tarafından atanmamışsa, kendi Excel listenizi yükleyebilir veya tek tek manuel öğrenci ekleyebilirsiniz.
-            
-            **2. Performans Değerlendirme (Proje Notu Verme):**
-            - Listeden öğrencinizi ve ders şablonunu seçin.
-            - Puanlarınızı kendiniz verin veya sistemin otomatik dağıtmasını sağlayın. İşlemi bitirince mutlaka en alttaki **Kaydet** butonuna basın.
-            
-            **3. Raporlar:**
-            - İdareye teslim edilecek Excel formlarını (Not Çizelgesini) buradan anında indirebilirsiniz.
-            - Velilere göndermek üzere sınıfın PDF/HTML renkli belgelerini tek tıkla alabilirsiniz.
-            
-            **4. Genel Görüşler:**
-            - E-Okul not listesini sisteme yükleyerek, öğrencinin notlarına göre e-Okul'a hazır değerlendirme metinleri oluşturabilirsiniz.
-            """)
-
-    if rol == "admin": 
+    # Admin her veriyi, Öğretmen sadece kendi okulunu ve ilişkili öğrencileri yönetir
+    if rol == "admin":
         df_yetkili = df
-        sekmeler = st.tabs(["🏢 Şablon ve Sistem", "📂 Öğrenci Yükle/Ekle", "🤖 Performans Değerlendirme", "📊 Raporlar", "📝 Akıllı Değerlendirme"])
-    else: 
-        df_yetkili = df[(df['Okul'] == k_bilgi.get("okul")) & (df['Atanan_Ogretmen'] == aktif_id)]
-        sekmeler = st.tabs(["📂 Öğrenci Yükle/Ekle", "🤖 Performans Değerlendirme", "📊 Raporlar", "📝 Akıllı Değerlendirme"])
+        sekmeler = st.tabs(["🏢 Sistem & Okul Kontrol", "📂 Öğrenci & Görev Havuzu", "🤖 Performans / Proje Değerlendir", "📊 Analiz & Çıktılar", "📝 Karne Görüşü Motoru"])
+    else:
+        df_yetkili = df[(df['Okul'] == k_bilgi.get("okul")) & ((df['Atanan_Ogretmen'] == aktif_id) | (df['Atanan_Ogretmen'] == 'admin'))]
+        sekmeler = st.tabs(["📂 Öğrenci & Görev Havuzu", "🤖 Performans / Proje Değerlendir", "📊 Analiz & Çıktılar", "📝 Karne Görüşü Motoru"])
 
-    # --- SEKME 1 (ADMİN): SİSTEM VE ŞABLON ---
+    # --- SEKME 1 (ADMİN): SİSTEM, ŞABLON VE OKUL DÜZENLEME ---
     if rol == "admin":
         with sekmeler[0]:
-            st.markdown("### 📚 Görsel ve Dinamik Şablon Oluşturucu")
-            st.info("💡 Aşağıdaki tabloya tıklayarak yeni kriterler yazabilir, en alta inerek yeni satır ekleyebilir veya gereksiz satırları silebilirsiniz. Toplam 100 puan olmalıdır.")
+            st.markdown("### 🛠️ Süper Yetkili Sistem Ayarları")
+            c_s1, c_s2, c_s3 = st.columns(3)
             
-            if "edit_sablon_adi" not in st.session_state:
-                st.session_state["edit_sablon_adi"] = ""
-            if "taslak_df" not in st.session_state:
-                st.session_state["taslak_df"] = pd.DataFrame([
-                    {"Kriter Başlığı": "İçerik", "Maksimum Puan": 50, "Açıklama": "Ödevdeki bilgilerin doğruluğu."},
-                    {"Kriter Başlığı": "Düzen ve Sunum", "Maksimum Puan": 50, "Açıklama": "Ödevin temizliği ve görselliği."}
-                ])
-
-            c_isim, c_kayit = st.columns([3, 1])
-            s_isim = c_isim.text_input("Şablonun Adı (Örn: 10 Maddelik Fen Şablonu)", value=st.session_state["edit_sablon_adi"])
-            
-            edited_df = st.data_editor(
-                st.session_state["taslak_df"], 
-                num_rows="dynamic",
-                use_container_width=True,
-                hide_index=True
-            )
-            
-            toplam_puan = pd.to_numeric(edited_df["Maksimum Puan"], errors="coerce").fillna(0).sum()
-            
-            if toplam_puan == 100:
-                st.success(f"✅ Kriterlerin toplamı 100 puan. Şablon kaydedilmeye hazır!")
-            else:
-                st.error(f"⚠️ Kriterlerin toplamı tam 100 puan olmalıdır! (Şu anki toplam: {toplam_puan})")
-            
-            if st.button("💾 Tablodaki Şablonu Kaydet / Güncelle", use_container_width=True):
-                if not s_isim.strip():
-                    st.error("❌ Lütfen şablona bir isim verin!")
-                elif toplam_puan != 100:
-                    st.error("❌ Toplam puan 100 olmadan kayıt yapamazsınız!")
-                else:
-                    yeni_kriterler = []
-                    for i, row in edited_df.iterrows():
-                        yeni_kriterler.append({
-                            "id": f"k{i+1}",
-                            "baslik": str(row["Kriter Başlığı"]),
-                            "max": int(row["Maksimum Puan"]),
-                            "icon": "📌",
-                            "aciklama": str(row["Açıklama"])
-                        })
-                    ayarlar["sablonlar"][s_isim] = yeni_kriterler
+            with c_s1:
+                st.markdown("#### 🏢 Dinamik Okul Listesi Yönetimi")
+                y_okul = st.text_input("Yeni Okul İsmi Girin")
+                if st.button("➕ Listeye Yeni Okul Ekle", use_container_width=True) and y_okul.strip():
+                    if y_okul.strip() not in ayarlar["okullar"]:
+                        ayarlar["okullar"].append(y_okul.strip())
+                        ayar_kaydet(ayarlar)
+                        st.success("Okul eklendi.")
+                        st.rerun()
+                
+                sil_okul = st.selectbox("Sistemden Silinecek Okul", ["— Seçiniz —"] + ayarlar["okullar"])
+                if st.button("🗑️ Seçilen Okulu Sil", use_container_width=True) and sil_okul != "— Seçiniz —":
+                    ayarlar["okullar"].remove(sil_okul)
                     ayar_kaydet(ayarlar)
-                    st.session_state["edit_sablon_adi"] = ""
-                    st.session_state["taslak_df"] = pd.DataFrame([{"Kriter Başlığı": "İçerik", "Maksimum Puan": 50, "Açıklama": "..."}])
-                    st.success(f"✅ '{s_isim}' başarıyla kaydedildi/güncellendi!")
-                    time.sleep(1)
+                    st.success("Okul silindi.")
                     st.rerun()
             
-            st.markdown("---")
-            c_mevcut, c_ogrt, c_sistem = st.columns(3)
-            
-            with c_mevcut:
-                st.markdown("#### ⚙️ Şablon Düzenle / Sil")
-                mevcut_sablonlar = list(ayarlar.get("sablonlar", {}).keys())
-                secili_islem_sablonu = st.selectbox("İşlem Yapılacak Şablonu Seçin:", ["— Seçiniz —"] + mevcut_sablonlar)
-                
-                c_btn1, c_btn2 = st.columns(2)
-                with c_btn1:
-                    if st.button("✏️ Düzenle", use_container_width=True) and secili_islem_sablonu != "— Seçiniz —":
-                        secili_data = ayarlar["sablonlar"][secili_islem_sablonu]
-                        df_data = []
-                        for k in secili_data:
-                            df_data.append({"Kriter Başlığı": k["baslik"], "Maksimum Puan": k["max"], "Açıklama": k["aciklama"]})
-                        st.session_state["taslak_df"] = pd.DataFrame(df_data)
-                        st.session_state["edit_sablon_adi"] = secili_islem_sablonu
-                        st.rerun() 
-                        
-                with c_btn2:
-                    if st.button("🗑️ Sil", use_container_width=True) and secili_islem_sablonu != "— Seçiniz —":
-                        if secili_islem_sablonu == "Gazi Matematik Şablonu":
-                            st.error("❌ Varsayılan sistem şablonu silinemez!")
-                        else:
-                            del ayarlar["sablonlar"][secili_islem_sablonu]
-                            ayar_kaydet(ayarlar)
-                            st.success(f"✅ '{secili_islem_sablonu}' başarıyla silindi!")
-                            time.sleep(1)
-                            st.rerun()
-            
-            with c_ogrt:
-                st.markdown("#### 👨‍🏫 Öğretmen Yönetimi")
+            with c_s2:
+                st.markdown("#### 👨‍🏫 Kayıtlı Öğretmen Hesapları")
                 ogretmenler = {k: v for k, v in ayarlar["kullanicilar"].items() if v.get("rol") == "ogretmen"}
-                t_ekle, t_liste, t_duzenle = st.tabs(["➕ Ekle", "📋 Listele / Sil", "✏️ Düzenle"])
-                
-                with t_ekle:
-                    st.info("💡 Birden fazla branş için aralarına virgül koyun.")
-                    with st.form("ogrt_ekle_form"):
-                        o_okul = st.selectbox("Okulu", ayarlar["okullar"])
-                        c1, c2 = st.columns(2)
-                        o_kadi = c1.text_input("Kullanıcı Adı (Giriş İçin)")
-                        o_sifre = c2.text_input("Şifre")
-                        o_ad = c1.text_input("Ad Soyad")
-                        o_brans = c2.text_input("Branş(lar)")
-                        if st.form_submit_button("💾 Öğretmeni Sisteme Ekle", use_container_width=True):
-                            if not o_kadi or not o_sifre or not o_ad:
-                                st.error("❌ Eksik bilgi girdiniz!")
-                            elif o_kadi in ayarlar["kullanicilar"]:
-                                st.error("❌ Bu kullanıcı adı sistemde zaten kayıtlı!")
-                            else:
-                                ayarlar["kullanicilar"][o_kadi] = {"sifre": o_sifre, "rol": "ogretmen", "ad": o_ad, "okul": o_okul, "brans": o_brans if o_brans else "Genel"}
-                                ayar_kaydet(ayarlar)
-                                st.success(f"✅ {o_ad} başarıyla eklendi!")
-                                time.sleep(1)
-                                st.rerun()
+                if ogretmenler:
+                    sec_ogrt = st.selectbox("İşlem Yapılacak Öğretmen", list(ogretmenler.keys()), format_func=lambda x: f"{ogretmenler[x]['ad']} ({ogretmenler[x]['okul']})")
+                    o_yeni_sifre = st.text_input("Yeni Şifre Belirle", value=ogretmenler[sec_ogrt]["sifre"])
+                    
+                    c_btn1, c_btn2 = st.columns(2)
+                    if c_btn1.button("🔄 Şifre Güncelle", use_container_width=True):
+                        ayarlar["kullanicilar"][sec_ogrt]["sifre"] = o_yeni_sifre
+                        ayar_kaydet(ayarlar)
+                        st.success("Şifre Değiştirildi.")
+                    if c_btn2.button("🗑️ Hesabı Sil", use_container_width=True):
+                        del ayarlar["kullanicilar"][sec_ogrt]
+                        ayar_kaydet(ayarlar)
+                        st.success("Hesap kaldırıldı.")
+                        st.rerun()
+                else: st.info("Sistemde henüz kayıtlı öğretmen yok.")
 
-                with t_liste:
-                    if not ogretmenler:
-                        st.warning("⚠️ Sistemde kayıtlı öğretmen yok.")
-                    else:
-                        for kadi, data in ogretmenler.items():
-                            with st.expander(f"👤 {data['ad']} - ({data.get('brans', 'Branş Yok')})"):
-                                st.write(f"**ID:** `{kadi}` | **Şifre:** `{data['sifre']}`")
-                                if st.button(f"🗑️ Öğretmeni Sil", key=f"sil_{kadi}"):
-                                    del ayarlar["kullanicilar"][kadi]
-                                    ayar_kaydet(ayarlar)
-                                    st.success(f"✅ {data['ad']} silindi!")
-                                    time.sleep(1)
-                                    st.rerun()
+            with c_s3:
+                st.markdown("#### 🔒 Sistem Kilidi")
+                kilit = ayarlar.get("sistem_kilitli", False)
+                if st.button("🔓 Sistemi Herkese Aç" if kilit else "🔒 Sistemi Öğretmenlere Kapat", use_container_width=True):
+                    ayarlar["sistem_kilitli"] = not kilit
+                    ayar_kaydet(ayarlar)
+                    st.rerun()
 
-                with t_duzenle:
-                    if ogretmenler:
-                        duzenle_kadi = st.selectbox("Düzenlenecek Öğretmen", list(ogretmenler.keys()), format_func=lambda x: f"{ogretmenler[x]['ad']} ({x})")
-                        if duzenle_kadi:
-                            d_data = ogretmenler[duzenle_kadi]
-                            with st.form("ogrt_duzenle_form"):
-                                d_okul_idx = ayarlar["okullar"].index(d_data.get('okul')) if d_data.get('okul') in ayarlar["okullar"] else 0
-                                d_okul = st.selectbox("Okulu", ayarlar["okullar"], index=d_okul_idx)
-                                c1, c2 = st.columns(2)
-                                d_sifre = c1.text_input("Yeni Şifre", value=d_data['sifre'])
-                                d_ad = c2.text_input("Ad Soyad", value=d_data['ad'])
-                                d_brans = st.text_input("Branş(lar)", value=d_data.get('brans', ''))
-                                if st.form_submit_button("🔄 Güncelle", use_container_width=True):
-                                    ayarlar["kullanicilar"][duzenle_kadi].update({"sifre": d_sifre, "ad": d_ad, "okul": d_okul, "brans": d_brans})
-                                    ayar_kaydet(ayarlar)
-                                    st.success("✅ Güncellendi!")
-                                    time.sleep(1)
-                                    st.rerun()
-                                    
-            with c_sistem:
-                st.markdown("#### 🏢 Okul Yönetimi")
-                yeni_okul = st.text_input("Yeni Okul Ekle", placeholder="Örn: Cumhuriyet Ortaokulu")
-                if st.button("➕ Sisteme Okul Ekle", use_container_width=True) and yeni_okul:
-                    if yeni_okul.strip() not in ayarlar["okullar"]:
-                        ayarlar["okullar"].append(yeni_okul.strip())
-                        ayar_kaydet(ayarlar)
-                        st.success(f"✅ '{yeni_okul}' eklendi!")
-                        time.sleep(1)
-                        st.rerun()
-                    else:
-                        st.warning("Bu okul sistemde zaten var!")
-                
-                sil_okul = st.selectbox("Okul Sil", ["— Seçiniz —"] + ayarlar["okullar"])
-                if st.button("🗑️ Okulu Sil", use_container_width=True) and sil_okul != "— Seçiniz —":
-                    if sil_okul == "Gazi Ortaokulu":
-                        st.error("❌ Ana okul silinemez!")
-                    else:
-                        ayarlar["okullar"].remove(sil_okul)
-                        ayar_kaydet(ayarlar)
-                        st.success(f"✅ '{sil_okul}' silindi!")
-                        time.sleep(1)
-                        st.rerun()
-                
-                st.markdown("---")
-                st.markdown("#### 🔒 Güvenlik Paneli")
-                kilit_durumu = ayarlar.get("sistem_kilitli", False)
-                if kilit_durumu:
-                    st.warning("⚠️ Sistem şu an öğretmenlere KAPALI.")
-                    if st.button("🔓 Sistemi Öğretmenlere AÇ", use_container_width=True):
-                        ayarlar["sistem_kilitli"] = False
-                        ayar_kaydet(ayarlar)
-                        st.rerun()
-                else:
-                    st.success("✅ Sistem şu an öğretmenlere AÇIK.")
-                    if st.button("🔒 Sistemi Öğretmenlere KAPAT", use_container_width=True):
-                        ayarlar["sistem_kilitli"] = True
-                        ayar_kaydet(ayarlar)
-                        st.rerun()
+            st.markdown("---")
+            st.markdown("#### 📊 Kriter Şablon Ayarları (Toplam 100 Puan Olmalıdır)")
+            if "taslak_df" not in st.session_state:
+                st.session_state["taslak_df"] = pd.DataFrame([{"Kriter Başlığı": "İçerik", "Maksimum Puan": 50, "Açıklama": "."}])
+            
+            s_adi_input = st.text_input("Yeni Şablon İsmi")
+            ed_df = st.data_editor(st.session_state["taslak_df"], num_rows="dynamic", use_container_width=True, hide_index=True)
+            if st.button("💾 Değerlendirme Şablonunu Kaydet"):
+                t_p = pd.to_numeric(ed_df["Maksimum Puan"], errors="coerce").sum()
+                if t_p == 100 and s_adi_input.strip():
+                    n_k = [{"id": f"k{i+1}", "baslik": str(r["Kriter Başlığı"]), "max": int(r["Maksimum Puan"]), "icon": "📌", "aciklama": str(r["Açıklama"])} for i, r in ed_df.iterrows()]
+                    ayarlar["sablonlar"][s_adi_input.strip()] = n_k
+                    ayar_kaydet(ayarlar)
+                    st.success("Şablon listeye eklendi.")
+                    st.rerun()
+                else: st.error("Hata: Toplam puan 100 olmalı ve bir isim girilmelidir.")
 
-    # --- SEKME 2: ÖĞRENCİ YÜKLEME VE EKLEME ---
+    # --- SEKME 2: ÖĞRENCİ VE ÇOKLU GÖREV HAVUZU ---
     sekme_veri = sekmeler[1] if rol == "admin" else sekmeler[0]
     with sekme_veri:
-        if rol == "admin": 
-            t1, t2, t3, t4 = st.tabs(["📥 Excel Yükle", "➕ Manuel Ekle", "🗑️ Öğrenci / Sınıf Sil", "👨‍🏫 Sınıf Ata (Yeni)"])
-        else: 
-            t1, t2, t3 = st.tabs(["📥 Excel Yükle", "➕ Manuel Ekle", "🗑️ Öğrenci / Sınıf Sil"])
-            t4 = None
+        st.markdown("### 📂 Öğrenci Listesi ve Yeni Görev (Proje/Performans) Tanımlama")
+        v_t1, v_t2, v_t3 = st.tabs(["📥 Excel / Liste Yükle", "➕ Tekil Öğrenci Kaydet", "🗑️ Öğrenci / Görev Verisi Sil"])
         
-        with t1:
-            hedef_okul = st.selectbox("Okul", ayarlar["okullar"], key="hedef_okul_excel") if rol == "admin" else k_bilgi.get("okul")
+        with v_t1:
+            h_okul = k_bilgi.get("okul") if rol != "admin" else st.selectbox("Yükleme Yapılacak Okul", ayarlar["okullar"], key="excel_okul")
+            st.download_button("📄 Örnek Liste Şablonunu İndir", data=bos_sablon_olustur(), file_name="Ogrenci_Sablon.xlsx", use_container_width=True)
             
-            hedef_ogrt = aktif_id
-            if rol == "admin":
-                ogrt_secenekler = {"admin": "Sistem Yöneticisi (Sadece Listeye Ekle)"}
-                for k, v in ayarlar["kullanicilar"].items():
-                    if v.get("rol") == "ogretmen" and v.get("okul") == hedef_okul:
-                        ogrt_secenekler[k] = f"{v['ad']} ({v.get('brans', 'Genel')})"
-                hedef_ogrt = st.selectbox("Bu Öğrenciler Hangi Öğretmene Atanacak?", list(ogrt_secenekler.keys()), format_func=lambda x: ogrt_secenekler[x])
-
-            c1, c2 = st.columns(2)
-            with c1: st.download_button("📄 Boş Şablonu İndir", data=bos_sablon_olustur(), file_name="Sablon.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            with c2:
-                yuklenen = st.file_uploader("Excel'i Yükleyin", type=['xlsx'])
-                if yuklenen and st.button("💾 Yükle"):
-                    try:
-                        yeni_df = pd.read_excel(yuklenen, dtype={"Okul No": str})
-                        yeni_df['Okul No'] = yeni_df['Okul No'].astype(str).str.strip().str.replace('.0', '', regex=False)
-                        yeni_df.dropna(subset=['Okul No'], inplace=True)
-                        
-                        mevcut_nolar = df[(df['Okul'] == hedef_okul) & (df['Atanan_Ogretmen'] == hedef_ogrt)]['Okul No'].tolist()
-                        eklenecek = yeni_df[~yeni_df['Okul No'].isin(mevcut_nolar)].copy()
-                        
-                        if not eklenecek.empty:
-                            eklenecek['Okul'] = hedef_okul
-                            eklenecek['Ekleyen'] = aktif_id
-                            eklenecek['Atanan_Ogretmen'] = hedef_ogrt
-                            eklenecek['Dinamik_JSON'] = "{}"
-                            
-                            if hedef_ogrt != "admin":
-                                eklenecek['Ders'] = ayarlar["kullanicilar"][hedef_ogrt].get("brans", "Genel").split(",")[0]
-                                
-                            for s in GEREKLI_SUTUNLAR:
-                                if s not in eklenecek.columns: eklenecek[s] = None
-                            df = pd.concat([df, eklenecek[GEREKLI_SUTUNLAR]], ignore_index=True)
-                            veriyi_kaydet(df)
-                            st.success(f"✅ {len(eklenecek)} öğrenci eklendi!")
-                            time.sleep(1)
-                            st.rerun()
-                        else: st.warning("Bu öğrenciler öğretmende zaten var!")
-                    except Exception as e: st.error(f"Hata: {e}")
-        
-        with t2:
-            with st.form("m_ekle"):
-                e_okul = st.selectbox("Okul Seç", ayarlar["okullar"], key="e_okul_manuel") if rol == "admin" else k_bilgi.get("okul")
-                
-                e_hedef_ogrt = aktif_id
-                if rol == "admin":
-                    e_hedef_ogrt = st.selectbox("Hangi Öğretmene Atanacak?", list(ogrt_secenekler.keys()), format_func=lambda x: ogrt_secenekler[x], key="m_hedef")
-
-                c1, c2 = st.columns(2)
-                e_no = c1.text_input("Okul Numarası")
-                e_ad = c2.text_input("Ad Soyad")
-                e_sinif = c1.text_input("Sınıf")
-                e_ders = c2.text_input("Ders", value=k_bilgi.get("brans", ""))
-                if st.form_submit_button("Öğrenciyi Ekle"):
-                    if e_no and e_ad:
-                        yeni = {col: None for col in GEREKLI_SUTUNLAR}
-                        yeni.update({'Okul': e_okul, 'Ekleyen': aktif_id, 'Atanan_Ogretmen': e_hedef_ogrt, 'Okul No': e_no.strip(), 'Öğrenci Adı Soyadı': e_ad.strip(), 'Sınıf': e_sinif.strip(), 'Ders': e_ders.strip(), 'Dinamik_JSON': "{}"})
-                        df.loc[len(df)] = yeni
-                        veriyi_kaydet(df)
-                        st.success("Eklendi!")
-                        st.rerun()
-                        
-        with t3:
-            st.markdown("#### 🗑️ Öğrenci ve Sınıf Silme İşlemleri")
-            if df_yetkili.empty:
-                st.warning("⚠️ Sistemde silinebilecek veri bulunmuyor.")
-            else:
-                sil_tipi = st.radio("İşlem Türü:", ["👤 Tek Öğrenci Sil", "📚 Sınıfı Komple Sil", "🏢 Okulu Komple Sil"], horizontal=True)
-                
-                if sil_tipi == "👤 Tek Öğrenci Sil":
-                    sil_liste = df_yetkili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist()
-                    sec_sil = st.selectbox("Öğrenci:", ["— Seçiniz —"] + sil_liste)
-                    if sec_sil != "— Seçiniz —" and st.button("🗑️ SİL"):
-                        s_no = sec_sil.split(" - ")[0]
-                        df = df[~(df['Okul No'] == s_no)]
-                        veriyi_kaydet(df)
-                        st.success("✅ Silindi!")
-                        time.sleep(1)
-                        st.rerun()
-                        
-                elif sil_tipi == "📚 Sınıfı Komple Sil":
-                    s_okul = st.selectbox("Okul:", df_yetkili['Okul'].unique())
-                    s_siniflar = df_yetkili[df_yetkili['Okul'] == s_okul]['Sınıf'].dropna().unique().tolist()
-                    if s_siniflar:
-                        s_sinif = st.selectbox("Sınıf:", ["— Seçiniz —"] + s_siniflar)
-                        if s_sinif != "— Seçiniz —" and st.button(f"🗑️ {s_sinif} Sınıfını SİL"):
-                            sart = (df['Okul'] == s_okul) & (df['Sınıf'] == s_sinif)
-                            if rol != "admin": sart = sart & (df['Atanan_Ogretmen'] == aktif_id)
-                            df = df[~sart]
-                            veriyi_kaydet(df)
-                            st.success("✅ Sınıf temizlendi!")
-                            time.sleep(1)
-                            st.rerun()
-                        
-                elif sil_tipi == "🏢 Okulu Komple Sil":
-                    s_okul = st.selectbox("Okul:", df_yetkili['Okul'].unique())
-                    teyit = st.text_input("Onaylamak için kutuya 'SİL' yazın:")
-                    if st.button("🗑️ Okul Verilerini SİL") and teyit == "SİL":
-                        sart = (df['Okul'] == s_okul)
-                        if rol != "admin": sart = sart & (df['Atanan_Ogretmen'] == aktif_id)
-                        df = df[~sart]
-                        veriyi_kaydet(df)
-                        st.success("✅ Okul verileri sıfırlandı!")
-                        time.sleep(1)
-                        st.rerun()
-
-        # YENİ 4. SEKME: YÖNETİCİNİN MEVCUT SINIFLARI BİRDEN ÇOK ÖĞRETMENE ATAMASI
-        if rol == "admin" and t4:
-            with t4:
-                st.markdown("#### 👨‍🏫 Mevcut Sınıfı Öğretmenlere Ata")
-                st.info("💡 Sisteme önceden yüklediğiniz bir sınıfı (örneğin 6/C), dersine giren BİRDEN FAZLA öğretmene aynı anda atayabilirsiniz.")
-                
-                a_okul = st.selectbox("İşlem Yapılacak Okul", ayarlar["okullar"], key="ata_okul")
-                okul_siniflari = df[df['Okul'] == a_okul]['Sınıf'].dropna().unique().tolist()
-                
-                if okul_siniflari:
-                    a_sinif = st.selectbox("Atanacak Sınıfı Seçin", okul_siniflari)
+            st.markdown("#### Tanımlanacak Görev Detayları")
+            g_tur = st.selectbox("Görev Türü", ["Proje Ödevi", "Ders İçi Performans", "1. Performans", "2. Performans"])
+            g_isim = st.text_input("Görevin Adı (Örn: Matematik Denklemler Projesi, Hücre Modeli Performansı vb.)")
+            
+            excel_file = st.file_uploader("Öğrenci Excel Listesini Seçin", type=['xlsx'])
+            if excel_file and g_isim.strip() and st.button("🚀 Listeyi ve Görevi Sisteme İşle", use_container_width=True):
+                try:
+                    excel_df = pd.read_excel(excel_file, dtype={"Okul No": str})
+                    excel_df.dropna(subset=['Okul No'], inplace=True)
+                    excel_df['Okul No'] = excel_df['Okul No'].astype(str).str.strip().str.replace('.0', '', regex=False)
                     
-                    ogrt_listesi = {k: f"{v['ad']} ({v.get('brans', 'Genel')})" for k, v in ayarlar["kullanicilar"].items() if v.get("rol") == "ogretmen" and v.get("okul") == a_okul}
-                    
-                    if ogrt_listesi:
-                        # ÇOKLU SEÇİM KUTUSU EKLENDİ (MULTISELECT)
-                        secilen_ogretmenler = st.multiselect("Bu Sınıf Hangi Öğretmenlerin Paneline Düşsün?", list(ogrt_listesi.keys()), format_func=lambda x: ogrt_listesi[x])
+                    eklenen_sayac = 0
+                    for _, row in excel_df.iterrows():
+                        o_no = row['Okul No']
+                        # Çift Kayıt Engelleme: Aynı okulda, aynı numaraya, aynı görevi atanmış mı kontrolü
+                        kontrol = df[(df['Okul'] == h_okul) & (df['Okul No'] == o_no) & (df['Gorev_Adi'] == g_isim.strip())]
                         
-                        if st.button("🚀 Sınıfı Seçili Öğretmenlere Ata") and secilen_ogretmenler:
-                            kaynak_ogrenciler = df[(df['Okul'] == a_okul) & (df['Sınıf'] == a_sinif)].drop_duplicates(subset=['Okul No'])
-                            toplam_atanan = 0
+                        if kontrol.empty:
+                            yeni_satir = {c: None for c in GEREKLI_SUTUNLAR}
+                            yeni_satir.update({
+                                'Okul': h_okul, 'Ekleyen': aktif_id, 'Atanan_Ogretmen': aktif_id,
+                                'Ders': k_bilgi.get("brans","Genel"), 'Okul No': o_no,
+                                'Öğrenci Adı Soyadı': row['Öğrenci Adı Soyadı'], 'Sınıf': str(row['Sınıf']),
+                                'Gorev_Turu': g_tur, 'Gorev_Adi': g_isim.strip(), 'Dinamik_JSON': "{}"
+                            })
+                            df.loc[len(df)] = yeni_satir
+                            eklenen_sayac += 1
                             
-                            for a_ogrt in secilen_ogretmenler:
-                                hedef_ders = ayarlar["kullanicilar"][a_ogrt].get("brans", "Genel").split(",")[0]
-                                
-                                mevcut_atanan_nolar = df[df['Atanan_Ogretmen'] == a_ogrt]['Okul No'].tolist()
-                                eklenecekler = kaynak_ogrenciler[~kaynak_ogrenciler['Okul No'].isin(mevcut_atanan_nolar)].copy()
-                                
-                                if not eklenecekler.empty:
-                                    eklenecekler['Atanan_Ogretmen'] = a_ogrt
-                                    eklenecekler['Ekleyen'] = aktif_id
-                                    eklenecekler['Ders'] = hedef_ders
-                                    eklenecekler['Dinamik_JSON'] = "{}"
-                                    eklenecekler['Toplam Puan'] = None
-                                    eklenecekler['Genel Değerlendirme Yorumu'] = None
-                                    for s in CEKIRDEK_SABLON:
-                                        eklenecekler[f"{s['baslik']} Puanı"] = None
-                                        eklenecekler[f"{s['baslik']} Açıklaması"] = None
-                                        
-                                    df = pd.concat([df, eklenecekler[GEREKLI_SUTUNLAR]], ignore_index=True)
-                                    toplam_atanan += len(eklenecekler)
-                            
-                            if toplam_atanan > 0:
-                                veriyi_kaydet(df)
-                                st.success(f"✅ Sınıf başarıyla {len(secilen_ogretmenler)} öğretmene (Toplam {toplam_atanan} yeni kayıt) atandı!")
-                                time.sleep(1.5)
-                                st.rerun()
-                            else:
-                                st.warning("⚠️ Bu sınıftaki öğrenciler seçili öğretmenlere zaten atanmış durumda.")
-                    else:
-                        st.warning("Bu okula kayıtlı öğretmen bulunamadı.")
-                else:
-                    st.info("Bu okulda henüz kayıtlı öğrenci/sınıf yok.")
+                    veriyi_kaydet(df)
+                    st.success(f"✅ İşlem Başarılı! {eklenen_sayac} öğrenciye ilgili görev başarıyla tanımlandı.")
+                    st.rerun()
+                except Exception as e: st.error(f"Excel Okuma Hatası: {e}")
 
-    # --- SEKME 3: AI DEĞERLENDİRME ---
+        with v_t2:
+            with st.form("manuel_ogr_form"):
+                st.markdown("#### Manuel Tekil Görev Tanımlama")
+                m_okul = k_bilgi.get("okul") if rol != "admin" else st.selectbox("Okul", ayarlar["okullar"])
+                m_no = st.text_input("Öğrenci Okul No")
+                m_ad = st.text_input("Öğrenci Adı Soyadı")
+                m_sinif = st.text_input("Sınıfı (Örn: 7/A)")
+                m_gtur = st.selectbox("Görev Türü", ["Proje Ödevi", "Ders İçi Performans"])
+                m_gadi = st.text_input("Görev Adı")
+                
+                if st.form_submit_button("💾 Görevi Öğrenciye Ekle"):
+                    if m_no.strip() and m_ad.strip() and m_gadi.strip():
+                        yeni_satir = {c: None for c in GEREKLI_SUTUNLAR}
+                        yeni_satir.update({
+                            'Okul': m_okul, 'Ekleyen': aktif_id, 'Atanan_Ogretmen': aktif_id,
+                            'Ders': k_bilgi.get("brans","Genel"), 'Okul No': m_no.strip(),
+                            'Öğrenci Adı Soyadı': m_ad.strip(), 'Sınıf': m_sinif.strip(),
+                            'Gorev_Turu': m_gtur, 'Gorev_Adi': m_gadi.strip(), 'Dinamik_JSON': "{}"
+                        })
+                        df.loc[len(df)] = yeni_satir
+                        veriyi_kaydet(df)
+                        st.success("Öğrenci görevi başarıyla kaydedildi.")
+                        st.rerun()
+
+        with v_t3:
+            st.markdown("#### Veri Temizleme Bölümü")
+            if not df_yetkili.empty:
+                s_liste = df_yetkili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']}", axis=1).tolist()
+                silinecek = st.selectbox("Sistemden Kaldırılacak Kayıt", ["— Seçiniz —"] + s_liste)
+                if silinecek != "— Seçiniz —" and st.button("🗑️ Seçilen Görevi/Öğrenciyi Sil", use_container_width=True):
+                    p_part = silinecek.split(" | ")[1].strip()
+                    n_part = silinecek.split(" - ")[0].strip()
+                    df = df[~((df['Okul No'] == n_part) & (df['Gorev_Adi'] == p_part))]
+                    veriyi_kaydet(df)
+                    st.success("Kayıt sistemden silindi.")
+                    st.rerun()
+
+    # --- SEKME 3: YAPAY ZEKA DESTEKLİ PERFORMANS/PROJE DEĞERLENDİRME ---
     sekme_puan = sekmeler[2] if rol == "admin" else sekmeler[1]
     with sekme_puan:
-        if df_yetkili.empty: 
-            st.warning("⚠️ Değerlendirilecek öğrenci bulunmuyor.")
+        st.markdown("### 🤖 Kriter Bazlı Yapay Zeka Ölçme Sistemi")
+        if df_yetkili.empty:
+            st.warning("Değerlendirilecek öğrenci/görev havuzu boş.")
         else:
-            c_sec, c_sablon = st.columns([2, 1])
-            puan_liste = df_yetkili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} ({r['Ders']})", axis=1).tolist()
-            sec_p = c_sec.selectbox("🎓 Öğrenci Seçin", ["— Seçiniz —"] + puan_liste)
+            p_liste = df_yetkili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']} ({r['Ders']})", axis=1).tolist()
+            sec_p = st.selectbox("🎯 Puanlama Yapılacak Öğrenci Görevi", ["— Seçiniz —"] + p_liste)
             
-            sablon_isimleri = list(ayarlar.get("sablonlar", {}).keys())
-            secili_sablon_ismi = c_sablon.selectbox("📐 Kullanılacak Şablon", sablon_isimleri)
-            aktif_sablon = ayarlar["sablonlar"].get(secili_sablon_ismi, CEKIRDEK_SABLON)
+            s_isimler = list(ayarlar.get("sablonlar", {}).keys())
+            sec_sablon_ismi = st.selectbox("📋 Değerlendirme Ölçeği (Şablon)", s_isimler)
+            aktif_sablon = ayarlar["sablonlar"].get(sec_sablon_ismi, CEKIRDEK_SABLON)
             
             if sec_p != "— Seçiniz —":
-                p_no = sec_p.split(" - ")[0]
-                idx_list = df_yetkili[df_yetkili['Okul No'] == p_no].index
-                idx = idx_list[0] if len(idx_list) > 0 else df[df['Okul No'] == p_no].index[0]
-                bilgi = df.iloc[idx]
-                d_ad = k_bilgi.get("ad", "Yönetici")
-                d_brans = bilgi.get("Ders", "Genel")
+                p_no = sec_p.split(" - ")[0].strip()
+                g_adi_sec = sec_p.split(" | ")[1].split(" (")[0].strip()
                 
-                if st.session_state.get("aktif_ogr_idx") != idx:
-                    st.session_state["aktif_ogr_idx"] = idx
-                    eski_puanlar = {}
-                    try:
-                        din_json = str(bilgi.get('Dinamik_JSON', '{}'))
-                        if din_json.strip() and din_json != "nan":
-                            eski_puanlar = json.loads(din_json)
-                    except: pass
-                    
+                idx = df[(df['Okul No'] == p_no) & (df['Gorev_Adi'] == g_adi_sec)].index[0]
+                bilgi = df.iloc[idx]
+                
+                # Form verilerini session state'e bağlama (Kayıpları önlemek için)
+                if st.session_state.get("current_idx") != idx:
+                    st.session_state["current_idx"] = idx
+                    e_puanlar = json.loads(str(bilgi.get('Dinamik_JSON', '{}'))) if pd.notna(bilgi.get('Dinamik_JSON', '{}')) else {}
                     for k in aktif_sablon:
-                        eski_p = eski_puanlar.get(f"{k['id']}_puan", bilgi.get(f"{k['baslik']} Puanı", 0))
-                        eski_a = eski_puanlar.get(f"{k['id']}_aciklama", bilgi.get(f"{k['baslik']} Açıklaması", ""))
-                        st.session_state[f"w_puan_{k['id']}"] = int(pd.to_numeric(eski_p, errors='coerce')) if pd.notna(eski_p) else 0
-                        st.session_state[f"w_aciklama_{k['id']}"] = str(eski_a) if pd.notna(eski_a) and str(eski_a) != "nan" else ""
-                    st.session_state["w_genel"] = str(bilgi.get('Genel Değerlendirme Yorumu', "")) if pd.notna(bilgi.get('Genel Değerlendirme Yorumu', "")) else ""
+                        st.session_state[f"val_p_{k['id']}"] = int(e_puanlar.get(f"{k['id']}_puan", 0))
+                        st.session_state[f"val_a_{k['id']}"] = str(e_puanlar.get(f"{k['id']}_aciklama", ""))
+                    st.session_state["val_genel"] = str(bilgi.get('Genel Değerlendirme Yorumu', ""))
 
-                st.markdown('<div class="glass-card" style="background:#eff6ff; border-color:#93c5fd;">', unsafe_allow_html=True)
-                ai_modu = st.radio("🤖 DEĞERLENDİRME MODU:", ["A", "B", "C"], format_func=lambda x: {"A": "MOD A: Yorum Yaz, Puanı Sistem Dağıtsın", "B": "MOD B: Hedef Puanı Gir, Sistem Tümünü Yapsın", "C": "MOD C: Manuel Puanla, Sistem Yorum Yapsın"}[x], horizontal=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                ai_modu = st.radio("🤖 YAPAY ZEKA MODU SEÇİN:", ["A", "B", "C"], format_func=lambda x: {
+                    "A": "MOD A: Ben Sadece Genel Yorum Yazarım, Puanları AI Dağıtır",
+                    "B": "MOD B: Ben Sadece Hedef Toplam Puan Girerim, AI Her Şeyi Yazar",
+                    "C": "MOD C: Puanları Kendim Veririm, AI Sadece Edebi/Pedagojik Cümleler Kurar"
+                }[x], horizontal=True)
                 
                 ham_metin, hedef_puan = "", 100
-                if ai_modu == "A": ham_metin = st.text_area("Öğretmen Notunuz:")
-                elif ai_modu == "B": hedef_puan = st.number_input("Hedef Puan", 0, 100, 85)
-                elif ai_modu == "C": ham_metin = st.text_input("Opsiyonel Ek Not:")
-
-                if st.button("✨ Değerlendirmeyi Çalıştır", use_container_width=True):
-                    with st.spinner("🤖 Sistem Düşünüyor..."):
+                if ai_modu == "A": ham_metin = st.text_area("Öğrenci Çalışması Hakkındaki Kısa Yorumunuz:")
+                elif ai_modu == "B": hedef_puan = st.number_input("Verilecek Toplam Puan", 0, 100, 85)
+                
+                if st.button("✨ Yapay Zeka Değerlendirmesini Başlat", use_container_width=True):
+                    with st.spinner("Yapay Zeka Analiz Ediyor..."):
                         try:
-                            manuel_puan_dict = {k['id']: st.session_state.get(f"w_puan_{k['id']}", 0) for k in aktif_sablon}
-                            json_sonuc = ai_degerlendirme_yap(bilgi.to_dict(), aktif_sablon, ai_modu, ham_metin, hedef_puan, manuel_puan_dict, d_ad, d_brans)
+                            m_p_d = {k['id']: st.session_state.get(f"val_p_{k['id']}", 0) for k in aktif_sablon}
+                            res = ai_degerlendirme_yap(bilgi.to_dict(), aktif_sablon, ai_modu, ham_metin, hedef_puan, m_p_d, k_bilgi.get("ad","Öğretmen"), bilgi['Ders'])
                             
                             for k in aktif_sablon:
-                                if k['id'] in json_sonuc.get("puanlar", {}): st.session_state[f"w_puan_{k['id']}"] = int(json_sonuc["puanlar"][k['id']])
-                                if k['id'] in json_sonuc.get("aciklamalar", {}): st.session_state[f"w_aciklama_{k['id']}"] = json_sonuc["aciklamalar"][k['id']]
-                            if "genel" in json_sonuc: st.session_state["w_genel"] = json_sonuc["genel"]
-                            st.success("✅ İşlem Tamamlandı!")
-                            time.sleep(1)
-                            st.rerun() 
-                        except Exception as e:
-                            st.error(f"❌ Hatası: {e}")
-
-                st.markdown("---")
-                st.markdown("### 📝 Kayıt Alanı")
-                for k in aktif_sablon:
-                    c1, c2 = st.columns([1, 4])
-                    c1.number_input(f"{k['baslik']}", 0, k['max'], key=f"w_puan_{k['id']}")
-                    c2.text_area(f"Açıklama", key=f"w_aciklama_{k['id']}")
-                st.text_area("💬 Genel Değerlendirme", key="w_genel", height=120)
+                                if k['id'] in res.get("puanlar", {}): st.session_state[f"val_p_{k['id']}"] = int(res["puanlar"][k['id']])
+                                if k['id'] in res.get("aciklamalar", {}): st.session_state[f"val_a_{k['id']}"] = res["aciklamalar"][k['id']]
+                            if "genel" in res: st.session_state["val_genel"] = res["genel"]
+                            st.success("Yayay zeka verileri hazırladı! Aşağıdaki kayıt alanından kontrol edip kaydedebilirsiniz.")
+                        except Exception as e: st.error(f"Yapay Zeka Motor Hatası: {e}")
                 
-                if st.button("💾 Kaydet", use_container_width=True):
-                    dinamik_kayit = {}
-                    toplam = 0
+                st.markdown("#### 📝 İnceleme ve Düzenleme Alanı")
+                with st.form("puan_kayit_form"):
+                    toplam_hesaplanan = 0
                     for k in aktif_sablon:
-                        p_val = st.session_state[f"w_puan_{k['id']}"]
-                        a_val = st.session_state[f"w_aciklama_{k['id']}"]
-                        dinamik_kayit[f"{k['id']}_puan"], dinamik_kayit[f"{k['id']}_aciklama"] = p_val, a_val
-                        df.at[idx, f"{k['baslik']} Puanı"], df.at[idx, f"{k['baslik']} Açıklaması"] = p_val, str(a_val)
-                        toplam += p_val
-                    df.at[idx, 'Dinamik_JSON'] = json.dumps(dinamik_kayit, ensure_ascii=False)
-                    df.at[idx, 'Genel Değerlendirme Yorumu'] = str(st.session_state["w_genel"])
-                    df.at[idx, 'Toplam Puan'] = toplam
-                    veriyi_kaydet(df)
-                    st.success(f"✅ Kaydedildi. Toplam Puan: {toplam}")
+                        c1, c2 = st.columns([1, 4])
+                        p_v = c1.number_input(f"{k['baslik']} (Max: {k['max']})", 0, k['max'], key=f"val_p_{k['id']}")
+                        a_v = c2.text_area(f"{k['baslik']} Kriter Açıklaması", key=f"val_a_{k['id']}", height=70)
+                        toplam_hesaplanan += p_v
+                    
+                    g_v = st.text_area("💬 Genel Sonuç Raporu ve Öğrenciye Tavsiyeler", key="val_genel")
+                    
+                    st.markdown(f"### 📊 Toplam Skor: **{toplam_hesaplanan} / 100**")
+                    if st.form_submit_button("💾 Değerlendirmeyi Resmi Veritabanına Kaydet"):
+                        d_kayit = {}
+                        for k in aktif_sablon:
+                            d_kayit[f"{k['id']}_puan"] = st.session_state[f"val_p_{k['id']}"]
+                            d_kayit[f"{k['id']}_aciklama"] = st.session_state[f"val_a_{k['id']}"]
+                        
+                        df.at[idx, 'Dinamik_JSON'] = json.dumps(d_kayit, ensure_ascii=False)
+                        df.at[idx, 'Genel Değerlendirme Yorumu'] = g_v
+                        df.at[idx, 'Toplam Puan'] = toplam_hesaplanan
+                        veriyi_kaydet(df)
+                        st.success("Öğrenci puanlaması sisteme işlendi!")
 
-    # --- SEKME 4: PROFESYONEL RAPORLAR ---
+    # --- SEKME 4: PROFESYONEL RAPORLAR VE ÇIKTILAR ---
     sekme_rapor = sekmeler[3] if rol == "admin" else sekmeler[2]
     with sekme_rapor:
-        if df_yetkili.empty: 
-            st.warning("⚠️ Raporlanacak veri bulunmuyor.")
+        st.markdown("### 📊 Çizelge ve Karne Çıktı Yönetimi")
+        if df_yetkili.empty:
+            st.info("Raporlanacak veri bulunmamaktadır.")
         else:
-            r_sinif = st.selectbox("Raporlanacak Sınıfı Seçin", sorted(df_yetkili['Sınıf'].dropna().unique()))
-            df_yazdir = df_yetkili[df_yetkili['Sınıf'] == r_sinif]
-            aktif_kriterler = CEKIRDEK_SABLON 
-
-            gorunum = st.radio("Rapor Türü:", ["🏢 1. Resmi İdare Çizelgesi", "📝 2. Geniş Görünüm", "📊 3. Dar Görünüm"])
+            r_sinif = st.selectbox("Sınıf Seçin", sorted(df_yetkili['Sınıf'].dropna().unique()))
+            df_y = df_yetkili[df_yetkili['Sınıf'] == r_sinif]
             
-            if gorunum == "🏢 1. Resmi İdare Çizelgesi":
-                idare_df = pd.DataFrame()
-                df_yazdir_sirali = df_yazdir.copy()
-                df_yazdir_sirali['Siralama_No'] = pd.to_numeric(df_yazdir_sirali['Okul No'], errors='coerce').fillna(9999)
-                df_yazdir_sirali = df_yazdir_sirali.sort_values(by='Siralama_No').drop(columns=['Siralama_No'])
-                idare_df["Okul No"], idare_df["Öğrenci Adı Soyadı"] = df_yazdir_sirali["Okul No"], df_yazdir_sirali["Öğrenci Adı Soyadı"]
+            g_filtresi = st.selectbox("Görev Filtresi", ["Tümü"] + df_y['Gorev_Adi'].unique().tolist())
+            if g_filtresi != "Tümü":
+                df_y = df_y[df_y['Gorev_Adi'] == g_filtresi]
                 
-                for k in aktif_kriterler: idare_df[f"{k['baslik']} (Max: {k['max']})"] = df_yazdir_sirali[f"{k['baslik']} Puanı"]
-                idare_df["TOPLAM PUAN"] = df_yazdir_sirali["Toplam Puan"]
-                st.dataframe(idare_df, use_container_width=True, hide_index=True)
-                
-                output_idare = io.BytesIO()
-                with pd.ExcelWriter(output_idare, engine='xlsxwriter') as writer:
-                    guvenli_sinif = r_sinif.replace('/', '_').replace('\\', '_')
-                    idare_df.to_excel(writer, index=False, sheet_name=f'{guvenli_sinif}_Idare'[:31])
-                st.download_button("🟢 İdare Not Çizelgesini İndir", data=output_idare.getvalue(), file_name=f"{guvenli_sinif}_Resmi_Cizelge.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
+            st.dataframe(df_y[['Okul No', 'Öğrenci Adı Soyadı', 'Gorev_Turu', 'Gorev_Adi', 'Toplam Puan']], use_container_width=True, hide_index=True)
+            
+            # Excel İdare Listesi Çıktısı
+            out_idare = io.BytesIO()
+            with pd.ExcelWriter(out_idare, engine='xlsxwriter') as writer:
+                df_y[['Okul No', 'Öğrenci Adı Soyadı', 'Gorev_Turu', 'Gorev_Adi', 'Toplam Puan']].to_excel(writer, index=False, sheet_name='Not_Cizelgesi')
+            
+            st.download_button("🏢 İdare İçin Resmi Excel Çizelgesi İndir", data=out_idare.getvalue(), file_name=f"{r_sinif}_Resmi_Not_Listesi.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
+            
+            # HTML/PDF Performans Karneleri Toplu Çıktı
+            if st.button("🖨️ Velilere Gönderilecek Renkli Performans Belgelerini Üret", use_container_width=True):
+                html_c = toplu_karne_html_dosyasi_uret(df_y, k_bilgi.get("ad","Öğretmen"), k_bilgi.get("brans",""), CEKIRDEK_SABLON)
+                st.download_button("📥 Hazırlanan Belgeleri İndir (HTML/PDF)", data=html_c, file_name=f"{r_sinif}_Performans_Karneleri.html", mime="text/html", use_container_width=True)
 
-            elif gorunum == "📝 2. Geniş Görünüm": st.dataframe(df_yazdir, use_container_width=True)
-            else: st.dataframe(df_yazdir[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Ders', 'Toplam Puan']].sort_values(by="Okul No"), use_container_width=True, hide_index=True)
-                
-            st.markdown("#### 🖨️ PDF Performans Belgeleri")
-            if not df_yazdir.empty:
-                html_cikti = toplu_karne_html_dosyasi_uret(df_yazdir, k_bilgi.get("ad", "Öğretmen"), df_yazdir.iloc[0].get("Ders", "Genel"), aktif_kriterler)
-                st.download_button("🖨️ Belgeleri İndir (HTML/PDF)", html_cikti, file_name=f"{r_sinif.replace('/', '_')}_Karneler.html", mime="text/html", use_container_width=True)
-
-    # --- SEKME 5: AKILLI DEĞERLENDİRME METNİ ---
+    # --- SEKME 5: E-OKUL KARNE GÖRÜŞÜ MOTORU ---
     sekme_karne = sekmeler[4] if rol == "admin" else sekmeler[3]
     with sekme_karne:
-        st.markdown("### 📝 Otomatik Öğrenci Görüşü Yazıcı")
-        karne_dosya = st.file_uploader("Not Listesini Yükleyin (CSV/Excel)", type=['csv', 'xlsx', 'xls'])
+        st.markdown("### 📝 Yapay Zeka E-Okul Karne Görüşü Sihirbazı")
+        st.download_button("📄 Boş E-Okul Not Entegrasyon Şablonunu İndir", data=eokul_sablon_olustur(), file_name="E_Okul_Not_Sablonu.xlsx")
         
-        if karne_dosya:
-            if "karne_df" not in st.session_state or st.session_state.get("son_yuklenen_karne") != karne_dosya.name:
-                try:
-                    k_df = pd.read_csv(karne_dosya, sep=None, engine='python') if karne_dosya.name.endswith('.csv') else pd.read_excel(karne_dosya)
-                    if "AI_Karne_Gorusu" not in k_df.columns: k_df["AI_Karne_Gorusu"] = ""
-                    st.session_state["karne_df"] = k_df
-                    st.session_state["son_yuklenen_karne"] = karne_dosya.name
-                except Exception as e: st.error(f"Okuma hatası: {e}")
+        k_dosya = st.file_uploader("Öğrenci Ders Notlarını İçeren Excel'i Yükleyin", type=['xlsx'])
+        if k_dosya:
+            if "k_df_state" not in st.session_state:
+                st.session_state["k_df_state"] = pd.read_excel(k_dosya)
+                if "AI_Karne_Gorusu" not in st.session_state["k_df_state"].columns:
+                    st.session_state["k_df_state"]["AI_Karne_Gorusu"] = ""
             
-            if "karne_df" in st.session_state:
-                k_df = st.session_state["karne_df"]
-                kolonlar = k_df.columns.tolist()
+            k_df = st.session_state["k_df_state"]
+            cols = k_df.columns.tolist()
+            
+            # Sütun eşleştirme otomasyonu
+            c_ad = next((c for c in cols if "ad" in str(c).lower()), cols[1])
+            c_no = next((c for c in cols if "no" in str(c).lower()), cols[0])
+            c_sinif = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else cols[0])
+            not_cols = [c for c in cols if c not in [c_ad, c_no, c_sinif, "AI_Karne_Gorusu"]]
+            
+            c_l, c_r = st.columns([1, 2])
+            with c_l:
+                o_sec = st.selectbox("Görüş Yazılacak Öğrenci", k_df[c_ad].tolist())
+                o_idx = k_df[k_df[c_ad] == o_sec].index[0]
+                o_row = k_df.loc[o_idx]
                 
-                ad_kolonu = next((col for col in kolonlar if "ad" in str(col).lower() and "soyad" in str(col).lower()), kolonlar[2] if len(kolonlar)>2 else kolonlar[0])
-                sinif_kolonu = next((col for col in kolonlar if "sınıf" in str(col).lower() or "sinif" in str(col).lower()), kolonlar[0])
-                no_kolonu = next((col for col in kolonlar if "no" in str(col).lower()), kolonlar[1] if len(kolonlar)>1 else kolonlar[0])
-                ders_kolonlari = [col for col in kolonlar if col not in [ad_kolonu, sinif_kolonu, no_kolonu, "AI_Karne_Gorusu"]]
-
-                c_sol, c_sag = st.columns([1, 2])
-                with c_sol:
-                    st.markdown("#### 👤 Öğrenci Seçimi")
-                    ogr_liste = k_df.apply(lambda r: f"{r[no_kolonu]} - {r[ad_kolonu]}", axis=1).tolist()
-                    secili_ogr = st.selectbox("Görüş Yazılacak Öğrenci:", ["— Seçiniz —"] + ogr_liste)
-                    davranis_notu = st.text_area("Öğretmen Gözlemi (Opsiyonel):", placeholder="Örn: Sınıfta aktif, ödevlerini aksatmıyor.")
-                    
-                    if secili_ogr != "— Seçiniz —":
-                        secilen_no = secili_ogr.split(" - ")[0]
-                        gercek_idx = k_df[k_df[no_kolonu].astype(str) == str(secilen_no)].index[0]
-                        bilgi = k_df.loc[gercek_idx]
-                        
-                        if st.button("✨ Değerlendirme Üret", use_container_width=True):
-                            with st.spinner("Sistem yazıyor..."):
-                                notlar_dict = {ders: bilgi[ders] for ders in ders_kolonlari}
-                                try:
-                                    gorus = ai_karne_gorusu_yaz(bilgi[ad_kolonu], bilgi[sinif_kolonu], notlar_dict, davranis_notu, k_bilgi.get("ad", "Öğretmen"))
-                                    st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"] = gorus
-                                    st.success("Oluşturuldu!")
-                                    st.rerun()
-                                except Exception as e: st.error(e)
-
-                with c_sag:
-                    st.markdown("#### 📝 Görüş ve Kayıt")
-                    if secili_ogr != "— Seçiniz —":
-                        gercek_idx = k_df[k_df[no_kolonu].astype(str) == str(secili_ogr.split(" - ")[0])].index[0]
-                        mevcut_gorus = st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"]
-                        yeni_gorus = st.text_area("Düzenle/Onayla:", value=mevcut_gorus, height=150)
-                        if st.button("💾 İşle", use_container_width=True):
-                            st.session_state["karne_df"].at[gercek_idx, "AI_Karne_Gorusu"] = yeni_gorus
-                            st.success("Kaydedildi!")
-                
-                st.markdown("---")
-                st.dataframe(st.session_state["karne_df"][[no_kolonu, ad_kolonu, "AI_Karne_Gorusu"]], use_container_width=True)
-                
-                output_karne = io.BytesIO()
-                with pd.ExcelWriter(output_karne, engine='xlsxwriter') as writer:
-                    st.session_state["karne_df"].to_excel(writer, index=False, sheet_name='Gorusler')
-                st.download_button("📥 E-Okul Listesini İndir", data=output_karne.getvalue(), file_name="Ogrenci_Gorusleri.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
+                obs = st.text_area("Öğretmen Davranış Gözlem Notu (Opsiyonel)")
+                if st.button("✨ Karne Görüşü Üret", use_container_width=True):
+                    with st.spinner("AI Cümleleri Tasarlıyor..."):
+                        n_dict = {d: o_row[d] for d in not_cols}
+                        gorus_metni = ai_karne_gorusu_yaz(o_row[c_ad], o_row[c_sinif], n_dict, obs, k_bilgi.get("ad","Öğretmen"))
+                        st.session_state["k_df_state"].at[o_idx, "AI_Karne_Gorusu"] = gorus_metni
+                        st.rerun()
+            
+            with c_r:
+                g_yazilan = st.text_area("Düzenle / Onayla", value=k_df.at[o_idx, "AI_Karne_Gorusu"], height=160)
+                if st.button("💾 Görüşü Tabloya İşle"):
+                    st.session_state["k_df_state"].at[o_idx, "AI_Karne_Gorusu"] = g_yazilan
+                    st.success("Görüş onaylandı.")
+            
+            st.markdown("---")
+            st.dataframe(st.session_state["k_df_state"][[c_no, c_ad, "AI_Karne_Gorusu"]], use_container_width=True)
+            
+            out_k = io.BytesIO()
+            with pd.ExcelWriter(out_k, engine='xlsxwriter') as writer:
+                st.session_state["k_df_state"].to_excel(writer, index=False, sheet_name='Karne_Gorusleri')
+            st.download_button("📥 E-Okul Hazır Excel Listesini İndir", data=out_k.getvalue(), file_name="E_Okul_Karne_Gorusleri_Hazir.xlsx", use_container_width=True)
 
 # ==========================================
-# 12. ANA ÇALIŞTIRMA MODÜLÜ
+# 11. ANA ÇALIŞTIRMA MODÜLÜ
 # ==========================================
 def main():
     ayarlar, df = ayar_yukle(), veri_yukle()
-    st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe Milli Eğitim Müdürlüğü</div><div class="hero-subtitle">Proje ve Performans Değerlendirme Sistemi</div></div>', unsafe_allow_html=True)
-    t1, t2 = st.tabs(["🎓 Öğrenci Girişi", "👨‍🏫 Öğretmen Paneli"])
-    with t1: ogrenci_paneli(df, ayarlar)
-    with t2:
-        if not st.session_state.get("giris_yapti", False): giris_paneli(ayarlar)
-        else: yonetim_paneli(df, ayarlar)
+    st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe Milli Eğitim Müdürlüğü</div><div class="hero-subtitle">Proje, Performans Ödevi ve Ölçme Değerlendirme Havuz Sistemi</div></div>', unsafe_allow_html=True)
+    
+    t_main1, t_main2 = st.tabs(["🎓 Öğrenci Giriş Portalı", "👨‍🏫 Öğretmen & İdare Yönetim Masası"])
+    with t_main1: 
+        ogrenci_paneli(df, ayarlar)
+    with t_main2:
+        if not st.session_state.get("giris_yapti", False): 
+            giris_paneli(ayarlar)
+        else: 
+            yonetim_paneli(df, ayarlar)
 
 if __name__ == "__main__":
     main()
