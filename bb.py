@@ -675,7 +675,7 @@ def yonetim_paneli(df, ayarlar):
 # ==========================================
 def main():
     ayarlar, df = ayar_yukle(), veri_yukle()
-    st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe MEM</div><div class="hero-subtitle">Proje, Performans ve Ölçme Değerlendirme Sistemi</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-header"><div class="hero-title">🏫 Dargeçit İlçe MEM</div><div class="hero-subtitle">PUSULA 360: Performans, Proje ve Karne Yönetim Sistemi</div></div>', unsafe_allow_html=True)
     
     if not st.session_state.get("giris_yapti", False): 
         ana_giris_ekranlari(df, ayarlar)
