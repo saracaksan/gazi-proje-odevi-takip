@@ -742,8 +742,7 @@ SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel"
     r = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
     r.raise_for_status()
     raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    return json.loads(raw.replace('```json', '').replace('
-```', '').strip())
+    return json.loads(raw.replace("```json", "").replace("```", "").strip())
 
 def ai_karne_gorusu_yaz(ogrenci_adi, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad):
     notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if pd.notna(notu)])
