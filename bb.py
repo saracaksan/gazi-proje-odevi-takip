@@ -40,8 +40,10 @@ except Exception as e:
     st.error(f"⚠️ HATA: Supabase bilgileri gizli kasada bulunamadı veya yanlış! Detay: {e}")
     st.stop()
 
-# E-posta gönderici (opsiyonel)
-EMAIL_SENDER = "saracaksan@gmail.com"
+# ==========================================
+# E-POSTA AYARLARI VE GİZLİ KASA BAĞLANTISI
+# ==========================================
+EMAIL_SENDER = "properkar360@gmail.com"
 try:
     EMAIL_PASSWORD = st.secrets.get("EMAIL_PASSWORD", "")
 except Exception:
@@ -54,7 +56,6 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* === TEMEL === */
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background-color: #f0f4f8;
@@ -62,7 +63,6 @@ html, body, [class*="css"] {
 }
 .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; }
 
-/* === HERO HEADER === */
 .hero-header {
     background: linear-gradient(135deg, #0f2d6b 0%, #1e56c7 60%, #3b82f6 100%);
     border-radius: 16px;
@@ -108,7 +108,6 @@ html, body, [class*="css"] {
     font-weight: 700;
 }
 
-/* === KARTLAR === */
 .glass-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -134,7 +133,6 @@ html, body, [class*="css"] {
 .stat-number { font-size: 2rem; font-weight: 900; color: #0f172a; line-height: 1; }
 .stat-label { font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 4px; }
 
-/* === SECTION HEADER === */
 .section-header {
     color: #1e40af;
     font-weight: 800;
@@ -147,7 +145,6 @@ html, body, [class*="css"] {
     gap: 8px;
 }
 
-/* === BUTONLAR === */
 .stButton > button {
     background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
     color: white !important;
@@ -157,7 +154,6 @@ html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     padding: 0.5rem 1rem !important;
     transition: all 0.2s !important;
-    letter-spacing: 0.2px !important;
 }
 .stButton > button:hover {
     transform: translateY(-1px) !important;
@@ -166,11 +162,7 @@ html, body, [class*="css"] {
 .stDownloadButton > button {
     background: linear-gradient(135deg, #059669, #10b981) !important;
 }
-.stDownloadButton > button:hover {
-    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.35) !important;
-}
 
-/* === TABS === */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     background: #e2e8f0;
     border-radius: 10px;
@@ -191,106 +183,20 @@ html, body, [class*="css"] {
     color: white !important;
 }
 
-/* === KULLANICI KARTLARI (Okul/Öğretmen navigasyon) === */
-.okul-kart {
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.okul-kart:hover { border-color: #2563eb; background: #eff6ff; }
-.okul-kart.selected { border-color: #2563eb; background: #eff6ff; }
+.info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #1e40af; font-weight: 600; font-size: 0.9rem; }
+.warn-banner { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #92400e; font-weight: 600; }
+.success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #166534; font-weight: 600; }
 
-.ogretmen-kart {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.ogretmen-kart:hover { background: #eff6ff; border-color: #93c5fd; }
-
-/* === BANNER MESAJLARI === */
-.info-banner {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: #1e40af;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-.warn-banner {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: #92400e;
-    font-weight: 600;
-}
-.success-banner {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: #166534;
-    font-weight: 600;
-}
-
-/* === PUAN ROZET === */
-.puan-rozet {
-    display: inline-block;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-weight: 800;
-    font-size: 1rem;
-}
+.puan-rozet { display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 4px 14px; border-radius: 20px; font-weight: 800; font-size: 1rem; }
 .puan-rozet.iyı { background: linear-gradient(135deg, #059669, #10b981); }
 .puan-rozet.orta { background: linear-gradient(135deg, #d97706, #f59e0b); }
 .puan-rozet.dusuk { background: linear-gradient(135deg, #dc2626, #ef4444); }
 
-/* === PROFIL HEADER === */
-.profil-bar {
-    background: white;
-    padding: 14px 22px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    margin-bottom: 18px;
-    border-left: 5px solid #2563eb;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-/* === FOOTER === */
-.app-footer {
-    background: #0f172a;
-    color: #94a3b8;
-    border-radius: 12px;
-    padding: 20px 30px;
-    margin-top: 30px;
-    text-align: center;
-    font-size: 0.85rem;
-}
+.profil-bar { background: white; padding: 14px 22px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 18px; border-left: 5px solid #2563eb; flex-wrap: wrap; gap: 10px; }
+.app-footer { background: #0f172a; color: #94a3b8; border-radius: 12px; padding: 20px 30px; margin-top: 30px; text-align: center; font-size: 0.85rem; }
 .app-footer a { color: #60a5fa; text-decoration: none; }
 .app-footer .footer-title { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
 
-/* === MOBİL OPTİMİZASYON === */
 @media (max-width: 768px) {
     .block-container { padding: 0.5rem !important; }
     .glass-card { padding: 14px; }
@@ -298,38 +204,15 @@ html, body, [class*="css"] {
     [data-testid="stTabs"] [data-baseweb="tab"] { font-size: 0.7rem; padding: 5px 8px !important; }
 }
 
-/* === KILAVUZ ACCORDION === */
-.kilavuz-item {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin-bottom: 8px;
-}
-.kilavuz-baslik {
-    font-weight: 700;
-    color: #1e40af;
-    margin-bottom: 8px;
-    font-size: 1rem;
-}
-.kilavuz-icerik {
-    color: #475569;
-    font-size: 0.9rem;
-    line-height: 1.7;
-}
+.kilavuz-item { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 8px; }
+.kilavuz-baslik { font-weight: 700; color: #1e40af; margin-bottom: 8px; font-size: 1rem; }
+.kilavuz-icerik { color: #475569; font-size: 0.9rem; line-height: 1.7; }
 
-/* === FORM STYLE === */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
-.stSelectbox > div > div {
-    border-radius: 8px !important;
-    border: 1.5px solid #e2e8f0 !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+.stTextInput > div > div > input, .stTextArea > div > div > textarea, .stSelectbox > div > div {
+    border-radius: 8px !important; border: 1.5px solid #e2e8f0 !important; font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
-.stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+.stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
+    border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -444,16 +327,6 @@ def veri_yukle():
         return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
 
 # ==========================================
-# ==========================================
-# E-POSTA AYARLARI VE GİZLİ KASA BAĞLANTISI
-# ==========================================
-EMAIL_SENDER = "properkar360@gmail.com"
-try:
-    EMAIL_PASSWORD = st.secrets.get("EMAIL_PASSWORD", "")
-except Exception:
-    EMAIL_PASSWORD = ""
-
-# ==========================================
 # 6. E-POSTA İŞLEMLERİ
 # ==========================================
 def sifre_olustur(uzunluk=10):
@@ -488,15 +361,6 @@ def eposta_gonder(alici, konu, icerik):
         return True, "E-posta gönderildi."
     except Exception as e:
         return False, str(e)
-        """
-        msg.attach(MIMEText(html_icerik, 'html', 'utf-8'))
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_SENDER, alici, msg.as_string())
-        server.quit()
-        return True, "E-posta gönderildi."
-    except Exception as e:
-        return False, str(e)
 
 # ==========================================
 # 7. YARDIMCI FONKSİYONLAR
@@ -513,7 +377,7 @@ def eokul_sablon_olustur():
     sablon_df = pd.DataFrame(columns=[
         'Öğrenci No', 'Adı Soyadı', 'Sınıfı', 'TÜRKÇE', 'MATEMATİK', 'HAYAT BİLGİSİ',
         'FEN BİLİMLERİ', 'SOSYAL BİLGİLER', 'İNGİLİZCE', 'DİN KÜLTÜRÜ VE AHLAK BİLGİSİ',
-        'GÖRSEL SANATLAR', 'MÜZİK', 'BEDEN EĞİTİMİ VE SPOR', 'Davranış Notu'
+        'GÖRSEL SANATLAR', 'MÜZİK', 'BEDEN EĞİTİMİ VE SPOR', 'Davranış'
     ])
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -540,9 +404,9 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
   body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
   .page {
-background: white; width: 100%; max-width: 750px; margin: 0 auto 24px;
-padding: 20px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-page-break-after: always; border-top: 7px solid #2563eb;
+    background: white; width: 100%; max-width: 750px; margin: 0 auto 24px;
+    padding: 20px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    page-break-after: always; border-top: 7px solid #2563eb;
   }
   table { width: 100%; border-collapse: collapse; margin-top: 18px; }
   th { background: #f1f5f9; color: #1e293b; padding: 11px; text-align: left; font-size: 0.85rem; border-bottom: 2px solid #cbd5e1; }
@@ -599,6 +463,7 @@ page-break-after: always; border-top: 7px solid #2563eb;
 
     html += "</body></html>"
     return html
+
 # ==========================================
 # 9. ANALİZ VE RAPOR FONKSİYONLARI
 # ==========================================
@@ -718,11 +583,15 @@ SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel"
     raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     return json.loads(raw.replace('```json', '').replace('```', '').strip())
 
-def ai_karne_gorusu_yaz(ogrenci_adi, sinifi, notlar_sozlugu, davranis_notu, ogrt_ad):
+def ai_karne_gorusu_yaz(ogrenci_adi, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad):
     notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if pd.notna(notu)])
     prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_adi} adlı öğrenciye e-okul karne görüşü yaz.
-Ders Notları:\n{notlar_metni}\nGözlem: {davranis_notu}
-Pedagojik, doğrudan öğrenciye hitap eden 3-4 cümlelik metin üret. Türkçe."""
+Öğrencinin Ders Notları ve Davranış Puanı (Hepsi 100 Üzerindendir):
+{notlar_metni}
+
+Ekstra Öğretmen Gözlemi: {ekstra_gozlem}
+
+Lütfen yukarıdaki ders notlarına ve özellikle 'Davranış' notuna (100 üzerinden bir akademik performans gibi analiz ederek) bakarak öğrenciye hitap eden, pedagojik, 3-4 cümlelik motive edici bir dönem sonu karne görüşü üret. Türkçe."""
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"response_mime_type": "text/plain"}
@@ -844,7 +713,7 @@ def giris_ekrani(df, ayarlar):
                     else:
                         st.error("❌ Hatalı kullanıcı adı veya şifre!")
 
-            # KAYIT OL (Mükerrer Kayıt Önlemi Eklendi)
+            # KAYIT OL (Mükerrer Kayıt Önlemi)
             with g2:
                 r_okul = st.selectbox("Okulunuz", ayarlar["okullar"], key="r_okul")
                 r_ad = st.text_input("Ad Soyad", key="r_ad")
@@ -853,7 +722,6 @@ def giris_ekrani(df, ayarlar):
                 r_kadi = st.text_input("Kullanıcı Adı Seçin", key="r_kadi")
                 r_sifre = st.text_input("Şifre Belirleyin", type="password", key="r_sifre")
                 
-                # İsim ve Okul eşleşmesi kontrolü (İdare zaten kaydetmiş mi?)
                 mevcut_ogrt = False
                 for k, v in ayarlar["kullanicilar"].items():
                     if str(v.get("ad", "")).strip().lower() == str(r_ad).strip().lower() and v.get("okul") == r_okul:
@@ -1048,7 +916,6 @@ def yonetim_paneli(df, ayarlar):
     admin_bakis = st.session_state.get("admin_bakis_modu", False)
     admin_bakis_ogrt = st.session_state.get("admin_bakis_ogretmen", None)
 
-    # Profil bar - YENİ VE DÜZELTİLMİŞ
     col_profil1, col_profil2 = st.columns([3, 1])
     with col_profil1:
         admin_etiket = f'<span style="color:#ef4444;">🔴 ADMİN</span>' if rol == 'admin' and not admin_bakis else ''
@@ -1078,7 +945,6 @@ def yonetim_paneli(df, ayarlar):
                 st.session_state.clear()
                 st.rerun()
 
-    # Hangi öğretmenin gözüyle bakıyoruz?
     if admin_bakis and admin_bakis_ogrt:
         kb_bakis = ayarlar["kullanicilar"].get(admin_bakis_ogrt, kb)
         df_yetkili = df[
@@ -1095,7 +961,6 @@ def yonetim_paneli(df, ayarlar):
 
     kullanim_kilavuzu()
 
-    # SEKME YAPISI
     if rol == "admin" and not admin_bakis:
         sekme_basliklari = [
             "👥 Öğrenci & Görev", "🤖 AI Değerlendirme",
@@ -1117,7 +982,6 @@ def yonetim_paneli(df, ayarlar):
             "🏫 Havuzdan Görev Ata", "🗑️ Silme İşlemleri"
         ])
 
-        # --- Excel yükleme ---
         with t1:
             st.markdown("<div class='section-header'>📥 Excel ile Toplu Görev Tanımla</div>", unsafe_allow_html=True)
             h_okul = kb.get("okul") if (rol != "admin" or admin_bakis) else st.selectbox("Okul Seçin", ayarlar["okullar"], key="ex_okul")
@@ -1163,7 +1027,6 @@ def yonetim_paneli(df, ayarlar):
                         db_records = []
                         for _, row in excel_df.iterrows():
                             o_no = row[no_col]
-                            # Aynı okul, aynı no, aynı görev ve aynı öğretmen kontrolü (Mükerrer Öğrenci Kaydı Önlemi)
                             kontrol = df[(df['Okul'] == h_okul) & (df['Okul No'] == o_no) &
                                          (df['Gorev_Adi'] == g_isim.strip()) & (df['Atanan_Ogretmen'] == hedef_ogrt_ex)]
                             if kontrol.empty:
@@ -1187,7 +1050,6 @@ def yonetim_paneli(df, ayarlar):
                     except Exception as e:
                         st.error(f"Hata: {e}")
 
-        # --- Tekil ekle ---
         with t2:
             st.markdown("<div class='section-header'>➕ Tekil Öğrenci/Görev Ekle</div>", unsafe_allow_html=True)
             with st.form("tekil_ekle"):
@@ -1222,7 +1084,6 @@ def yonetim_paneli(df, ayarlar):
                     else:
                         st.warning("Okul no, ad ve görev adı zorunludur.")
 
-        # --- Havuzdan görev ata ---
         with t3:
             st.markdown("<div class='section-header'>🏫 Havuzdaki Sınıflara Yeni Görev Ata</div>", unsafe_allow_html=True)
             st.markdown('<div class="info-banner">Okulunuzdaki diğer öğretmenlerin yüklediği sınıfları seçerek kendi dersiniz için görev tanımlayabilirsiniz. Sadece bulunduğunuz okuldaki sınıflar gösterilir.</div>', unsafe_allow_html=True)
@@ -1273,7 +1134,6 @@ def yonetim_paneli(df, ayarlar):
             else:
                 st.info("Bu okula ait öğrenci kaydı yok. Önce Excel ile yükleme yapın.")
 
-        # --- Silme işlemleri ---
         with t4:
             st.markdown("<div class='section-header'>🗑️ Veri Silme İşlemleri</div>", unsafe_allow_html=True)
             st.markdown('<div class="warn-banner">⚠️ Silme işlemleri geri alınamaz! Önemli verileri silmeden önce <b>Raporlar → Veri Yedekleme</b> bölümünden yedek alın.</div>', unsafe_allow_html=True)
@@ -1523,8 +1383,10 @@ def yonetim_paneli(df, ayarlar):
     # ============ SEKME 3: E-OKUL KARNE ============
     with sekmeler[3]:
         st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü Yazıcı</div>", unsafe_allow_html=True)
-        st.download_button("📄 Örnek Not Şablonu İndir", data=eokul_sablon_olustur(), file_name="Eokul_Sablon.xlsx")
-        k_dosya = st.file_uploader("Öğrenci Not Listesini Yükle (Excel/CSV)", type=['xlsx', 'csv', 'xls'])
+        
+        col_down, col_up = st.columns([1, 2])
+        col_down.download_button("📄 Örnek Not Şablonu İndir", data=eokul_sablon_olustur(), file_name="Eokul_Sablon.xlsx")
+        k_dosya = col_up.file_uploader("Öğrenci Not Listesini Yükle (Excel/CSV)", type=['xlsx', 'csv', 'xls'])
 
         if k_dosya:
             if "kdf" not in st.session_state or st.session_state.get("last_k_file") != k_dosya.name:
@@ -1540,41 +1402,62 @@ def yonetim_paneli(df, ayarlar):
                 except Exception as e:
                     st.error(f"Dosya okuma hatası: {e}")
 
-        if "kdf" in st.session_state:
+        if "kdf" in st.session_state and not st.session_state["kdf"].empty:
+            st.markdown("---")
             kdf = st.session_state["kdf"]
             cols = kdf.columns.tolist()
+            
             c_ad = next((c for c in cols if "ad" in str(c).lower() and "soyad" in str(c).lower()), cols[1] if len(cols) > 1 else cols[0])
             c_sinif = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols) > 2 else cols[0])
-            not_cols = [c for c in cols if c not in [c_ad, c_sinif, cols[0], "AI_Karne_Gorusu", "Davranış Notu"]]
+            not_cols = [c for c in cols if c not in [c_ad, c_sinif, cols[0], "AI_Karne_Gorusu"]]
 
             c_k1, c_k2 = st.columns([1, 2])
-            o_sec_k = c_k1.selectbox("Öğrenci Seç", kdf[c_ad].tolist())
+            
+            o_sec_k = c_k1.selectbox("🎯 İşlem Yapılacak Öğrenciyi Seçin", kdf[c_ad].tolist())
             o_idx_k = kdf[kdf[c_ad] == o_sec_k].index[0]
+            
+            if c_k1.button("🗑️ Sadece Bu Öğrenciyi Listeden Çıkar"):
+                st.session_state["kdf"] = kdf.drop(o_idx_k).reset_index(drop=True)
+                st.rerun()
 
-            davranis = ""
-            if "Davranış Notu" in kdf.columns and pd.notna(kdf.loc[o_idx_k, "Davranış Notu"]):
-                davranis = str(kdf.loc[o_idx_k, "Davranış Notu"])
-            obs = c_k1.text_area("Öğretmen Gözlemi (Opsiyonel)", value=davranis)
+            st.markdown(f"#### 📊 {o_sec_k} - Not Profili")
+            ogrenci_notlari = {d: kdf.loc[o_idx_k, d] for d in not_cols if pd.notna(kdf.loc[o_idx_k, d])}
+            
+            not_html = "<div style='display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;'>"
+            for ders, notu in ogrenci_notlari.items():
+                not_html += f"<div style='background:white; border:1px solid #bfdbfe; padding:8px 12px; border-radius:8px; font-size:0.85rem;'><strong style='color:#1e40af;'>{ders}:</strong> <span style='font-weight:800; font-size:1rem;'>{notu}</span></div>"
+            not_html += "</div>"
+            st.markdown(not_html, unsafe_allow_html=True)
 
-            if c_k1.button("✨ Görüş Üret", use_container_width=True):
-                with st.spinner("AI cümleler oluşturuyor..."):
+            obs = c_k1.text_area("Öğretmen Özel Gözlemi (Opsiyonel)", placeholder="Örn: Bu dönem arkadaşlarına çok yardımcı oldu...")
+
+            if c_k1.button("✨ Görüş Üret (Yapay Zeka)", use_container_width=True):
+                with st.spinner("Öğrencinin ders ve davranış notları analiz edilip görüş yazılıyor..."):
                     try:
-                        n_dict = {d: kdf.loc[o_idx_k, d] for d in not_cols}
-                        g_metin = ai_karne_gorusu_yaz(kdf.loc[o_idx_k, c_ad], kdf.loc[o_idx_k, c_sinif], n_dict, obs, kb.get("ad", ""))
+                        g_metin = ai_karne_gorusu_yaz(kdf.loc[o_idx_k, c_ad], kdf.loc[o_idx_k, c_sinif], ogrenci_notlari, obs, kb.get("ad", ""))
                         st.session_state["kdf"].at[o_idx_k, "AI_Karne_Gorusu"] = g_metin
                         st.rerun()
                     except Exception as e:
                         st.error(f"Hata: {e}")
 
-            y_gorus = c_k2.text_area("Görüşü Düzenle / Onayla", value=kdf.at[o_idx_k, "AI_Karne_Gorusu"], height=150)
-            if c_k2.button("💾 Bu Görüşü Onayla ve Kaydet"):
+            y_gorus = c_k2.text_area("Görüşü Düzenle / Onayla", value=kdf.at[o_idx_k, "AI_Karne_Gorusu"], height=180)
+            if c_k2.button("💾 Bu Görüşü Listeye Kaydet"):
                 st.session_state["kdf"].at[o_idx_k, "AI_Karne_Gorusu"] = y_gorus
-                st.success("✅ Onaylandı.")
+                st.success(f"✅ {o_sec_k} için görüş listeye işlendi.")
 
+            st.markdown("---")
+            col_b1, col_b2 = st.columns(2)
+            
             out_k = io.BytesIO()
             with pd.ExcelWriter(out_k, engine='xlsxwriter') as writer:
                 st.session_state["kdf"].to_excel(writer, index=False, sheet_name='Karne_Gorusleri')
-            st.download_button("📥 Tamamlanan Listeyi İndir", data=out_k.getvalue(), file_name="E_Okul_Gorusleri.xlsx", use_container_width=True)
+            
+            col_b1.download_button("📥 Tamamlanan Listeyi Excel Olarak İndir", data=out_k.getvalue(), file_name="E_Okul_Gorusleri.xlsx", use_container_width=True)
+            
+            if col_b2.button("🧹 Şablonu ve Tüm Listeyi Sistemden Temizle", type="primary", use_container_width=True):
+                del st.session_state["kdf"]
+                st.session_state["last_k_file"] = None
+                st.rerun()
 
     # ============ SEKME 4: ÖĞRETMEN YÖNETİMİ (Admin) ============
     if rol == "admin" and not admin_bakis and len(sekmeler) >= 5:
@@ -1631,7 +1514,6 @@ def yonetim_paneli(df, ayarlar):
                                 st.session_state["nav_ogretmen"] = kadi
                                 st.rerun()
 
-                        # Öğretmen düzenleme paneli
                         sec_ogrt_duzenle = st.session_state.get("nav_ogretmen")
                         if sec_ogrt_duzenle and sec_ogrt_duzenle in ayarlar["kullanicilar"]:
                             user_d = ayarlar["kullanicilar"][sec_ogrt_duzenle]
