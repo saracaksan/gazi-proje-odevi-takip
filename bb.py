@@ -826,7 +826,7 @@ def giris_ekrani(df, ayarlar):
                     else:
                         st.error("❌ Hatalı kullanıcı adı veya şifre!")
 
-            # KAYIT OL
+            # KAYIT OL (Mükerrer Kayıt Önlemi Eklendi)
             with g2:
                 r_okul = st.selectbox("Okulunuz", ayarlar["okullar"], key="r_okul")
                 r_ad = st.text_input("Ad Soyad", key="r_ad")
@@ -834,9 +834,20 @@ def giris_ekrani(df, ayarlar):
                 r_eposta = st.text_input("E-posta Adresiniz", key="r_eposta", placeholder="ornek@gmail.com")
                 r_kadi = st.text_input("Kullanıcı Adı Seçin", key="r_kadi")
                 r_sifre = st.text_input("Şifre Belirleyin", type="password", key="r_sifre")
+                
+                # İsim ve Okul eşleşmesi kontrolü (İdare zaten kaydetmiş mi?)
+                mevcut_ogrt = False
+                for k, v in ayarlar["kullanicilar"].items():
+                    if str(v.get("ad", "")).strip().lower() == str(r_ad).strip().lower() and v.get("okul") == r_okul:
+                        mevcut_ogrt = True
+                        break
+
                 if st.button("Kayıt Ol", use_container_width=True, key="btn_kayit"):
                     if r_kadi in ayarlar["kullanicilar"]:
                         st.error("Bu kullanıcı adı alınmış.")
+                    elif mevcut_ogrt:
+                        st.error("⚠️ Sistemde bu okulda adınıza açılmış bir kayıt zaten mevcut!")
+                        st.info("Okul idaresi veya sistem yöneticisi sizi sisteme önceden eklemiş olabilir. Lütfen şifrenizi onlardan talep ediniz.")
                     elif not (r_kadi and r_sifre and r_ad):
                         st.warning("Lütfen tüm alanları doldurun.")
                     else:
@@ -893,63 +904,121 @@ def kullanim_kilavuzu():
         <div class="kilavuz-baslik">1️⃣ Sisteme Kayıt ve Giriş</div>
         <div class="kilavuz-icerik">
         • <b>Kayıt Ol</b> sekmesinden okul, ad-soyad, branş ve e-posta bilgilerinizi girerek kayıt olun.<br>
-        • Yönetici otomatik onayı açmışsa direkt giriş yapabilirsiniz; kapalıysa yönetici onayını bekleyin.<br>
-        • Şifrenizi unutursanız <b>"Şifremi Unuttum"</b> sekmesinden e-posta ile yeni şifre alabilirsiniz.
+        • Sistemde idare tarafından daha önce kaydınız açılmışsa mükerrer kayıt yapamazsınız. Şifrenizi idareden isteyin.<br>
+        • Yönetici otomatik onayı açmışsa direkt giriş yapabilirsiniz; kapalıysa yönetici onayını bekleyin.
         </div></div>
 
         <div class="kilavuz-item">
-        <div class="kilavuz-baslik">2️⃣ Öğrenci Listesi Yükleme</div>
+        <div class="kilavuz-baslik">2️⃣ Değerlendirme Ölçeği (Şablon) Yönetimi</div>
+        <div class="kilavuz-icerik">
+        • "Sistem Ayarları" (veya Öğretmenler için "Profilim") sekmesinde yer alır.<br>
+        • Kendinize özel değerlendirme ölçeği (şablon) oluşturabilirsiniz.<br>
+        • İsterseniz örnek Excel ölçek dosyasını indirip kendi kriterlerinizi ekleyerek Excel üzerinden sisteme şablon yükleyebilirsiniz.<br>
+        • Sadece <b>kendi oluşturduğunuz</b> şablonları silebilirsiniz.
+        </div></div>
+
+        <div class="kilavuz-item">
+        <div class="kilavuz-baslik">3️⃣ Öğrenci Listesi Yükleme</div>
         <div class="kilavuz-icerik">
         • <b>Öğrenci & Görev İşlemleri → Excel ile Toplu Yükle</b> sekmesinden örnek Excel şablonunu indirin.<br>
         • Şablonu doldurun: <b>Okul No</b>, <b>Ad Soyad</b>, <b>Sınıf</b> sütunları zorunludur.<br>
-        • Okul numaralarının sıra numarası değil gerçek okul numarası olduğuna dikkat edin.<br>
-        • Görev türünü (Proje/Performans) ve görevin adını belirleyip yükleyin.
+        • Aynı öğrencinin aynı göreve iki defa kaydedilmesini engelleyen koruma mekanizması mevcuttur.
         </div></div>
 
         <div class="kilavuz-item">
-        <div class="kilavuz-baslik">3️⃣ Yapay Zeka Değerlendirme</div>
+        <div class="kilavuz-baslik">4️⃣ Yapay Zeka Değerlendirme</div>
         <div class="kilavuz-icerik">
-        • <b>AI Değerlendirme</b> sekmesinde öğrenci ve görevi seçin.<br>
+        • <b>AI Değerlendirme</b> sekmesinde öğrenci ve görevi seçin. Oluşturduğunuz özel Şablonu seçin.<br>
         • <b>Mod A:</b> Sadece bir not/yorum yazın, AI puanları otomatik dağıtsın.<br>
         • <b>Mod B:</b> Vermek istediğiniz toplam puanı girin, AI geri kalanı yapsın.<br>
-        • <b>Mod C:</b> Puanları kendiniz verin, AI sadece edebi açıklamalar yazsın.<br>
-        • Sonuçları gözden geçirip <b>Kaydet</b> butonuyla veritabanına yazın.
+        • <b>Mod C:</b> Puanları kendiniz verin, AI sadece edebi açıklamalar yazsın.
         </div></div>
 
         <div class="kilavuz-item">
-        <div class="kilavuz-baslik">4️⃣ Raporlar ve Çıktılar</div>
+        <div class="kilavuz-baslik">5️⃣ Veri Silme ve Raporlar</div>
         <div class="kilavuz-icerik">
-        • <b>Raporlar</b> sekmesinde sınıf seçerek hem kişisel karneleri hem de sınıf analiz raporunu indirebilirsiniz.<br>
-        • HTML karneler tarayıcıda açılıp Ctrl+P ile PDF'e dönüştürülebilir.<br>
-        • Excel çizelgeleri e-okul sistemine aktarıma uygundur.
-        </div></div>
-
-        <div class="kilavuz-item">
-        <div class="kilavuz-baslik">5️⃣ Veri Silme ve Yedekleme</div>
-        <div class="kilavuz-icerik">
-        • <b>Silme İşlemleri</b> sekmesinden tek tek kayıt silebilirsiniz.<br>
-        • <b>Toplu Silme</b> ile tüm bir sınıfın veya okuldaki tüm verileri temizleyebilirsiniz.<br>
-        • <b>Raporlar → Veri Yedekleme</b> ile tüm verilerinizi Excel olarak bilgisayarınıza indirin.<br>
-        • <b>Dikkat:</b> Silme işlemi geri alınamaz! Önce yedek alın.
-        </div></div>
-
-        <div class="kilavuz-item">
-        <div class="kilavuz-baslik">6️⃣ E-Okul Karne Görüşü</div>
-        <div class="kilavuz-icerik">
-        • <b>E-Okul Karne</b> sekmesinde örnek şablonu indirip öğrenci notlarını doldurun.<br>
-        • Her öğrenci için AI ile 3-4 cümlelik pedagojik görüş oluşturun, düzenleyin ve onaylayın.<br>
-        • Tamamlanan listeyi Excel olarak indirip e-okul sistemine aktarın.
-        </div></div>
-
-        <div class="kilavuz-item">
-        <div class="kilavuz-baslik">7️⃣ Yönetici (Admin) Özellikleri</div>
-        <div class="kilavuz-icerik">
-        • Tüm okulların ve öğretmenlerin verilerini görüntüleyip yönetebilirsiniz.<br>
-        • <b>Öğretmen Navigasyonu:</b> Okul seçin → Öğretmen seçin → Detay bilgilere erişin.<br>
-        • <b>Gözatma Modu:</b> Öğretmen üzerine tıklayarak onun gördüğü ekrana geçebilirsiniz.<br>
-        • Kullanıcı onaylama, şifre sıfırlama, okul ekleme/silme ve şablon yönetimi yapabilirsiniz.
+        • <b>Raporlar</b> sekmesinde sınıf seçerek kişisel karneleri HTML veya Excel olarak indirebilirsiniz.<br>
+        • <b>Silme İşlemleri</b> sekmesinden kayıt silebilirsiniz. İşlem geri alınamaz, önce "Veri Yedekleme" bölümünden Excel yedeği alın.
         </div></div>
         """, unsafe_allow_html=True)
+
+# ==========================================
+# GÜÇLÜ ŞABLON (ÖLÇEK) YÖNETİM MODÜLÜ
+# ==========================================
+def sablon_yonetimi_ui(ayarlar, kb, rol):
+    st.markdown("#### 📐 Proje/Performans Değerlendirme Ölçeği (Şablon) Yönetimi")
+    st.info("Kriterlerin toplam puanı 100 olmalıdır. Kendi ölçeklerinizi oluşturup diğer öğretmenlerle paylaşabilirsiniz.")
+
+    t_man, t_ex = st.tabs(["✍️ Manuel Oluştur", "📥 Excel ile Yükle"])
+
+    with t_man:
+        if "t_df" not in st.session_state:
+            st.session_state["t_df"] = pd.DataFrame([{"Başlık": "İçerik", "Puan": 50, "Açıklama": ""}])
+        s_isim_yeni = st.text_input("Ölçek/Şablon Adı", key=f"man_sablon_ad_{rol}")
+        e_df = st.data_editor(st.session_state["t_df"], num_rows="dynamic", use_container_width=True, key=f"man_editor_{rol}")
+        if st.button("💾 Manuel Ölçeği Kaydet", key=f"btn_man_kaydet_{rol}"):
+            if pd.to_numeric(e_df["Puan"], errors="coerce").sum() == 100 and s_isim_yeni:
+                tam_isim = s_isim_yeni if rol == "admin" else f"{s_isim_yeni} (Ekleyen: {kb['ad']})"
+                n_k = [{"id": f"k{i+1}", "baslik": str(r["Başlık"]), "max": int(r["Puan"]), "icon": "📌", "aciklama": str(r.get("Açıklama",""))} for i, r in e_df.iterrows()]
+                ayarlar["sablonlar"][tam_isim] = n_k
+                ayar_kaydet(ayarlar)
+                st.success(f"✅ '{tam_isim}' eklendi!")
+                st.rerun()
+            else:
+                st.error("Toplam puan 100 olmalı ve bir isim girilmelidir!")
+
+    with t_ex:
+        sab_ex_df = pd.DataFrame(columns=["Kriter Başlığı", "Maksimum Puan", "Açıklama"])
+        out_sab = io.BytesIO()
+        with pd.ExcelWriter(out_sab, engine='xlsxwriter') as w:
+            sab_ex_df.to_excel(w, index=False, sheet_name="Olcek")
+            w.sheets['Olcek'].set_column(0, 2, 30)
+
+        st.download_button("📄 Excel Ölçek Şablonunu İndir", data=out_sab.getvalue(), file_name="Olcek_Sablonu.xlsx", key=f"dl_sab_{rol}")
+
+        up_sab = st.file_uploader("Doldurulmuş Ölçek Excelini Yükle", type=["xlsx"], key=f"up_sab_{rol}")
+        up_sab_isim = st.text_input("Yüklenen Ölçeğin Adı", key=f"up_sab_ad_{rol}")
+        if st.button("🚀 Excel'den Ölçeği Kaydet", key=f"btn_ex_kaydet_{rol}"):
+            if up_sab and up_sab_isim:
+                try:
+                    sdf = pd.read_excel(up_sab)
+                    if pd.to_numeric(sdf.iloc[:, 1], errors="coerce").sum() == 100:
+                        tam_isim = up_sab_isim if rol == "admin" else f"{up_sab_isim} (Ekleyen: {kb['ad']})"
+                        n_k = []
+                        for i, r in sdf.iterrows():
+                            n_k.append({
+                                "id": f"k{i+1}",
+                                "baslik": str(r.iloc[0]),
+                                "max": int(r.iloc[1]),
+                                "icon": "📌",
+                                "aciklama": str(r.iloc[2]) if len(r) > 2 else ""
+                            })
+                        ayarlar["sablonlar"][tam_isim] = n_k
+                        ayar_kaydet(ayarlar)
+                        st.success("✅ Ölçek başarıyla yüklendi!")
+                        st.rerun()
+                    else:
+                        st.error("Kriterlerin toplam puanı 100 olmalıdır!")
+                except Exception as e:
+                    st.error(f"Hata: {e}")
+            else:
+                st.warning("Lütfen dosyayı yükleyin ve isim belirleyin.")
+
+    st.markdown("#### 🗑️ Ölçek Sil")
+    if rol == "admin":
+        silinebilir_sablonlar = [s for s in ayarlar["sablonlar"].keys() if "Varsayılan" not in s]
+    else:
+        silinebilir_sablonlar = [s for s in ayarlar["sablonlar"].keys() if f"(Ekleyen: {kb['ad']})" in s]
+
+    if silinebilir_sablonlar:
+        sil_sablon = st.selectbox("Silinecek Şablon", silinebilir_sablonlar, key=f"sil_sab_{rol}")
+        if st.button("🗑️ Seçili Ölçeği Sil", key=f"btn_sil_sab_{rol}"):
+            del ayarlar["sablonlar"][sil_sablon]
+            ayar_kaydet(ayarlar)
+            st.success("Silindi.")
+            st.rerun()
+    else:
+        st.info("Silinebilecek (yetkiniz olan) bir şablon bulunmuyor.")
 
 # ==========================================
 # 14. YÖNETİM PANELİ
@@ -1076,6 +1145,7 @@ def yonetim_paneli(df, ayarlar):
                         db_records = []
                         for _, row in excel_df.iterrows():
                             o_no = row[no_col]
+                            # Aynı okul, aynı no, aynı görev ve aynı öğretmen kontrolü (Mükerrer Öğrenci Kaydı Önlemi)
                             kontrol = df[(df['Okul'] == h_okul) & (df['Okul No'] == o_no) &
                                          (df['Gorev_Adi'] == g_isim.strip()) & (df['Atanan_Ogretmen'] == hedef_ogrt_ex)]
                             if kontrol.empty:
@@ -1095,7 +1165,7 @@ def yonetim_paneli(df, ayarlar):
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.warning("Tüm öğrenciler için bu görev zaten atanmış.")
+                            st.warning("Tüm öğrenciler için bu görev zaten atanmış. Mükerrer kayıt engellendi.")
                     except Exception as e:
                         st.error(f"Hata: {e}")
 
@@ -1137,7 +1207,7 @@ def yonetim_paneli(df, ayarlar):
         # --- Havuzdan görev ata ---
         with t3:
             st.markdown("<div class='section-header'>🏫 Havuzdaki Sınıflara Yeni Görev Ata</div>", unsafe_allow_html=True)
-            st.markdown('<div class="info-banner">Okulunuzdaki diğer öğretmenlerin yüklediği sınıfları seçerek kendi dersiniz için görev tanımlayabilirsiniz.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="info-banner">Okulunuzdaki diğer öğretmenlerin yüklediği sınıfları seçerek kendi dersiniz için görev tanımlayabilirsiniz. Sadece bulunduğunuz okuldaki sınıflar gösterilir.</div>', unsafe_allow_html=True)
 
             islem_okul = kb.get("okul") if (rol != "admin" or admin_bakis) else st.selectbox("Okul", ayarlar["okullar"], key="havuz_okul")
 
@@ -1181,7 +1251,7 @@ def yonetim_paneli(df, ayarlar):
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.warning("Bu görev zaten atanmış.")
+                            st.warning("Bu görev zaten atanmış. Mükerrer kayıt engellendi.")
             else:
                 st.info("Bu okula ait öğrenci kaydı yok. Önce Excel ile yükleme yapın.")
 
@@ -1258,7 +1328,7 @@ def yonetim_paneli(df, ayarlar):
             puan_liste = df_yetkili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']}", axis=1).tolist()
             secili_gorev = c_sec1.selectbox("🎯 Öğrenci ve Görevi Seçin", ["— Seçiniz —"] + puan_liste)
             s_isimler = list(ayarlar.get("sablonlar", {}).keys())
-            sec_sablon_ismi = c_sec2.selectbox("📋 Şablon", s_isimler)
+            sec_sablon_ismi = c_sec2.selectbox("📋 Kullanılacak Şablon", s_isimler)
             aktif_sablon = ayarlar["sablonlar"].get(sec_sablon_ismi, CEKIRDEK_SABLON)
 
             if secili_gorev != "— Seçiniz —":
@@ -1376,7 +1446,6 @@ def yonetim_paneli(df, ayarlar):
             if g_filtre != "Tümü":
                 df_r = df_r[df_r['Gorev_Adi'] == g_filtre]
 
-            # İstatistik kartları
             if not df_r.empty:
                 df_r_copy = df_r.copy()
                 df_r_copy['Toplam Puan'] = pd.to_numeric(df_r_copy['Toplam Puan'], errors='coerce').fillna(0)
@@ -1393,19 +1462,16 @@ def yonetim_paneli(df, ayarlar):
 
             c_btn1, c_btn2, c_btn3 = st.columns(3)
 
-            # Excel çizelgesi
             out_xls = io.BytesIO()
             with pd.ExcelWriter(out_xls, engine='xlsxwriter') as writer:
                 df_r[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Turu', 'Gorev_Adi', 'Toplam Puan']].to_excel(writer, index=False, sheet_name='Cizelge')
             c_btn1.download_button("📊 Excel Çizelgesi", data=out_xls.getvalue(), file_name=f"{r_sinif}_Cizelge.xlsx", use_container_width=True)
 
-            # HTML Karneler
             if c_btn2.button("🖨️ Kişisel Karneler (HTML)", use_container_width=True):
                 s_aktif = ayarlar["sablonlar"].get(list(ayarlar["sablonlar"].keys())[0], CEKIRDEK_SABLON)
                 h_cikti = toplu_karne_html_dosyasi_uret(df_r, kb.get("ad", ""), kb.get("brans", ""), s_aktif)
                 st.download_button("📥 HTML Karneleri İndir", data=h_cikti, file_name=f"{r_sinif}_Karneler.html", mime="text/html", use_container_width=True)
 
-            # Sınıf analiz raporu
             if c_btn3.button("📈 Sınıf Analiz Raporu (HTML)", use_container_width=True):
                 analiz_html = sinif_analiz_raporu(df_r, r_sinif, kb.get("ad", ""))
                 st.download_button("📥 Analiz Raporunu İndir", data=analiz_html, file_name=f"{r_sinif}_Analiz.html", mime="text/html", use_container_width=True)
@@ -1646,6 +1712,7 @@ def yonetim_paneli(df, ayarlar):
                     ayar_kaydet(ayarlar)
                     st.rerun()
 
+            with col_ay2:
                 st.markdown("#### 🏢 Okul Listesi")
                 y_okul_ekle = st.text_input("Yeni Okul Adı")
                 if st.button("➕ Okul Ekle") and y_okul_ekle:
@@ -1657,33 +1724,9 @@ def yonetim_paneli(df, ayarlar):
                     ayarlar["okullar"].remove(sil_okul)
                     ayar_kaydet(ayarlar)
                     st.rerun()
-
-            with col_ay2:
-                st.markdown("#### 📐 Yeni Değerlendirme Şablonu")
-                st.info("Kriterlerin puan toplamı 100 olmalıdır.")
-                if "t_df" not in st.session_state:
-                    st.session_state["t_df"] = pd.DataFrame([{"Başlık": "İçerik", "Puan": 50, "Açıklama": ""}])
-                s_isim_yeni = st.text_input("Şablon Adı")
-                e_df = st.data_editor(st.session_state["t_df"], num_rows="dynamic", use_container_width=True)
-                if st.button("💾 Şablonu Kaydet"):
-                    if pd.to_numeric(e_df["Puan"], errors="coerce").sum() == 100 and s_isim_yeni:
-                        n_k = [{"id": f"k{i+1}", "baslik": str(r["Başlık"]), "max": int(r["Puan"]), "icon": "📌", "aciklama": str(r["Açıklama"])} for i, r in e_df.iterrows()]
-                        ayarlar["sablonlar"][s_isim_yeni] = n_k
-                        ayar_kaydet(ayarlar)
-                        st.success("✅ Eklendi")
-                        st.rerun()
-                    else:
-                        st.error("Toplam 100 olmalı ve isim girilmeli!")
-
-                st.markdown("#### Şablon Sil")
-                sil_sablon = st.selectbox("Silinecek Şablon", list(ayarlar["sablonlar"].keys()))
-                if st.button("🗑️ Şablonu Sil"):
-                    if "Varsayılan" in sil_sablon:
-                        st.error("Varsayılan şablon silinemez!")
-                    else:
-                        del ayarlar["sablonlar"][sil_sablon]
-                        ayar_kaydet(ayarlar)
-                        st.rerun()
+            
+            st.markdown("---")
+            sablon_yonetimi_ui(ayarlar, kb, rol)
 
         else:
             st.markdown("<div class='section-header'>⚙️ Kişisel Profil Ayarları</div>", unsafe_allow_html=True)
@@ -1700,6 +1743,9 @@ def yonetim_paneli(df, ayarlar):
                     ayar_kaydet(ayarlar)
                     st.session_state["kullanici_bilgi"] = ayarlar["kullanicilar"][aktif_id]
                     st.success("✅ Profiliniz güncellendi!")
+            
+            st.markdown("---")
+            sablon_yonetimi_ui(ayarlar, kb, rol)
 
 # ==========================================
 # 15. FOOTER
