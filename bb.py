@@ -540,9 +540,9 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
   body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
   .page {
-    background: white; width: 100%; max-width: 750px; margin: 0 auto 24px;
-    padding: 20px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    page-break-after: always; border-top: 7px solid #2563eb;
+background: white; width: 100%; max-width: 750px; margin: 0 auto 24px;
+padding: 20px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+page-break-after: always; border-top: 7px solid #2563eb;
   }
   table { width: 100%; border-collapse: collapse; margin-top: 18px; }
   th { background: #f1f5f9; color: #1e293b; padding: 11px; text-align: left; font-size: 0.85rem; border-bottom: 2px solid #cbd5e1; }
