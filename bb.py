@@ -16,7 +16,7 @@ from supabase import create_client, Client
 # 1. SAYFA YAPILANDIRMASI
 # ==========================================
 st.set_page_config(
-    page_title="PUSULA 360 | Bütüncül Değerlendirme Platformu",
+    page_title="PROPERKAR360 | Bütüncül Değerlendirme Platformu",
     page_icon="🧭",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -47,11 +47,7 @@ except Exception:
     EMAIL_PASSWORD = ""
 
 # ==========================================
-# 3. GLOBAL CSS — TAM YENİDEN YAZILDI
-# Üst/Alt sekme karışıklığı tamamen giderildi.
-# st.tabs() yerine session_state tabanlı özel
-# navigasyon kullanıldı; böylece hiçbir CSS
-# seçici çakışması kalmadı.
+# 3. GLOBAL CSS — YENİ PROFESYONEL MENÜ TASARIMI
 # ==========================================
 st.markdown("""
 <style>
@@ -106,87 +102,70 @@ html, body, [class*="css"] {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.25);
     color: white;
-    padding: 3px 14px;
+    padding: 4px 16px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     margin-top: 8px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
 }
 
-/* ── Özel Navigasyon (Ana Menü) ── */
-.nav-bar {
-    display: flex;
-    gap: 6px;
+/* ── ANA MENÜ (Üst Navigasyon) ── */
+.main-nav-container {
     background: #0f172a;
+    padding: 12px 14px;
     border-radius: 14px;
-    padding: 8px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    margin-bottom: 24px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border-bottom: 4px solid #3b82f6;
 }
-.nav-btn {
-    flex: 1;
-    min-width: 100px;
-    background: transparent;
-    color: #94a3b8;
-    border: none;
-    border-radius: 9px;
-    padding: 10px 14px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    white-space: nowrap;
+.main-nav-container .stButton > button {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+    padding: 10px !important;
+    transition: all 0.2s ease !important;
 }
-.nav-btn:hover {
-    background: rgba(59,130,246,0.2);
-    color: #93c5fd;
+.main-nav-container .stButton > button[kind="primary"] {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b82f6 !important;
+    box-shadow: 0 4px 12px rgba(59,130,246,0.4) !important;
 }
-.nav-btn.active {
-    background: #3b82f6;
-    color: #ffffff;
-    box-shadow: 0 2px 12px rgba(59,130,246,0.4);
+.main-nav-container .stButton > button:hover {
+    background: #2563eb !important;
+    color: #ffffff !important;
 }
 
-/* ── Özel Alt Navigasyon ── */
-.subnav-bar {
-    display: flex;
-    gap: 5px;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    border-radius: 11px;
-    padding: 6px;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
-}
-.subnav-btn {
-    flex: 1;
-    min-width: 90px;
+/* ── ALT MENÜ (İç Navigasyon) ── */
+.sub-nav-container {
     background: transparent;
-    color: #475569;
-    border: none;
-    border-radius: 7px;
-    padding: 8px 12px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    white-space: nowrap;
+    padding: 0 0 12px 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
 }
-.subnav-btn:hover {
-    background: rgba(16,185,129,0.12);
-    color: #059669;
+.sub-nav-container .stButton > button {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 20px !important; /* Hap (Pill) Görünümü */
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s ease !important;
 }
-.subnav-btn.active {
-    background: #10b981;
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(16,185,129,0.35);
+.sub-nav-container .stButton > button[kind="primary"] {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    border: 1px solid #10b981 !important;
+    box-shadow: 0 4px 10px rgba(16,185,129,0.3) !important;
+}
+.sub-nav-container .stButton > button:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
 }
 
 /* ── Kart & Paneller ── */
@@ -229,32 +208,31 @@ html, body, [class*="css"] {
     gap: 8px;
 }
 
-/* ── Butonlar ── */
+/* ── Standart Butonlar ── */
 .stButton > button {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 9px !important;
-    font-weight: 700 !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    padding: 0.5rem 1.1rem !important;
-    transition: all 0.2s !important;
-    letter-spacing: 0.1px !important;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 9px;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 0.5rem 1.1rem;
+    transition: all 0.2s;
 }
 .stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(37,99,235,0.35) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(37,99,235,0.35);
 }
-.stButton > button:active { transform: translateY(0) !important; }
-
 .stDownloadButton > button {
     background: linear-gradient(135deg, #059669, #10b981) !important;
+    border: none !important;
+    color: white !important;
 }
 .stDownloadButton > button:hover {
     box-shadow: 0 6px 20px rgba(16,185,129,0.35) !important;
 }
 
-/* ── Streamlit Native Tabs (sadece giriş ekranı için) ── */
+/* ── Giriş Ekranı Standart Tabs ── */
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] {
     background: #1e293b;
     border-radius: 12px;
@@ -269,6 +247,7 @@ html, body, [class*="css"] {
     font-size: 0.88rem !important;
     padding: 8px 16px !important;
     transition: all 0.2s !important;
+    border: none !important;
 }
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] > button[aria-selected="true"] {
     background: #3b82f6 !important;
@@ -277,149 +256,47 @@ html, body, [class*="css"] {
 }
 
 /* ── Bildirim Banner'lar ── */
-.info-banner {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: #1e40af;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-.warn-banner {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: #92400e;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-.success-banner {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: #166534;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
+.info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #1e40af; font-weight: 600; font-size: 0.9rem; }
+.warn-banner { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #92400e; font-weight: 600; font-size: 0.9rem; }
+.success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #166534; font-weight: 600; font-size: 0.9rem; }
 
 /* ── Puan Rozeti ── */
-.puan-rozet {
-    display: inline-block;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-weight: 800;
-    font-size: 1rem;
-}
+.puan-rozet { display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 4px 14px; border-radius: 20px; font-weight: 800; font-size: 1rem; }
 .puan-rozet.iyi   { background: linear-gradient(135deg, #059669, #10b981); }
 .puan-rozet.orta  { background: linear-gradient(135deg, #d97706, #f59e0b); }
 .puan-rozet.dusuk { background: linear-gradient(135deg, #dc2626, #ef4444); }
 
 /* ── Profil Çubuğu ── */
-.profil-bar {
-    background: white;
-    padding: 14px 22px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    margin-bottom: 16px;
-    border-left: 5px solid #2563eb;
-    flex-wrap: wrap;
-    gap: 10px;
-}
+.profil-bar { background: white; padding: 14px 22px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; border-left: 5px solid #2563eb; flex-wrap: wrap; gap: 10px; }
 
 /* ── Kılavuz ── */
-.kilavuz-item {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin-bottom: 8px;
-}
+.kilavuz-item { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 8px; }
 .kilavuz-baslik  { font-weight: 700; color: #1e40af; margin-bottom: 8px; font-size: 1rem; }
 .kilavuz-icerik  { color: #475569; font-size: 0.9rem; line-height: 1.7; }
 
 /* ── Form elemanları ── */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
-.stSelectbox > div > div {
-    border-radius: 8px !important;
-    border: 1.5px solid #e2e8f0 !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    transition: border-color 0.2s, box-shadow 0.2s !important;
+.stTextInput > div > div > input, .stTextArea > div > div > textarea, .stSelectbox > div > div {
+    border-radius: 8px !important; border: 1.5px solid #e2e8f0 !important; font-family: 'Plus Jakarta Sans', sans-serif !important; transition: border-color 0.2s, box-shadow 0.2s !important;
 }
-.stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+.stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
+    border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
 }
 
 /* ── Footer ── */
-.app-footer {
-    background: #0f172a;
-    color: #94a3b8;
-    border-radius: 12px;
-    padding: 22px 30px;
-    margin-top: 32px;
-    text-align: center;
-    font-size: 0.85rem;
-}
+.app-footer { background: #0f172a; color: #94a3b8; border-radius: 12px; padding: 22px 30px; margin-top: 32px; text-align: center; font-size: 0.85rem; }
 .app-footer a { color: #60a5fa; text-decoration: none; }
-.app-footer .footer-title {
-    color: white;
-    font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 6px;
-}
-
-/* ── Mobil Uyum ── */
-@media (max-width: 768px) {
-    .block-container { padding: 0.5rem !important; }
-    .glass-card { padding: 14px; }
-    .profil-bar { flex-direction: column; align-items: flex-start; }
-    .nav-bar { gap: 4px; padding: 6px; }
-    .nav-btn { font-size: 0.78rem; padding: 8px 10px; }
-    .subnav-btn { font-size: 0.76rem; padding: 6px 8px; }
-}
+.app-footer .footer-title { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
 
 /* ── Öğretmen Navigasyon Kartları ── */
-.ogrt-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    border-left: 3px solid #10b981;
-    transition: all 0.15s;
-}
+.ogrt-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; border-left: 3px solid #10b981; transition: all 0.15s; }
 .ogrt-card.bekliyor { border-left-color: #f59e0b; }
 .ogrt-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
 
 /* ── Kriter Kartı ── */
-.kriter-card {
-    background: #f0f9ff;
-    padding: 12px 16px;
-    border-radius: 9px;
-    border-left: 4px solid #2563eb;
-    margin-bottom: 10px;
-}
+.kriter-card { background: #f0f9ff; padding: 12px 16px; border-radius: 9px; border-left: 4px solid #2563eb; margin-bottom: 10px; }
 .kriter-card .baslik { color: #1e3a8a; font-weight: 700; font-size: 0.95rem; }
 .kriter-card .aciklama { color: #94a3b8; font-size: 0.82rem; margin-top: 2px; }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -461,16 +338,6 @@ GEREKLI_SUTUNLAR = [
     'Toplam Puan', 'Genel Değerlendirme Yorumu', 'Dinamik_JSON'
 ]
 
-# ── Ana menü sekmeleri ──
-ANA_MENU = {
-    "ogr_gorev": {"label": "👥 Öğrenci & Görev", "icon": "👥"},
-    "ai_degerlendirme": {"label": "🤖 AI Değerlendirme", "icon": "🤖"},
-    "raporlar": {"label": "📊 Raporlar", "icon": "📊"},
-    "eokul": {"label": "📝 E-Okul Karne", "icon": "📝"},
-    "ogretmen_yonetim": {"label": "👨‍🏫 Öğretmen Yönetimi", "icon": "👨‍🏫"},  # sadece admin
-    "ayarlar": {"label": "⚙️ Ayarlar & Profil", "icon": "⚙️"},
-}
-
 ALT_MENU_OGR_GOREV = [
     ("excel_yukle",   "📥 Excel ile Yükle"),
     ("tekil_ekle",    "➕ Tekil Ekle"),
@@ -500,40 +367,27 @@ ALT_MENU_SIL = [
 # 5. ÖZEL NAVİGASYON YARDIMCILARI
 # ==========================================
 def _init_nav():
-    """Session state'te navigasyon anahtarlarını başlat."""
-    if "nav_ana" not in st.session_state:
-        st.session_state["nav_ana"] = "ogr_gorev"
-    if "nav_ogr_alt" not in st.session_state:
-        st.session_state["nav_ogr_alt"] = "excel_yukle"
-    if "nav_rapor_alt" not in st.session_state:
-        st.session_state["nav_rapor_alt"] = "sinif_rapor"
-    if "nav_ayar_alt" not in st.session_state:
-        st.session_state["nav_ayar_alt"] = "profil"
-    if "nav_sil_alt" not in st.session_state:
-        st.session_state["nav_sil_alt"] = "tekil_sil"
+    if "nav_ana" not in st.session_state: st.session_state["nav_ana"] = "ogr_gorev"
+    if "nav_ogr_alt" not in st.session_state: st.session_state["nav_ogr_alt"] = "excel_yukle"
+    if "nav_rapor_alt" not in st.session_state: st.session_state["nav_rapor_alt"] = "sinif_rapor"
+    if "nav_ayar_alt" not in st.session_state: st.session_state["nav_ayar_alt"] = "profil"
+    if "nav_sil_alt" not in st.session_state: st.session_state["nav_sil_alt"] = "tekil_sil"
 
-
-def render_nav_bar(menu_items: list, state_key: str, css_class: str = "nav-bar", btn_class: str = "nav-btn"):
-    """
-    Özel navigasyon çubuğu. Streamlit butonları yerine
-    HTML+JS olmaksızın saf Streamlit columns ile yapıldı —
-    her buton tıklanınca session_state güncellenir, rerun tetiklenir.
-    """
+def render_nav_bar(menu_items: list, state_key: str, container_class: str):
+    """Ana ve Alt menü butonlarını izole CSS ile çizer."""
+    st.markdown(f'<div class="{container_class}">', unsafe_allow_html=True)
     cols = st.columns(len(menu_items))
     aktif = st.session_state.get(state_key, menu_items[0][0])
     for col, (key, label) in zip(cols, menu_items):
         is_active = aktif == key
-        btn_style = "primary" if is_active else "secondary"
-        # İşaretli seçili sekmeyi göstermek için label'e prefix ekle
         display_label = f"▶ {label}" if is_active else label
         if col.button(display_label, key=f"navbtn_{state_key}_{key}", use_container_width=True,
                       type="primary" if is_active else "secondary"):
             st.session_state[state_key] = key
             st.rerun()
-
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def render_ana_nav(rol: str, admin_bakis: bool):
-    """Ana yönetim menüsünü çizer."""
     items = [
         ("ogr_gorev",         "👥 Öğrenci & Görev"),
         ("ai_degerlendirme",  "🤖 AI Değerlendirme"),
@@ -543,8 +397,7 @@ def render_ana_nav(rol: str, admin_bakis: bool):
     if rol == "admin" and not admin_bakis:
         items.append(("ogretmen_yonetim", "👨‍🏫 Öğretmen Yönetimi"))
     items.append(("ayarlar", "⚙️ Ayarlar & Profil"))
-    render_nav_bar(items, "nav_ana")
-
+    render_nav_bar(items, "nav_ana", "main-nav-container")
 
 # ==========================================
 # 6. VERİTABANI YÖNETİMİ
@@ -579,9 +432,9 @@ def ayar_yukle():
                         "sifre": "Sarac.47",
                         "rol": "admin",
                         "ad": "Sistem Yöneticisi",
-                        "brans": "Tüm Dersler",
+                        "brans": "",
                         "okul": "",
-                        "eposta": "saracaksan@gmail.com",
+                        "eposta": "properkar360@gmail.com",
                         "onayli": True
                     }
                 },
@@ -594,13 +447,11 @@ def ayar_yukle():
         st.error(f"Sistem ayarları yüklenemedi: {e}")
         return {}
 
-
 def ayar_kaydet(ayarlar):
     try:
         supabase.table('ayarlar').update({'veri': ayarlar}).eq('id', 1).execute()
     except Exception as e:
         st.error(f"Ayarlar kaydedilemedi: {e}")
-
 
 @st.cache_data(ttl=0)
 def veri_yukle():
@@ -624,14 +475,12 @@ def veri_yukle():
     except Exception as e:
         return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
 
-
 # ==========================================
 # 7. E-POSTA İŞLEMLERİ
 # ==========================================
 def sifre_olustur(uzunluk=10):
     alfabe = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alfabe) for _ in range(uzunluk))
-
 
 def eposta_gonder(alici, konu, icerik):
     if not EMAIL_PASSWORD:
@@ -645,11 +494,10 @@ def eposta_gonder(alici, konu, icerik):
         <html><body style="font-family:Arial,sans-serif;background:#f0f4f8;padding:20px;">
         <div style="background:white;border-radius:12px;padding:30px;max-width:500px;
              margin:0 auto;border-top:5px solid #2563eb;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-            <h2 style="color:#1e3a8a;margin-top:0;">🧭 PUSULA 360</h2>
+            <h2 style="color:#1e3a8a;margin-top:0;">🧭 PROPERKAR360</h2>
             <p style="color:#334155;line-height:1.6;">{icerik}</p>
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
-            <p style="color:#94a3b8;font-size:0.85rem;">Dargeçit İlçe Milli Eğitim Müdürlüğü<br>
-            Bu e-posta otomatik gönderilmiştir.</p>
+            <p style="color:#94a3b8;font-size:0.85rem;">Bu e-posta otomatik gönderilmiştir.</p>
         </div></body></html>
         """
         msg.attach(MIMEText(html_icerik, 'html', 'utf-8'))
@@ -660,7 +508,6 @@ def eposta_gonder(alici, konu, icerik):
         return True, "E-posta gönderildi."
     except Exception as e:
         return False, str(e)
-
 
 # ==========================================
 # 8. YARDIMCI FONKSİYONLAR
@@ -673,7 +520,6 @@ def bos_sablon_olustur():
         writer.sheets['Ogrenci_Listesi'].set_column(0, 2, 25)
     return output.getvalue()
 
-
 def eokul_sablon_olustur():
     sablon_df = pd.DataFrame(columns=[
         'Öğrenci No', 'Adı Soyadı', 'Sınıfı', 'TÜRKÇE', 'MATEMATİK', 'HAYAT BİLGİSİ',
@@ -685,7 +531,6 @@ def eokul_sablon_olustur():
         sablon_df.to_excel(writer, index=False, sheet_name='E_Okul_Karne_Listesi')
     return output.getvalue()
 
-
 def puan_renk(puan):
     try:
         p = int(puan)
@@ -695,9 +540,7 @@ def puan_renk(puan):
     except:
         return ""
 
-
 def kriter_bul(k_id, ayarlar):
-    """Kriter ID'sinden başlık, max, icon bilgisini döndürür."""
     for s_kriterler in ayarlar.get("sablonlar", {}).values():
         for kr in s_kriterler:
             if kr["id"] == k_id:
@@ -707,9 +550,8 @@ def kriter_bul(k_id, ayarlar):
             return kr["baslik"], kr["max"], kr.get("icon", "📌")
     return "Kriter", 100, "📌"
 
-
 # ==========================================
-# 9. HTML RAPOR ŞABLONLARİ
+# 9. HTML RAPOR ŞABLONLARI
 # ==========================================
 def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
     if tekil_gorev_idx is not None:
@@ -783,6 +625,8 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
         ders    = row.get('Ders', 'Bilinmeyen Ders')
         ogrt_id = row.get('Atanan_Ogretmen', 'admin')
         ogrt_ad = ayarlar["kullanicilar"].get(ogrt_id, {}).get("ad", "Öğretmen") if ogrt_id != "admin" else "Sistem Yöneticisi"
+        ogrt_brans_d = ayarlar["kullanicilar"].get(ogrt_id, {}).get("brans", "")
+        ogrt_brans_txt = f"{ogrt_brans_d} Öğretmeni" if ogrt_brans_d else "Öğretmen / Yönetici"
 
         html += f"""
         <div class="page">
@@ -825,15 +669,17 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
                 {row.get('Genel Değerlendirme Yorumu','Henüz genel bir değerlendirme yazılmamış.')}
             </div>
             <div class="imza-alani">
-                <strong>{ogrt_ad}</strong><br>{ders} Öğretmeni
+                <strong>{ogrt_ad}</strong><br>{ogrt_brans_txt}
             </div>
         </div>"""
 
     html += "</body></html>"
     return html
 
-
 def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler):
+    ogrt_brans_txt = f"({ogrt_brans})" if ogrt_brans else ""
+    imza_unvan = f"{ogrt_brans} Öğretmeni" if ogrt_brans else "Öğretmen / Yönetici"
+    
     html = """<!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Değerlendirme Raporu</title>
@@ -873,7 +719,7 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
   <div class="header">
     <div>
       <div style="opacity:0.8;font-size:0.85rem;">{b.get('Okul','')}</div>
-      <h1>{b.get('Gorev_Adi','Değerlendirme')} ({b.get('Ders',ogrt_brans)})</h1>
+      <h1>{b.get('Gorev_Adi','Değerlendirme')} {ogrt_brans_txt}</h1>
     </div>
     <div style="text-align:center;">
       <div class="puan-daire">{toplam}</div>
@@ -902,12 +748,11 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
         html += f"""
   </table>
   <div class="yorum"><strong>💬 Genel Yorum:</strong><br><br>{b.get('Genel Değerlendirme Yorumu','Değerlendirme bekleniyor.')}</div>
-  <div class="imza"><strong>{ogrt_ad}</strong><br>{b.get('Ders',ogrt_brans)} Öğretmeni</div>
+  <div class="imza"><strong>{ogrt_ad}</strong><br>{imza_unvan}</div>
 </div>"""
 
     html += "</body></html>"
     return html
-
 
 def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
     df_p = df_sinif.dropna(subset=['Toplam Puan']).copy()
@@ -996,11 +841,10 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
         html += f"<tr><td>{i}</td><td>{row.get('Okul No','')}</td><td><strong>{row.get('Öğrenci Adı Soyadı','')}</strong></td><td>{row.get('Sınıf','')}</td><td>{row.get('Gorev_Adi','')}</td><td style='font-weight:800;'>{p}</td><td><span class='badge {badge}'>{durum}</span></td></tr>"
 
     html += f"""</table>
-<div class="footer">PUSULA 360 Bütüncül Değerlendirme Platformu &nbsp;|&nbsp; {time.strftime('%d.%m.%Y')}<br>
+<div class="footer">PROPERKAR360 Bütüncül Değerlendirme Platformu &nbsp;|&nbsp; {time.strftime('%d.%m.%Y')}<br>
 Tasarım: Sıraç AKSAN — <a href="mailto:saracaksan@gmail.com" style="color:#2563eb;">saracaksan@gmail.com</a></div>
 </div></body></html>"""
     return html
-
 
 # ==========================================
 # 10. YAPAY ZEKA BAĞLANTILARI
@@ -1009,8 +853,9 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
     sinif_str = str(bilgi_dict.get("Sınıf", "7"))
     seviye    = "".join(filter(str.isdigit, sinif_str)) or "7"
     kriter_ozeti = "\n".join([f"  - {k['id']}: {k['baslik']} (Max: {k['max']} Puan)" for k in kriterler])
-
-    prompt = f"""Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencisi değerlendiriyorsun.
+    
+    ogrt_brans_txt = f"{ogrt_brans} " if ogrt_brans else ""
+    prompt = f"""Sen profesyonel bir {ogrt_brans_txt}öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencisi değerlendiriyorsun.
 Öğrenciyle doğrudan 'sen' diliyle şefkatli ve motive edici konuş.
 Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
 
@@ -1034,7 +879,6 @@ SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel"
     raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     return json.loads(raw.replace("```json", "").replace("```", "").strip())
 
-
 def ai_karne_gorusu_yaz(ogrenci_adi, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad):
     notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if pd.notna(notu)])
     prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_adi} adlı öğrenciye e-okul karne görüşü yaz.
@@ -1051,9 +895,8 @@ bakarak öğrenciye hitap eden, pedagojik, 3-4 cümlelik motive edici bir dönem
     r.raise_for_status()
     return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-
 # ==========================================
-# 11. ÖĞRENCİ SORGULAMA EKRANI
+# 11. ÖĞRENCİ SORGULAMA EKRANI (VELİ/ÖĞRENCİ)
 # ==========================================
 def ogrenci_sorgu_ekrani(df, ayarlar):
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
@@ -1140,7 +983,6 @@ def ogrenci_sorgu_ekrani(df, ayarlar):
                             key=f"dl_{idx}"
                         )
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 # ==========================================
 # 12. GİRİŞ EKRANI
@@ -1230,7 +1072,7 @@ def giris_ekrani(df, ayarlar):
                         yeni_sifre = sifre_olustur()
                         ok, mesaj = eposta_gonder(
                             u_eposta,
-                            "PUSULA 360 – Yeni Şifreniz",
+                            "PROPERKAR360 – Yeni Şifreniz",
                             f"Sayın {bulunan['ad']},<br><br>"
                             f"Şifre yenileme talebiniz alındı. Yeni şifreniz: <strong>{yeni_sifre}</strong><br><br>"
                             f"Giriş yaptıktan sonra profilinizden şifrenizi değiştirebilirsiniz."
@@ -1245,12 +1087,11 @@ def giris_ekrani(df, ayarlar):
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-
 # ==========================================
 # 13. KULLANIM KILAVUZU
 # ==========================================
 def kullanim_kilavuzu():
-    with st.expander("📖 PUSULA 360 Kullanım Kılavuzu — Tıkla, Aç", expanded=False):
+    with st.expander("📖 PROPERKAR360 Kullanım Kılavuzu — Tıkla, Aç", expanded=False):
         st.markdown("""
         <div class="kilavuz-item">
         <div class="kilavuz-baslik">1️⃣ Sisteme Kayıt ve Giriş</div>
@@ -1285,7 +1126,6 @@ def kullanim_kilavuzu():
         • Silmeden önce <b>Raporlar → Veri Yedekleme</b> bölümünden Excel yedeği alın.
         </div></div>
         """, unsafe_allow_html=True)
-
 
 # ==========================================
 # 14. ŞABLON YÖNETİM MODÜLÜ
@@ -1360,7 +1200,6 @@ def sablon_yonetimi_ui(ayarlar, kb, rol):
     else:
         st.info("Silinebilecek (yetkiniz olan) bir şablon bulunmuyor.")
 
-
 # ==========================================
 # 15. YÖNETİM PANELİ — Tüm sekmeler
 # ==========================================
@@ -1373,13 +1212,17 @@ def yonetim_paneli(df, ayarlar):
     admin_bakis = st.session_state.get("admin_bakis_modu", False)
     admin_bakis_ogrt = st.session_state.get("admin_bakis_ogretmen", None)
 
-    # ── Profil çubuğu ──
     col_profil1, col_profil2 = st.columns([4, 1])
     with col_profil1:
         admin_etiket  = '<span style="color:#ef4444;font-weight:800;">🔴 ADMİN</span>' if rol == 'admin' and not admin_bakis else ''
         gozatma_badge = (f'<span style="background:#fef9c3;color:#854d0e;padding:2px 10px;'
                          f'border-radius:6px;font-size:0.75rem;margin-left:8px;">👁 GÖZATMA → {admin_bakis_ogrt}</span>'
                          if admin_bakis else '')
+        
+        brans_text = kb.get('brans','')
+        if brans_text == "Tüm Dersler": brans_text = ""
+        brans_bolumu = f"&nbsp;|&nbsp; {brans_text}" if brans_text else ""
+
         st.markdown(f"""
         <div class="profil-bar">
             <div>
@@ -1387,7 +1230,7 @@ def yonetim_paneli(df, ayarlar):
                     {'👁️ ' if admin_bakis else '👋 '}{kb['ad']} {gozatma_badge}
                 </div>
                 <div style="font-size:0.88rem;color:#64748b;font-weight:600;margin-top:2px;">
-                    {kb.get('okul','') or 'Yönetici'} &nbsp;|&nbsp; {kb.get('brans','')} {admin_etiket}
+                    {kb.get('okul','') or 'Yönetici'} {brans_bolumu} {admin_etiket}
                 </div>
             </div>
         </div>""", unsafe_allow_html=True)
@@ -1403,7 +1246,6 @@ def yonetim_paneli(df, ayarlar):
                 st.session_state.clear()
                 st.rerun()
 
-    # ── Yetkili veri filtresi ──
     if admin_bakis and admin_bakis_ogrt:
         kb_bakis = ayarlar["kullanicilar"].get(admin_bakis_ogrt, kb)
         df_yetkili = df[
@@ -1420,7 +1262,6 @@ def yonetim_paneli(df, ayarlar):
 
     kullanim_kilavuzu()
 
-    # ── Ana navigasyon çubuğu ──
     render_ana_nav(rol, admin_bakis)
     aktif_ana = st.session_state.get("nav_ana", "ogr_gorev")
 
@@ -1428,10 +1269,9 @@ def yonetim_paneli(df, ayarlar):
     # SEKME: ÖĞRENCİ & GÖREV
     # ══════════════════════════════════════════════════
     if aktif_ana == "ogr_gorev":
-        render_nav_bar(ALT_MENU_OGR_GOREV, "nav_ogr_alt")
+        render_nav_bar(ALT_MENU_OGR_GOREV, "nav_ogr_alt", "sub-nav-container")
         aktif_ogr = st.session_state.get("nav_ogr_alt", "excel_yukle")
 
-        # ── Excel ile Yükle ──
         if aktif_ogr == "excel_yukle":
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             st.markdown("<div class='section-header'>📥 Excel ile Toplu Görev Tanımla</div>", unsafe_allow_html=True)
@@ -1500,7 +1340,6 @@ def yonetim_paneli(df, ayarlar):
                         st.error(f"Hata: {e}")
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Tekil Ekle ──
         elif aktif_ogr == "tekil_ekle":
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             st.markdown("<div class='section-header'>➕ Tekil Öğrenci/Görev Ekle</div>", unsafe_allow_html=True)
@@ -1537,7 +1376,6 @@ def yonetim_paneli(df, ayarlar):
                         st.warning("Okul no, ad ve görev adı zorunludur.")
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Havuzdan Görev Ata ──
         elif aktif_ogr == "havuz_ata":
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             st.markdown("<div class='section-header'>🏫 Havuzdaki Sınıflara Yeni Görev Ata</div>", unsafe_allow_html=True)
@@ -1588,10 +1426,9 @@ def yonetim_paneli(df, ayarlar):
                 st.info("Bu okula ait öğrenci kaydı yok. Önce Excel ile yükleme yapın.")
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Silme İşlemleri ──
         elif aktif_ogr == "silme":
             st.markdown('<div class="warn-banner">⚠️ Silme işlemleri geri alınamaz! Silmeden önce <b>Raporlar → Veri Yedekleme</b> bölümünden yedek alın.</div>', unsafe_allow_html=True)
-            render_nav_bar(ALT_MENU_SIL, "nav_sil_alt")
+            render_nav_bar(ALT_MENU_SIL, "nav_sil_alt", "sub-nav-container")
             aktif_sil = st.session_state.get("nav_sil_alt", "tekil_sil")
 
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
@@ -1782,7 +1619,7 @@ def yonetim_paneli(df, ayarlar):
     # SEKME: RAPORLAR
     # ══════════════════════════════════════════════════
     elif aktif_ana == "raporlar":
-        render_nav_bar(ALT_MENU_RAPORLAR, "nav_rapor_alt")
+        render_nav_bar(ALT_MENU_RAPORLAR, "nav_rapor_alt", "sub-nav-container")
         aktif_rapor = st.session_state.get("nav_rapor_alt", "sinif_rapor")
 
         if aktif_rapor == "sinif_rapor":
@@ -1988,34 +1825,34 @@ def yonetim_paneli(df, ayarlar):
                             st.session_state["nav_ogretmen"] = kadi
                             st.rerun()
 
-                    sec_ogrt_duzenle = st.session_state.get("nav_ogretmen")
-                    if sec_ogrt_duzenle and sec_ogrt_duzenle in ayarlar["kullanicilar"]:
-                        user_d = ayarlar["kullanicilar"][sec_ogrt_duzenle]
-                        st.markdown(f"---\n#### ✏️ {user_d['ad']} — Bilgi Düzenleme")
-                        with st.form(f"ogrt_duzenle_{sec_ogrt_duzenle}"):
-                            col_d1, col_d2 = st.columns(2)
-                            y_ad    = col_d1.text_input("Ad Soyad", value=user_d['ad'])
-                            y_brans = col_d2.text_input("Branş", value=user_d.get('brans',''))
-                            y_okul_idx = ayarlar["okullar"].index(user_d['okul']) if user_d['okul'] in ayarlar["okullar"] else 0
-                            y_okul  = st.selectbox("Okul", ayarlar["okullar"], index=y_okul_idx)
-                            y_eposta = st.text_input("E-posta", value=user_d.get('eposta',''))
-                            y_sifre  = st.text_input("Şifre", value=user_d['sifre'], type="password")
-                            y_onayli = st.checkbox("Onaylı Hesap", value=user_d.get("onayli", True))
-                            col_f1, col_f2 = st.columns(2)
-                            if col_f1.form_submit_button("💾 Güncelle"):
-                                ayarlar["kullanicilar"][sec_ogrt_duzenle].update({
-                                    "ad": y_ad, "okul": y_okul, "brans": y_brans,
-                                    "eposta": y_eposta, "sifre": y_sifre, "onayli": y_onayli
-                                })
-                                ayar_kaydet(ayarlar)
-                                st.success("✅ Güncellendi!")
-                                time.sleep(1)
-                                st.rerun()
-                            if col_f2.form_submit_button("🗑️ Sil", type="primary"):
-                                del ayarlar["kullanicilar"][sec_ogrt_duzenle]
-                                ayar_kaydet(ayarlar)
-                                st.session_state["nav_ogretmen"] = None
-                                st.rerun()
+                sec_ogrt_duzenle = st.session_state.get("nav_ogretmen")
+                if sec_ogrt_duzenle and sec_ogrt_duzenle in ayarlar["kullanicilar"]:
+                    user_d = ayarlar["kullanicilar"][sec_ogrt_duzenle]
+                    st.markdown(f"---\n#### ✏️ {user_d['ad']} — Bilgi Düzenleme")
+                    with st.form(f"ogrt_duzenle_{sec_ogrt_duzenle}"):
+                        col_d1, col_d2 = st.columns(2)
+                        y_ad    = col_d1.text_input("Ad Soyad", value=user_d['ad'])
+                        y_brans = col_d2.text_input("Branş", value=user_d.get('brans',''))
+                        y_okul_idx = ayarlar["okullar"].index(user_d['okul']) if user_d['okul'] in ayarlar["okullar"] else 0
+                        y_okul  = st.selectbox("Okul", ayarlar["okullar"], index=y_okul_idx)
+                        y_eposta = st.text_input("E-posta", value=user_d.get('eposta',''))
+                        y_sifre  = st.text_input("Şifre", value=user_d['sifre'], type="password")
+                        y_onayli = st.checkbox("Onaylı Hesap", value=user_d.get("onayli", True))
+                        col_f1, col_f2 = st.columns(2)
+                        if col_f1.form_submit_button("💾 Güncelle"):
+                            ayarlar["kullanicilar"][sec_ogrt_duzenle].update({
+                                "ad": y_ad, "okul": y_okul, "brans": y_brans,
+                                "eposta": y_eposta, "sifre": y_sifre, "onayli": y_onayli
+                            })
+                            ayar_kaydet(ayarlar)
+                            st.success("✅ Güncellendi!")
+                            time.sleep(1)
+                            st.rerun()
+                        if col_f2.form_submit_button("🗑️ Sil", type="primary"):
+                            del ayarlar["kullanicilar"][sec_ogrt_duzenle]
+                            ayar_kaydet(ayarlar)
+                            st.session_state["nav_ogretmen"] = None
+                            st.rerun()
 
         st.markdown("---")
         col_ek1, col_ek2 = st.columns(2)
@@ -2069,9 +1906,9 @@ def yonetim_paneli(df, ayarlar):
     # ══════════════════════════════════════════════════
     elif aktif_ana == "ayarlar":
         if rol == "admin" and not admin_bakis:
-            render_nav_bar(ALT_MENU_AYARLAR_ADMIN, "nav_ayar_alt")
+            render_nav_bar(ALT_MENU_AYARLAR_ADMIN, "nav_ayar_alt", "sub-nav-container")
         else:
-            render_nav_bar(ALT_MENU_AYARLAR_OGRT, "nav_ayar_alt")
+            render_nav_bar(ALT_MENU_AYARLAR_OGRT, "nav_ayar_alt", "sub-nav-container")
         aktif_ayar = st.session_state.get("nav_ayar_alt", "sistem" if (rol == "admin" and not admin_bakis) else "profil")
 
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
@@ -2133,8 +1970,8 @@ def yonetim_paneli(df, ayarlar):
 def footer_goster():
     st.markdown("""
     <div class="app-footer">
-        <div class="footer-title">🧭 PUSULA 360 — Bütüncül Değerlendirme Platformu</div>
-        <div>Dargeçit İlçe Milli Eğitim Müdürlüğü | Proje, Performans ve Karne Yönetim Sistemi</div>
+        <div class="footer-title">🧭 PROPERKAR360 — Bütüncül Değerlendirme Platformu</div>
+        <div>Proje, Performans ve Karne Yönetim Sistemi</div>
         <br>
         <div>
             Sistem Tasarımcısı: <strong style="color:white;">Sıraç AKSAN</strong> &nbsp;|&nbsp;
@@ -2142,7 +1979,7 @@ def footer_goster():
             📱 0506 928 22 10
         </div>
         <div style="margin-top:8px;font-size:0.78rem;">
-            © 2025 PUSULA 360. Tüm hakları saklıdır.
+            © 2025 PROPERKAR360. Tüm hakları saklıdır.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -2157,9 +1994,9 @@ def main():
 
     st.markdown("""
     <div class="hero-header">
-        <div class="hero-title">🧭 PUSULA 360</div>
+        <div class="hero-title">🧭 PROPERKAR360</div>
         <div class="hero-subtitle">Bütüncül Proje, Performans ve Karne Değerlendirme Platformu</div>
-        <span class="hero-badge">Dargeçit İlçe Milli Eğitim Müdürlüğü</span>
+        <span class="hero-badge">Sıraç AKSAN</span>
     </div>
     """, unsafe_allow_html=True)
 
