@@ -444,6 +444,16 @@ def veri_yukle():
         return pd.DataFrame(columns=GEREKLI_SUTUNLAR)
 
 # ==========================================
+# ==========================================
+# E-POSTA AYARLARI VE GİZLİ KASA BAĞLANTISI
+# ==========================================
+EMAIL_SENDER = "properkar360@gmail.com"
+try:
+    EMAIL_PASSWORD = st.secrets.get("EMAIL_PASSWORD", "")
+except Exception:
+    EMAIL_PASSWORD = ""
+
+# ==========================================
 # 6. E-POSTA İŞLEMLERİ
 # ==========================================
 def sifre_olustur(uzunluk=10):
@@ -469,6 +479,15 @@ def eposta_gonder(alici, konu, icerik):
             <p style="color: #94a3b8; font-size: 0.85rem;">Dargeçit İlçe Milli Eğitim Müdürlüğü<br>
             Bu e-posta otomatik gönderilmiştir.</p>
         </div></body></html>
+        """
+        msg.attach(MIMEText(html_icerik, 'html', 'utf-8'))
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_SENDER, alici, msg.as_string())
+        server.quit()
+        return True, "E-posta gönderildi."
+    except Exception as e:
+        return False, str(e)
         """
         msg.attach(MIMEText(html_icerik, 'html', 'utf-8'))
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
