@@ -1,0 +1,16 @@
+name: "Pro-Per-Kar & Supabase Uyumama Kalkanı"
+
+on:
+  schedule:
+    # Her 12 saatte bir çalışır (Günde 2 kez sistemi dürter)
+    - cron: '0 */12 * * *'
+  workflow_dispatch: # İstediğiniz zaman GitHub panelinden elle başlatabilmeniz için
+
+jobs:
+  ping_sunucu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Pusula 360 Sistemine İstek Gönderiliyor"
+        run: |
+          curl -I -s https://pro-per-kar.streamlit.app/
+          echo "Kalkan başarıyla çalıştırıldı, Streamlit ve Supabase uyanık tutuldu!"
