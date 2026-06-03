@@ -597,8 +597,10 @@ def giris_ekrani(df, ayarlar):
                     else:
                         st.error("❌ Hatalı bilgi!")
 
-            with g2:
+           with g2:
                 st.markdown("##### 📍 Kurum Bilgileri")
+                st.info("💡 Lütfen önce okulunuzun listede olup olmadığını kontrol edin. Aynı okulun 2 farklı isimle kaydedilmemesi için, sadece listede YOKSA 'Yeni Okul Ekle' seçeneğini kullanın.")
+                
                 il_listesi = list(ayarlar["okullar"].keys())
                 
                 # İL SEÇİMİ
@@ -620,7 +622,7 @@ def giris_ekrani(df, ayarlar):
                     okul_listesi = ayarlar["okullar"].get(sec_il, {}).get(sec_ilce, [])
                     sec_okul = st.selectbox("Okulunuzu Seçiniz", ["— Seçiniz —", "➕ Yeni Okul Ekle"] + okul_listesi)
                     if sec_okul == "➕ Yeni Okul Ekle":
-                        sec_okul = st.text_input("Okulun Tam Adını Yazınız").strip().title()
+                        sec_okul = st.text_input("Okulun Tam Adını Yazınız (Örn: Süleyman Demirel İlkokulu)").strip().title()
 
                 st.markdown("##### 👤 Kişisel Bilgiler")
                 r_ad     = st.text_input("Ad Soyad", key="r_ad")
@@ -637,7 +639,6 @@ def giris_ekrani(df, ayarlar):
                     elif not (r_kadi and r_sifre and r_ad and sec_il and sec_ilce and sec_okul and "Seçiniz" not in tam_okul_adi):
                         st.warning("Lütfen il, ilçe, okul ve tüm kişisel alanları eksiksiz doldurun.")
                     else:
-                        # Eğer yeni il/ilçe/okul yazıldıysa veritabanına hiyerarşik olarak ekle
                         if sec_il not in ayarlar["okullar"]: ayarlar["okullar"][sec_il] = {}
                         if sec_ilce not in ayarlar["okullar"][sec_il]: ayarlar["okullar"][sec_il][sec_ilce] = []
                         if sec_okul not in ayarlar["okullar"][sec_il][sec_ilce]: 
