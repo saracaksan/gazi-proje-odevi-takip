@@ -385,7 +385,6 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
         # ÜST MENÜ (Ana Navigasyon) - Koyu arka plan, Mavi butonlar, yükselme efekti
         st.markdown(f"""
         <style>
-        /* Konteyneri renklendir (Siyah çubuk problemini çözer) */
         div.element-container:has(#{marker_id}) + div.element-container {{
             background: #0f172a;
             padding: 12px 16px;
@@ -394,7 +393,6 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
             margin-bottom: 10px;
             border-bottom: 4px solid #3b82f6;
         }}
-        /* Butonların standart pasif hali */
         div.element-container:has(#{marker_id}) + div.element-container button {{
             background: transparent !important;
             color: #94a3b8 !important;
@@ -403,13 +401,11 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
             font-weight: 800 !important;
             transition: all 0.25s ease !important;
         }}
-        /* Üzerine gelince (Hover) - Hafif parlar ve yukarı kalkar */
         div.element-container:has(#{marker_id}) + div.element-container button:hover:not([kind="primary"]) {{
             background: rgba(255,255,255,0.08) !important;
             color: #ffffff !important;
             transform: translateY(-2px);
         }}
-        /* Seçili Buton (Primary) - Canlı Mavi ve Hafif Büyüme */
         div.element-container:has(#{marker_id}) + div.element-container button[kind="primary"] {{
             background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
             color: #ffffff !important;
@@ -422,7 +418,6 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
         # ALT MENÜ (İç Navigasyon) - Açık arka plan, Yeşil butonlar, renk değiştirme efekti
         st.markdown(f"""
         <style>
-        /* Alt menü çerçevesi */
         div.element-container:has(#{marker_id}) + div.element-container {{
             background: #f8fafc;
             padding: 12px 18px;
@@ -430,7 +425,6 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
             border: 1px solid #cbd5e1;
             margin-bottom: 24px;
         }}
-        /* Butonların standart pasif hali */
         div.element-container:has(#{marker_id}) + div.element-container button {{
             background: #ffffff !important;
             color: #475569 !important;
@@ -439,14 +433,12 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
             font-weight: 700 !important;
             transition: all 0.25s ease !important;
         }}
-        /* Üzerine gelince (Hover) - Açık yeşil olur, metin yeşile döner */
         div.element-container:has(#{marker_id}) + div.element-container button:hover:not([kind="primary"]) {{
             background: #d1fae5 !important;
             color: #059669 !important;
             border-color: #34d399 !important;
             transform: translateY(-2px);
         }}
-        /* Seçili Buton (Primary) - Zümrüt Yeşili ve Hafif Büyüme */
         div.element-container:has(#{marker_id}) + div.element-container button[kind="primary"] {{
             background: linear-gradient(135deg, #059669, #10b981) !important;
             color: #ffffff !important;
@@ -467,6 +459,18 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
                       type="primary" if is_active else "secondary"):
             st.session_state[state_key] = key
             st.rerun()
+
+def render_ana_nav(rol: str, admin_bakis: bool):
+    items = [
+        ("ogr_gorev",         "👥 Öğrenci & Görev"),
+        ("ai_degerlendirme",  "🤖 AI Değerlendirme"),
+        ("raporlar",          "📊 Raporlar"),
+        ("eokul",             "📝 E-Okul Karne"),
+    ]
+    if rol == "admin" and not admin_bakis:
+        items.append(("ogretmen_yonetim", "👨‍🏫 Öğretmen Yönetimi"))
+    items.append(("ayarlar", "⚙️ Ayarlar & Profil"))
+    render_nav_bar(items, "nav_ana", "main-nav-container")
 
 # ==========================================
 # 6. VERİTABANI YÖNETİMİ
