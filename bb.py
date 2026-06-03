@@ -47,309 +47,440 @@ except Exception:
     EMAIL_PASSWORD = ""
 
 # ==========================================
-# 3. GLOBAL CSS — YENİ PROFESYONELLEŞTİRİLMİŞ TASARIM
+# 3. GLOBAL CSS — YAPISAN YENİDEN TASARIM
 # ==========================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700&display=swap');
 
-/* ── Temel ── */
+/* ═══════════════════════════════════════════
+   TEMEL ZEMIN
+═══════════════════════════════════════════ */
 html, body, [class*="css"] {
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: #f8f7f4;
-    color: #111827;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    background-color: #F4F3EF !important;
+    color: #1C1C1E !important;
 }
 .block-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 2rem !important;
-    max-width: 1400px !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1380px !important;
 }
 
-/* ── Hero Başlık ── */
+/* ═══════════════════════════════════════════
+   HERO — minimal, koyu, temiz
+═══════════════════════════════════════════ */
 .hero-header {
-    background: #111827;
-    border-radius: 12px;
-    padding: 18px 28px;
-    text-align: center;
-    margin-bottom: 16px;
+    background: #1C1C1E;
+    border-radius: 14px;
+    padding: 20px 32px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
 }
 .hero-title {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(1.3rem, 3.5vw, 1.9rem);
-    font-weight: 600;
-    color: #ffffff;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 700;
+    color: #FFFFFF;
     margin: 0;
     letter-spacing: -0.5px;
 }
 .hero-subtitle {
-    font-size: 0.88rem;
-    color: #9ca3af;
-    margin-top: 4px;
+    font-size: 0.82rem;
+    color: #8E8E93;
+    margin-top: 3px;
     font-weight: 400;
 }
 .hero-badge {
     display: inline-block;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #d1d5db;
-    padding: 3px 14px;
+    background: #2C2C2E;
+    border: 1px solid #3A3A3C;
+    color: #8E8E93;
+    padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
-    margin-top: 7px;
+    font-size: 0.72rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
-/* ── ANA MENÜ (Topbar stili — "nereye gidiyorum")
-   Koyu arka plan YOK. Açık, ince kenarlıklı kart.
-   Aktif: hafif gri dolgu + kenarlık. Pasif: şeffaf.
-   Mavi burada KULLANILMIYOR — sadece "aktif alt sekme"de var.
-*/
+/* ═══════════════════════════════════════════
+   ANA NAVİGASYON
+   — Büyük, yatay tab şeridi
+   — Aktif: kalın alt çizgi + koyu metin
+   — Pasif: soluk, küçük
+   — Zemin: beyaz kart
+═══════════════════════════════════════════ */
 .main-nav-container {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 6px;
-    margin-bottom: 4px;
+    background: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 14px;
+    padding: 0 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: stretch;
+    min-height: 52px;
+}
+.main-nav-container .stButton {
+    display: flex !important;
+    align-items: stretch !important;
 }
 .main-nav-container .stButton > button {
     background: transparent !important;
-    color: #6b7280 !important;
+    color: #8E8E93 !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-bottom: 3px solid transparent !important;
+    border-radius: 0 !important;
     font-weight: 500 !important;
-    font-size: 0.85rem !important;
-    padding: 8px 14px !important;
-    transition: all 0.15s !important;
-}
-.main-nav-container .stButton > button[kind="primary"] {
-    background: #f3f4f6 !important;
-    color: #111827 !important;
-    border: 1px solid #e5e7eb !important;
-    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    padding: 14px 18px !important;
+    margin: 0 !important;
+    transition: color 0.15s, border-color 0.15s !important;
+    white-space: nowrap !important;
     box-shadow: none !important;
+    height: 100% !important;
 }
 .main-nav-container .stButton > button:hover {
-    background: #f9fafb !important;
-    color: #111827 !important;
+    color: #1C1C1E !important;
+    background: transparent !important;
+    border-bottom: 3px solid #D1D1D6 !important;
+    box-shadow: none !important;
     transform: none !important;
+}
+.main-nav-container .stButton > button[kind="primary"] {
+    color: #1C1C1E !important;
+    font-weight: 700 !important;
+    border-bottom: 3px solid #1C1C1E !important;
+    background: transparent !important;
     box-shadow: none !important;
 }
 
-/* ── ALT MENÜ (Sidebar stili — "ne yapıyorum")
-   Gri zemin — ana navdan görsel olarak ayrılıyor.
-   Aktif: MAVİ — bu uygulamada mavinin TEK anlamlı kullanımı.
-   Kullanıcı "aktif alt sekme = mavi" okur, başka hiçbir şey mavi değil.
-*/
+/* ═══════════════════════════════════════════
+   ALT NAVİGASYON
+   — Tamamen farklı görsel dil: yatay pill listesi DEĞİL,
+     koyu zemin üstünde küçük etiket sistemi
+   — Aktif: turuncu/amber aksan (ana navdan farklı renk)
+   — Pasif: gri, hafif
+   — Zemin: koyu (#1C1C1E şerit) = "bu ana navın ALTINDAKİ
+     bir şey" mesajını net verir
+═══════════════════════════════════════════ */
 .sub-nav-container {
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    background: #1C1C1E;
     border-radius: 10px;
-    padding: 6px;
-    margin-bottom: 16px;
+    padding: 8px 10px;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
 }
 .sub-nav-container .stButton > button {
     background: transparent !important;
-    color: #6b7280 !important;
-    border: none !important;
-    border-radius: 7px !important;
+    color: #636366 !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
     font-weight: 500 !important;
-    font-size: 0.82rem !important;
-    padding: 8px 12px !important;
+    font-size: 0.78rem !important;
+    padding: 6px 14px !important;
+    letter-spacing: 0.1px !important;
     transition: all 0.12s !important;
-    text-align: left !important;
-    justify-content: flex-start !important;
-}
-.sub-nav-container .stButton > button[kind="primary"] {
-    background: #eff6ff !important;
-    color: #1d4ed8 !important;
-    border: 1px solid #bfdbfe !important;
-    font-weight: 600 !important;
     box-shadow: none !important;
+    white-space: nowrap !important;
 }
 .sub-nav-container .stButton > button:hover {
-    background: #ffffff !important;
-    color: #374151 !important;
+    background: #2C2C2E !important;
+    color: #EBEBF5 !important;
+    border-color: transparent !important;
     transform: none !important;
     box-shadow: none !important;
 }
+.sub-nav-container .stButton > button[kind="primary"] {
+    background: #F0A500 !important;   /* amber — ANA NAVDAN TAMAMEN FARKLI */
+    color: #1C1C1E !important;
+    font-weight: 700 !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
 
-/* ── Kart & Paneller ── */
+/* ═══════════════════════════════════════════
+   İÇERİK KARTLARI
+   — Sol kenarlık: bölüm kimliğini gösterir
+   — Kart arka planı: beyaz
+   — Zemin zaten #F4F3EF, kontrast kendiliğinden oluşur
+═══════════════════════════════════════════ */
 .glass-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-left: 4px solid #E5E5EA;   /* varsayılan: nötr gri */
     border-radius: 12px;
-    padding: 20px;
+    padding: 22px;
     margin-bottom: 16px;
 }
 
-/* Üst kenarlık aksanı: her kart türü farklı renk = farklı anlam */
-.stat-card {
-    background: white;
-    border-radius: 10px;
-    padding: 14px 18px;
-    border: 1px solid #e5e7eb;
-    border-top: 3px solid #2563eb;
-    margin-bottom: 12px;
-}
-.stat-card.green  { border-top-color: #16a34a; }
-.stat-card.orange { border-top-color: #d97706; }
-.stat-card.red    { border-top-color: #dc2626; }
-.stat-number { font-size: 1.9rem; font-weight: 600; color: #111827; line-height: 1; }
-.stat-label  { font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-top: 4px;
-               text-transform: uppercase; letter-spacing: 0.4px; }
-
-/* Bölüm başlığı: mavi alt çizgi yok — gri, ince, nötr */
+/* Bölüm başlığı: büyük değil, net */
 .section-header {
-    color: #374151;
+    font-size: 0.95rem;
     font-weight: 600;
-    font-size: 1rem;
-    margin-bottom: 14px;
-    border-bottom: 1px solid #f3f4f6;
+    color: #1C1C1E;
+    margin-bottom: 16px;
     padding-bottom: 10px;
+    border-bottom: 1px solid #F2F2F7;
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: -0.1px;
 }
 
-/* ── Standart Butonlar
-   Koyu (#111827) = genel aksiyon. Mavi değil.
-   İndirme = yeşil. Renk = anlam.
-*/
+/* İstatistik kartları */
+.stat-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid #E5E5EA;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #636366;   /* varsayılan gri */
+    border-radius: 12px 12px 0 0;
+}
+.stat-card.green::before  { background: #34C759; }
+.stat-card.orange::before { background: #FF9F0A; }
+.stat-card.red::before    { background: #FF3B30; }
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1C1C1E;
+    line-height: 1;
+}
+.stat-label {
+    font-size: 0.72rem;
+    color: #8E8E93;
+    font-weight: 600;
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ═══════════════════════════════════════════
+   BUTONLAR — 3 renk = 3 anlam
+   Koyu = genel aksiyon
+   Yeşil = indir/kaydet
+   (Nav renkleri butonlarda YOK)
+═══════════════════════════════════════════ */
 .stButton > button {
-    background: #111827 !important;
-    color: white !important;
+    background: #1C1C1E !important;
+    color: #FFFFFF !important;
     border: none !important;
-    border-radius: 8px !important;
-    font-weight: 500 !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
     font-family: 'Inter', sans-serif !important;
     font-size: 0.85rem !important;
-    padding: 0.5rem 1.1rem !important;
+    padding: 0.55rem 1.2rem !important;
     transition: opacity 0.15s !important;
+    box-shadow: none !important;
 }
 .stButton > button:hover {
-    opacity: 0.82 !important;
+    opacity: 0.78 !important;
     transform: none !important;
     box-shadow: none !important;
 }
 .stDownloadButton > button {
-    background: #16a34a !important;
+    background: #34C759 !important;
+    color: #FFFFFF !important;
     border: none !important;
-    color: white !important;
+    border-radius: 9px !important;
 }
 .stDownloadButton > button:hover {
-    opacity: 0.85 !important;
+    opacity: 0.82 !important;
     box-shadow: none !important;
 }
 
-/* ── Giriş Ekranı Tabs ── */
+/* ═══════════════════════════════════════════
+   GİRİŞ EKRANI TABS
+   Aynı mantık: aktif = koyu, pasif = soluk
+═══════════════════════════════════════════ */
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] {
-    background: #f3f4f6;
-    border-radius: 10px;
+    background: #F2F2F7;
+    border-radius: 12px;
     padding: 4px;
     gap: 2px;
-    border: 1px solid #e5e7eb;
+    border: none;
 }
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] > button {
     background: transparent !important;
-    color: #6b7280 !important;
-    border-radius: 7px !important;
+    color: #8E8E93 !important;
+    border-radius: 9px !important;
     font-weight: 500 !important;
     font-size: 0.85rem !important;
-    padding: 7px 16px !important;
+    padding: 8px 16px !important;
     border: none !important;
 }
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] > button[aria-selected="true"] {
-    background: #ffffff !important;
-    color: #111827 !important;
-    box-shadow: 0 0 0 1px #e5e7eb !important;
-    font-weight: 600 !important;
+    background: #FFFFFF !important;
+    color: #1C1C1E !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
 }
 
-/* ── Bildirim Bannerlar — her renk tek anlam taşır ── */
+/* ═══════════════════════════════════════════
+   BİLDİRİM BANNERLARI — soluk zemin, net kenar
+═══════════════════════════════════════════ */
 .info-banner {
-    background: #eff6ff; border: 1px solid #bfdbfe;
-    border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
-    color: #1e40af; font-weight: 500; font-size: 0.85rem;
+    background: #F0F6FF;
+    border: 1px solid #B4D0F7;
+    border-left: 4px solid #007AFF;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    color: #003D99;
+    font-weight: 500;
+    font-size: 0.85rem;
 }
 .warn-banner {
-    background: #fffbeb; border: 1px solid #fde68a;
-    border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
-    color: #92400e; font-weight: 500; font-size: 0.85rem;
+    background: #FFFBF0;
+    border: 1px solid #FFD60A;
+    border-left: 4px solid #FF9F0A;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    color: #7A4F00;
+    font-weight: 500;
+    font-size: 0.85rem;
 }
 .success-banner {
-    background: #f0fdf4; border: 1px solid #bbf7d0;
-    border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
-    color: #166534; font-weight: 500; font-size: 0.85rem;
+    background: #F0FFF4;
+    border: 1px solid #86EFAC;
+    border-left: 4px solid #34C759;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    color: #166534;
+    font-weight: 500;
+    font-size: 0.85rem;
 }
 
-/* ── Puan Rozeti ── */
+/* ═══════════════════════════════════════════
+   PUAN ROZETİ — soluk, küçük
+═══════════════════════════════════════════ */
 .puan-rozet {
     display: inline-block;
-    background: #111827;
-    color: white; padding: 3px 12px;
-    border-radius: 20px; font-weight: 600; font-size: 0.88rem;
+    background: #F2F2F7;
+    color: #636366;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid #E5E5EA;
 }
-.puan-rozet.iyi   { background: #16a34a; }
-.puan-rozet.orta  { background: #d97706; }
-.puan-rozet.dusuk { background: #dc2626; }
+.puan-rozet.iyi   { background: #F0FFF4; color: #166534; border-color: #86EFAC; }
+.puan-rozet.orta  { background: #FFFBF0; color: #7A4F00; border-color: #FFD60A; }
+.puan-rozet.dusuk { background: #FFF5F5; color: #9B1C1C; border-color: #FCA5A5; }
 
-/* ── Profil Çubuğu ── */
+/* ═══════════════════════════════════════════
+   PROFİL ÇUBUĞU
+═══════════════════════════════════════════ */
 .profil-bar {
-    background: white; padding: 12px 20px;
-    border-radius: 10px; border: 1px solid #e5e7eb;
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 16px;
-    flex-wrap: wrap; gap: 10px;
+    background: #FFFFFF;
+    padding: 14px 22px;
+    border-radius: 12px;
+    border: 1px solid #E5E5EA;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-/* ── Kriter Kartı ── */
+/* ═══════════════════════════════════════════
+   KRİTER KARTI
+   — Sol kenarlık rengi konuyu gösteriyor
+   — Zemin soluk gri, göze batmıyor
+═══════════════════════════════════════════ */
 .kriter-card {
-    background: #f9fafb; padding: 10px 14px;
-    border-radius: 8px; border-left: 3px solid #6b7280;
+    background: #F9F9FB;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid #E5E5EA;
+    border-left: 4px solid #FF9F0A;   /* turuncu = alt nav ile aynı aksan */
+    margin-bottom: 10px;
+}
+.kriter-card .baslik {
+    color: #1C1C1E;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.kriter-card .aciklama {
+    color: #8E8E93;
+    font-size: 0.8rem;
+    margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   ÖĞRETMEN KART
+═══════════════════════════════════════════ */
+.ogrt-card {
+    background: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-left: 4px solid #34C759;
+}
+.ogrt-card.bekliyor { border-left-color: #FF9F0A; }
+
+/* ═══════════════════════════════════════════
+   KILAVUZ
+═══════════════════════════════════════════ */
+.kilavuz-item {
+    background: #FFFFFF;
+    border: 1px solid #E5E5EA;
+    border-radius: 10px;
+    padding: 14px 18px;
     margin-bottom: 8px;
 }
-.kriter-card .baslik  { color: #111827; font-weight: 600; font-size: 0.9rem; }
-.kriter-card .aciklama { color: #9ca3af; font-size: 0.8rem; margin-top: 1px; }
+.kilavuz-baslik  { font-weight: 700; color: #1C1C1E; margin-bottom: 8px; font-size: 0.92rem; }
+.kilavuz-icerik  { color: #636366; font-size: 0.87rem; line-height: 1.7; }
 
-/* ── Öğretmen Navigasyon Kartları ── */
-.ogrt-card {
-    background: #f9fafb; border: 1px solid #e5e7eb;
-    border-radius: 8px; padding: 10px 14px;
-    margin-bottom: 6px; border-left: 3px solid #16a34a;
-}
-.ogrt-card.bekliyor { border-left-color: #d97706; }
-
-/* ── Kılavuz ── */
-.kilavuz-item {
-    background: white; border: 1px solid #e5e7eb;
-    border-radius: 8px; padding: 12px 16px; margin-bottom: 6px;
-}
-.kilavuz-baslik  { font-weight: 600; color: #111827; margin-bottom: 6px; font-size: 0.9rem; }
-.kilavuz-icerik  { color: #6b7280; font-size: 0.87rem; line-height: 1.65; }
-
-/* ── Form Elemanları ── */
+/* ═══════════════════════════════════════════
+   FORM ELEMANLARI
+═══════════════════════════════════════════ */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea,
 .stSelectbox > div > div {
-    border-radius: 7px !important;
-    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #D1D1D6 !important;
     font-family: 'Inter', sans-serif !important;
+    font-size: 0.88rem !important;
     transition: border-color 0.15s !important;
+    background: #FFFFFF !important;
 }
 .stTextInput > div > div > input:focus,
 .stTextArea > div > div > textarea:focus {
-    border-color: #6b7280 !important;
-    box-shadow: 0 0 0 2px rgba(107,114,128,0.15) !important;
+    border-color: #1C1C1E !important;
+    box-shadow: 0 0 0 3px rgba(28,28,30,0.08) !important;
 }
 
-/* ── Footer ── */
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
 .app-footer {
-    background: #111827; color: #6b7280;
-    border-radius: 10px; padding: 20px 28px;
-    margin-top: 28px; text-align: center; font-size: 0.82rem;
+    background: #1C1C1E;
+    color: #636366;
+    border-radius: 14px;
+    padding: 24px 32px;
+    margin-top: 32px;
+    text-align: center;
+    font-size: 0.82rem;
 }
-.app-footer a { color: #9ca3af; text-decoration: none; }
-.app-footer .footer-title { color: white; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+.app-footer a { color: #8E8E93; text-decoration: none; }
+.app-footer .footer-title { color: #FFFFFF; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
 </style>
 """, unsafe_allow_html=True)
 # ==========================================
