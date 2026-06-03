@@ -47,259 +47,311 @@ except Exception:
     EMAIL_PASSWORD = ""
 
 # ==========================================
-# 3. GLOBAL CSS — YENİ PROFESYONEL MENÜ TASARIMI
+# 3. GLOBAL CSS — YENİ PROFESYONELLEŞTİRİLMİŞ TASARIM
 # ==========================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 /* ── Temel ── */
 html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background-color: #f0f4f8;
-    color: #0f172a;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f8f7f4;
+    color: #111827;
 }
 .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0.5rem !important;
     padding-bottom: 2rem !important;
     max-width: 1400px !important;
 }
 
 /* ── Hero Başlık ── */
 .hero-header {
-    background: linear-gradient(135deg, #0f2d6b 0%, #1e56c7 60%, #3b82f6 100%);
-    border-radius: 16px;
-    padding: 22px 30px;
+    background: #111827;
+    border-radius: 12px;
+    padding: 18px 28px;
     text-align: center;
-    box-shadow: 0 8px 30px rgba(30,58,138,0.25);
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-}
-.hero-header::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(circle at 70% 50%, rgba(255,255,255,0.06) 0%, transparent 60%);
+    margin-bottom: 16px;
 }
 .hero-title {
-    font-family: 'Nunito', sans-serif;
-    font-size: clamp(1.4rem, 4vw, 2.2rem);
-    font-weight: 900;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(1.3rem, 3.5vw, 1.9rem);
+    font-weight: 600;
     color: #ffffff;
     margin: 0;
     letter-spacing: -0.5px;
 }
 .hero-subtitle {
-    font-size: clamp(0.85rem, 2.5vw, 1rem);
-    color: #bfdbfe;
-    margin-top: 5px;
-    font-weight: 600;
+    font-size: 0.88rem;
+    color: #9ca3af;
+    margin-top: 4px;
+    font-weight: 400;
 }
 .hero-badge {
     display: inline-block;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: white;
-    padding: 4px 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #d1d5db;
+    padding: 3px 14px;
     border-radius: 20px;
-    font-size: 0.8rem;
-    margin-top: 8px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    margin-top: 7px;
+    font-weight: 500;
 }
 
-/* ── ANA MENÜ (Üst Navigasyon) ── */
+/* ── ANA MENÜ (Topbar stili — "nereye gidiyorum")
+   Koyu arka plan YOK. Açık, ince kenarlıklı kart.
+   Aktif: hafif gri dolgu + kenarlık. Pasif: şeffaf.
+   Mavi burada KULLANILMIYOR — sadece "aktif alt sekme"de var.
+*/
 .main-nav-container {
-    background: #0f172a;
-    padding: 12px 14px;
-    border-radius: 14px;
-    margin-bottom: 24px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    border-bottom: 4px solid #3b82f6;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 4px;
 }
 .main-nav-container .stButton > button {
-    background: #1e293b !important;
-    color: #94a3b8 !important;
-    border: 1px solid #334155 !important;
+    background: transparent !important;
+    color: #6b7280 !important;
+    border: none !important;
     border-radius: 8px !important;
-    font-weight: 800 !important;
-    font-size: 0.95rem !important;
-    padding: 10px !important;
-    transition: all 0.2s ease !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 14px !important;
+    transition: all 0.15s !important;
 }
 .main-nav-container .stButton > button[kind="primary"] {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
-    border: 1px solid #3b82f6 !important;
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4) !important;
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
 }
 .main-nav-container .stButton > button:hover {
-    background: #2563eb !important;
-    color: #ffffff !important;
+    background: #f9fafb !important;
+    color: #111827 !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* ── ALT MENÜ (İç Navigasyon) ── */
+/* ── ALT MENÜ (Sidebar stili — "ne yapıyorum")
+   Gri zemin — ana navdan görsel olarak ayrılıyor.
+   Aktif: MAVİ — bu uygulamada mavinin TEK anlamlı kullanımı.
+   Kullanıcı "aktif alt sekme = mavi" okur, başka hiçbir şey mavi değil.
+*/
 .sub-nav-container {
-    background: transparent;
-    padding: 0 0 12px 0;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #e2e8f0;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 6px;
+    margin-bottom: 16px;
 }
 .sub-nav-container .stButton > button {
-    background: #f8fafc !important;
-    color: #475569 !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 20px !important; /* Hap (Pill) Görünümü */
-    font-weight: 700 !important;
-    font-size: 0.85rem !important;
-    padding: 8px 16px !important;
-    transition: all 0.2s ease !important;
+    background: transparent !important;
+    color: #6b7280 !important;
+    border: none !important;
+    border-radius: 7px !important;
+    font-weight: 500 !important;
+    font-size: 0.82rem !important;
+    padding: 8px 12px !important;
+    transition: all 0.12s !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
 }
 .sub-nav-container .stButton > button[kind="primary"] {
-    background: #10b981 !important;
-    color: #ffffff !important;
-    border: 1px solid #10b981 !important;
-    box-shadow: 0 4px 10px rgba(16,185,129,0.3) !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
 }
 .sub-nav-container .stButton > button:hover {
-    background: #e2e8f0 !important;
-    color: #0f172a !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* ── Kart & Paneller ── */
 .glass-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 22px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    transition: box-shadow 0.2s;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
 }
-.glass-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
 
+/* Üst kenarlık aksanı: her kart türü farklı renk = farklı anlam */
 .stat-card {
     background: white;
-    border-radius: 12px;
-    padding: 16px 20px;
-    border-left: 5px solid #2563eb;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 14px 18px;
+    border: 1px solid #e5e7eb;
+    border-top: 3px solid #2563eb;
     margin-bottom: 12px;
-    transition: transform 0.15s;
 }
-.stat-card:hover { transform: translateY(-2px); }
-.stat-card.green  { border-left-color: #10b981; }
-.stat-card.orange { border-left-color: #f59e0b; }
-.stat-card.red    { border-left-color: #ef4444; }
-.stat-number { font-size: 2rem; font-weight: 900; color: #0f172a; line-height: 1; }
-.stat-label  { font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 4px; }
+.stat-card.green  { border-top-color: #16a34a; }
+.stat-card.orange { border-top-color: #d97706; }
+.stat-card.red    { border-top-color: #dc2626; }
+.stat-number { font-size: 1.9rem; font-weight: 600; color: #111827; line-height: 1; }
+.stat-label  { font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-top: 4px;
+               text-transform: uppercase; letter-spacing: 0.4px; }
 
+/* Bölüm başlığı: mavi alt çizgi yok — gri, ince, nötr */
 .section-header {
-    color: #1e40af;
-    font-weight: 800;
-    font-size: 1.1rem;
-    margin-bottom: 16px;
-    border-bottom: 2px solid #bfdbfe;
-    padding-bottom: 8px;
+    color: #374151;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-/* ── Standart Butonlar ── */
+/* ── Standart Butonlar
+   Koyu (#111827) = genel aksiyon. Mavi değil.
+   İndirme = yeşil. Renk = anlam.
+*/
 .stButton > button {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    border: none;
-    border-radius: 9px;
-    font-weight: 700;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    padding: 0.5rem 1.1rem;
-    transition: all 0.2s;
+    background: #111827 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem 1.1rem !important;
+    transition: opacity 0.15s !important;
 }
 .stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+    opacity: 0.82 !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 .stDownloadButton > button {
-    background: linear-gradient(135deg, #059669, #10b981) !important;
+    background: #16a34a !important;
     border: none !important;
     color: white !important;
 }
 .stDownloadButton > button:hover {
-    box-shadow: 0 6px 20px rgba(16,185,129,0.35) !important;
+    opacity: 0.85 !important;
+    box-shadow: none !important;
 }
 
-/* ── Giriş Ekranı Standart Tabs ── */
+/* ── Giriş Ekranı Tabs ── */
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] {
-    background: #1e293b;
-    border-radius: 12px;
-    padding: 7px;
-    gap: 5px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 4px;
+    gap: 2px;
+    border: 1px solid #e5e7eb;
 }
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] > button {
     background: transparent !important;
-    color: #94a3b8 !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-    font-size: 0.88rem !important;
-    padding: 8px 16px !important;
-    transition: all 0.2s !important;
+    color: #6b7280 !important;
+    border-radius: 7px !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 7px 16px !important;
     border: none !important;
 }
 [data-testid="stTabs"] > div[data-baseweb="tab-list"] > button[aria-selected="true"] {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 10px rgba(59,130,246,0.4) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: 0 0 0 1px #e5e7eb !important;
+    font-weight: 600 !important;
 }
 
-/* ── Bildirim Banner'lar ── */
-.info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #1e40af; font-weight: 600; font-size: 0.9rem; }
-.warn-banner { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #92400e; font-weight: 600; font-size: 0.9rem; }
-.success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #166534; font-weight: 600; font-size: 0.9rem; }
+/* ── Bildirim Bannerlar — her renk tek anlam taşır ── */
+.info-banner {
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
+    color: #1e40af; font-weight: 500; font-size: 0.85rem;
+}
+.warn-banner {
+    background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
+    color: #92400e; font-weight: 500; font-size: 0.85rem;
+}
+.success-banner {
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
+    color: #166534; font-weight: 500; font-size: 0.85rem;
+}
 
 /* ── Puan Rozeti ── */
-.puan-rozet { display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 4px 14px; border-radius: 20px; font-weight: 800; font-size: 1rem; }
-.puan-rozet.iyi   { background: linear-gradient(135deg, #059669, #10b981); }
-.puan-rozet.orta  { background: linear-gradient(135deg, #d97706, #f59e0b); }
-.puan-rozet.dusuk { background: linear-gradient(135deg, #dc2626, #ef4444); }
+.puan-rozet {
+    display: inline-block;
+    background: #111827;
+    color: white; padding: 3px 12px;
+    border-radius: 20px; font-weight: 600; font-size: 0.88rem;
+}
+.puan-rozet.iyi   { background: #16a34a; }
+.puan-rozet.orta  { background: #d97706; }
+.puan-rozet.dusuk { background: #dc2626; }
 
 /* ── Profil Çubuğu ── */
-.profil-bar { background: white; padding: 14px 22px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; border-left: 5px solid #2563eb; flex-wrap: wrap; gap: 10px; }
+.profil-bar {
+    background: white; padding: 12px 20px;
+    border-radius: 10px; border: 1px solid #e5e7eb;
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 16px;
+    flex-wrap: wrap; gap: 10px;
+}
+
+/* ── Kriter Kartı ── */
+.kriter-card {
+    background: #f9fafb; padding: 10px 14px;
+    border-radius: 8px; border-left: 3px solid #6b7280;
+    margin-bottom: 8px;
+}
+.kriter-card .baslik  { color: #111827; font-weight: 600; font-size: 0.9rem; }
+.kriter-card .aciklama { color: #9ca3af; font-size: 0.8rem; margin-top: 1px; }
+
+/* ── Öğretmen Navigasyon Kartları ── */
+.ogrt-card {
+    background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 10px 14px;
+    margin-bottom: 6px; border-left: 3px solid #16a34a;
+}
+.ogrt-card.bekliyor { border-left-color: #d97706; }
 
 /* ── Kılavuz ── */
-.kilavuz-item { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 8px; }
-.kilavuz-baslik  { font-weight: 700; color: #1e40af; margin-bottom: 8px; font-size: 1rem; }
-.kilavuz-icerik  { color: #475569; font-size: 0.9rem; line-height: 1.7; }
-
-/* ── Form elemanları ── */
-.stTextInput > div > div > input, .stTextArea > div > div > textarea, .stSelectbox > div > div {
-    border-radius: 8px !important; border: 1.5px solid #e2e8f0 !important; font-family: 'Plus Jakarta Sans', sans-serif !important; transition: border-color 0.2s, box-shadow 0.2s !important;
+.kilavuz-item {
+    background: white; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 6px;
 }
-.stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-    border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+.kilavuz-baslik  { font-weight: 600; color: #111827; margin-bottom: 6px; font-size: 0.9rem; }
+.kilavuz-icerik  { color: #6b7280; font-size: 0.87rem; line-height: 1.65; }
+
+/* ── Form Elemanları ── */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+.stSelectbox > div > div {
+    border-radius: 7px !important;
+    border: 1px solid #d1d5db !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: border-color 0.15s !important;
+}
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: #6b7280 !important;
+    box-shadow: 0 0 0 2px rgba(107,114,128,0.15) !important;
 }
 
 /* ── Footer ── */
-.app-footer { background: #0f172a; color: #94a3b8; border-radius: 12px; padding: 22px 30px; margin-top: 32px; text-align: center; font-size: 0.85rem; }
-.app-footer a { color: #60a5fa; text-decoration: none; }
-.app-footer .footer-title { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
-
-/* ── Öğretmen Navigasyon Kartları ── */
-.ogrt-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; border-left: 3px solid #10b981; transition: all 0.15s; }
-.ogrt-card.bekliyor { border-left-color: #f59e0b; }
-.ogrt-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-
-/* ── Kriter Kartı ── */
-.kriter-card { background: #f0f9ff; padding: 12px 16px; border-radius: 9px; border-left: 4px solid #2563eb; margin-bottom: 10px; }
-.kriter-card .baslik { color: #1e3a8a; font-weight: 700; font-size: 0.95rem; }
-.kriter-card .aciklama { color: #94a3b8; font-size: 0.82rem; margin-top: 2px; }
-
+.app-footer {
+    background: #111827; color: #6b7280;
+    border-radius: 10px; padding: 20px 28px;
+    margin-top: 28px; text-align: center; font-size: 0.82rem;
+}
+.app-footer a { color: #9ca3af; text-decoration: none; }
+.app-footer .footer-title { color: white; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
 </style>
 """, unsafe_allow_html=True)
-
 # ==========================================
 # 4. SABİTLER
 # ==========================================
