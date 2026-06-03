@@ -375,8 +375,89 @@ def _init_nav():
     if "nav_sil_alt" not in st.session_state: st.session_state["nav_sil_alt"] = "tekil_sil"
 
 def render_nav_bar(menu_items: list, state_key: str, container_class: str):
-    """Ana ve Alt menü butonlarını izole CSS ile çizer."""
-    st.markdown(f'<div class="{container_class}">', unsafe_allow_html=True)
+    # Streamlit DOM yapısına müdahale etmek için görünmez bir işaretçi (marker) atıyoruz
+    marker_id = f"nav_marker_{state_key}"
+    st.markdown(f'<div id="{marker_id}"></div>', unsafe_allow_html=True)
+    
+    is_main = (state_key == "nav_ana")
+    
+    if is_main:
+        # ÜST MENÜ (Ana Navigasyon) - Koyu arka plan, Mavi butonlar, yükselme efekti
+        st.markdown(f"""
+        <style>
+        /* Konteyneri renklendir (Siyah çubuk problemini çözer) */
+        div.element-container:has(#{marker_id}) + div.element-container {{
+            background: #0f172a;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            border-bottom: 4px solid #3b82f6;
+        }}
+        /* Butonların standart pasif hali */
+        div.element-container:has(#{marker_id}) + div.element-container button {{
+            background: transparent !important;
+            color: #94a3b8 !important;
+            border: 1px solid transparent !important;
+            border-radius: 8px !important;
+            font-weight: 800 !important;
+            transition: all 0.25s ease !important;
+        }}
+        /* Üzerine gelince (Hover) - Hafif parlar ve yukarı kalkar */
+        div.element-container:has(#{marker_id}) + div.element-container button:hover:not([kind="primary"]) {{
+            background: rgba(255,255,255,0.08) !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+        }}
+        /* Seçili Buton (Primary) - Canlı Mavi ve Hafif Büyüme */
+        div.element-container:has(#{marker_id}) + div.element-container button[kind="primary"] {{
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3) !important;
+            transform: scale(1.03);
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+    else:
+        # ALT MENÜ (İç Navigasyon) - Açık arka plan, Yeşil butonlar, renk değiştirme efekti
+        st.markdown(f"""
+        <style>
+        /* Alt menü çerçevesi */
+        div.element-container:has(#{marker_id}) + div.element-container {{
+            background: #f8fafc;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 24px;
+        }}
+        /* Butonların standart pasif hali */
+        div.element-container:has(#{marker_id}) + div.element-container button {{
+            background: #ffffff !important;
+            color: #475569 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            transition: all 0.25s ease !important;
+        }}
+        /* Üzerine gelince (Hover) - Açık yeşil olur, metin yeşile döner */
+        div.element-container:has(#{marker_id}) + div.element-container button:hover:not([kind="primary"]) {{
+            background: #d1fae5 !important;
+            color: #059669 !important;
+            border-color: #34d399 !important;
+            transform: translateY(-2px);
+        }}
+        /* Seçili Buton (Primary) - Zümrüt Yeşili ve Hafif Büyüme */
+        div.element-container:has(#{marker_id}) + div.element-container button[kind="primary"] {{
+            background: linear-gradient(135deg, #059669, #10b981) !important;
+            color: #ffffff !important;
+            border: none !important;
+            box-shadow: 0 4px 10px rgba(16,185,129,0.2) !important;
+            transform: scale(1.03);
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+
+    # Butonları render et
     cols = st.columns(len(menu_items))
     aktif = st.session_state.get(state_key, menu_items[0][0])
     for col, (key, label) in zip(cols, menu_items):
@@ -386,19 +467,6 @@ def render_nav_bar(menu_items: list, state_key: str, container_class: str):
                       type="primary" if is_active else "secondary"):
             st.session_state[state_key] = key
             st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-def render_ana_nav(rol: str, admin_bakis: bool):
-    items = [
-        ("ogr_gorev",         "👥 Öğrenci & Görev"),
-        ("ai_degerlendirme",  "🤖 AI Değerlendirme"),
-        ("raporlar",          "📊 Raporlar"),
-        ("eokul",             "📝 E-Okul Karne"),
-    ]
-    if rol == "admin" and not admin_bakis:
-        items.append(("ogretmen_yonetim", "👨‍🏫 Öğretmen Yönetimi"))
-    items.append(("ayarlar", "⚙️ Ayarlar & Profil"))
-    render_nav_bar(items, "nav_ana", "main-nav-container")
 
 # ==========================================
 # 6. VERİTABANI YÖNETİMİ
