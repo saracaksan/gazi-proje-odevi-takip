@@ -2162,4 +2162,110 @@ def yonetim_paneli(df, ayarlar):
                 
                 st.markdown("---")
                 st.markdown("**Kayıtlı Okulları Sil:**")
-                sil_okul = st.selectbox("Silinecek Ok
+                sil_okul = st.selectbox("Silinecek Okulu Seç", ["— Seçiniz —"] + sorted(ayarlar["okullar"]))
+                if st.button("🗑️ Seçili Okulu Listeden Çıkar"):
+                    if sil_okul != "— Seçiniz —":
+                        ayarlar["okullar"].remove(sil_okul)
+                        ayar_kaydet(ayarlar)
+                        st.success("Silindi.")
+                        time.sleep(1)
+                        st.rerun()
+
+            with tab_okul_birlestir:
+                st.markdown("#### 🔗 Hatalı veya Farklı Yazılan Okulları Birleştir")
+                st.markdown('<div class="info-banner">Örn: Eski düz isimli "Gazi Ortaokulu"nu yeni formatlı "Mardin / Dargeçit / Gazi Ortaokulu" ile birleştirebilirsiniz. Hatalı okuldaki tüm öğretmen ve öğrenciler otomatik olarak doğru okula aktarılır.</div>', unsafe_allow_html=True)
+                
+                col_b1, col_b2 = st.columns(2)
+                
+                hatali_okul = col_b1.selectbox("Silinecek (Hatalı/Eski) Okul", ["— Seçiniz —"] + sorted(ayarlar["okullar"]))
+                hedef_okul  = col_b2.selectbox("Aktarılacak (Doğru/Yeni) Okul", ["— Seçiniz —"] + sorted(ayarlar["okullar"]))
+
+                if st.button("🔗 Okulları Birleştir ve Verileri Aktar", type="primary", use_container_width=True):
+                    if hatali_okul == "— Seçiniz —" or hedef_okul == "— Seçiniz —" or hatali_okul == hedef_okul:
+                        st.error("Lütfen iki farklı okul seçin.")
+                    else:
+                        # 1. Veritabanındaki Görevleri/Öğrencileri Güncelle
+                        supabase.table('gorevler').update({'okul': hedef_okul}).eq('okul', hatali_okul).execute()
+                        
+                        # 2. Öğretmenlerin Kayıtlı Olduğu Okulu Güncelle
+                        for k, u in ayarlar["kullanicilar"].items():
+                            if u.get("okul") == hatali_okul:
+                                ayarlar["kullanicilar"][k]["okul"] = hedef_okul
+                        
+                        # 3. Hatalı Okulu JSON Listesinden Sil
+                        if hatali_okul in ayarlar["okullar"]:
+                            ayarlar["okullar"].remove(hatali_okul)
+                            
+                        ayar_kaydet(ayarlar)
+                        st.success(f"✅ '{hatali_okul}' isimli okul listeden silindi! İçindeki tüm veriler '{hedef_okul}' okuluna aktarıldı.")
+                        time.sleep(2)
+                        st.rerun()
+
+        elif aktif_ayar == "sablonlar":
+            sablon_yonetimi_ui(ayarlar, kb, rol)
+
+        elif aktif_ayar == "profil":
+            st.markdown("<div class='section-header'>👤 Kişisel Profil Ayarları</div>", unsafe_allow_html=True)
+            with st.form("profil_form"):
+                p_ad     = st.text_input("Ad Soyad", value=kb["ad"])
+                p_brans  = st.text_input("Branş", value=kb.get("brans",""))
+                p_eposta = st.text_input("E-posta Adresiniz", value=kb.get("eposta",""))
+                p_sifre  = st.text_input("Yeni Şifre (boş bırakırsan değişmez)", type="password")
+                if st.form_submit_button("💾 Bilgilerimi Güncelle"):
+                    guncelleme = {"ad": p_ad, "brans": p_brans, "eposta": p_eposta}
+                    if p_sifre.strip():
+                        guncelleme["sifre"] = p_sifre
+                    ayarlar["kullanicilar"][aktif_id].update(guncelleme)
+                    ayar_kaydet(ayarlar)
+                    st.session_state["kullanici_bilgi"] = ayarlar["kullanicilar"][aktif_id]
+                    st.success("✅ Profiliniz güncellendi!")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ==========================================
+# 16. FOOTER
+# ==========================================
+def footer_goster():
+    st.markdown("""
+    <div class="app-footer">
+        <div class="footer-title">🧭 PUSULA 360 — Bütüncül Değerlendirme Platformu</div>
+        <div>Dargeçit İlçe Milli Eğitim Müdürlüğü | Proje, Performans ve Karne Yönetim Sistemi</div>
+        <br>
+        <div>
+            Sistem Tasarımcısı: <strong style="color:white;">Sıraç AKSAN</strong> &nbsp;|&nbsp;
+            📧 <a href="mailto:saracaksan@gmail.com">saracaksan@gmail.com</a> &nbsp;|&nbsp;
+            📱 0506 928 22 10
+        </div>
+        <div style="margin-top:8px;font-size:0.78rem;">
+            © 2025 PUSULA 360. Tüm hakları saklıdır.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ==========================================
+# 17. ANA ÇALIŞTIRMA
+# ==========================================
+def main():
+    ayarlar = ayar_yukle()
+    df      = veri_yukle()
+
+    st.markdown("""
+    <div class="hero-header">
+        <div class="hero-title">🧭 PUSULA 360</div>
+        <div class="hero-subtitle">Bütüncül Proje, Performans ve Karne Değerlendirme Platformu</div>
+        <span class="hero-badge">Dargeçit İlçe Milli Eğitim Müdürlüğü</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.get("giris_yapti", False):
+        giris_ekrani(df, ayarlar)
+    else:
+        yonetim_paneli(df, ayarlar)
+
+    footer_goster()
+
+
+if __name__ == "__main__":
+    main()
