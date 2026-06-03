@@ -112,64 +112,63 @@ html, body, [class*="css"] {
 
 /* ── ANA MENÜ (Üst Navigasyon) ── */
 .main-nav-container {
-    background: #1e293b;
-    padding: 10px 14px 0 14px; /* Alt padding kaldırıldı */
-    border-radius: 14px 14px 0 0; /* Alt köşeler düz, alt menüye bağlanacak */
-    margin-bottom: 0px; /* Alt menüye yapışması için */
+    background: #0f172a;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 14px; /* Alt menü ile arasına net bir boşluk */
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border-bottom: 4px solid #10b981; /* Zümrüt yeşili bağlayıcı çizgi */
+    border-bottom: 4px solid #3b82f6; /* Ana menüye ait mavi ayırıcı çizgi */
 }
 .main-nav-container .stButton > button {
     background: transparent !important;
     color: #94a3b8 !important;
-    border: none !important;
-    border-radius: 8px 8px 0 0 !important; /* Sekme (Tab) görünümü */
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
     font-weight: 800 !important;
     font-size: 0.95rem !important;
-    padding: 12px 10px !important;
+    padding: 10px 14px !important;
     transition: all 0.2s ease !important;
 }
 .main-nav-container .stButton > button[kind="primary"] {
-    background: #10b981 !important; /* Seçili sekme Zümrüt Yeşili */
+    background: #3b82f6 !important; /* Ana menü seçili rengi (Canlı Mavi) */
     color: #ffffff !important;
-    box-shadow: none !important;
+    box-shadow: 0 4px 12px rgba(59,130,246,0.3) !important;
 }
 .main-nav-container .stButton > button:hover:not([kind="primary"]) {
-    background: rgba(255,255,255,0.05) !important;
+    background: rgba(255,255,255,0.08) !important;
     color: #f8fafc !important;
 }
 
 /* ── ALT MENÜ (İç Navigasyon) ── */
 .sub-nav-container {
-    background: #ecfdf5; /* Çok açık yeşil, aitlik hissi verir */
-    padding: 16px 14px;
+    background: #f8fafc; /* Ana menüden ayırmak için açık gri/beyaz zemin */
+    padding: 14px 18px;
     margin-bottom: 24px;
-    border-radius: 0 0 14px 14px;
-    border: 1px solid #a7f3d0;
-    border-top: none;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    border: 1px solid #cbd5e1; /* Alt menüyü net bir kutu içine alır */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 .sub-nav-container .stButton > button {
     background: #ffffff !important;
-    color: #059669 !important;
-    border: 1px solid #6ee7b7 !important;
-    border-radius: 8px !important; 
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important; 
     font-weight: 700 !important;
     font-size: 0.85rem !important;
     padding: 8px 16px !important;
     transition: all 0.2s ease !important;
 }
 .sub-nav-container .stButton > button[kind="primary"] {
-    background: #059669 !important; /* Daha koyu yeşil */
+    background: #10b981 !important; /* Alt menü seçili rengi (Zümrüt Yeşili) - Ana menüden tamamen farklı */
     color: #ffffff !important;
-    border-color: #059669 !important;
-    box-shadow: 0 4px 10px rgba(5,150,105,0.2) !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 4px 10px rgba(16,185,129,0.2) !important;
 }
 .sub-nav-container .stButton > button:hover:not([kind="primary"]) {
-    background: #d1fae5 !important;
-    color: #047857 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
 }
-
 /* ── Kart & Paneller ── */
 .glass-card {
     background: #ffffff;
