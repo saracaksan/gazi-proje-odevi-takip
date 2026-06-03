@@ -572,8 +572,10 @@ def ogrenci_sorgu_ekrani(df, ayarlar):
 # ==========================================
 def giris_ekrani(df, ayarlar):
     tab_ogr, tab_ogrt = st.tabs(["🎓 Öğrenci/Veli Girişi", "👨‍🏫 Öğretmen/İdare Girişi"])
+    
     with tab_ogr:
         ogrenci_sorgu_ekrani(df, ayarlar)
+        
     with tab_ogrt:
         c1, c2, c3 = st.columns([1, 1.8, 1])
         with c2:
@@ -581,7 +583,8 @@ def giris_ekrani(df, ayarlar):
             g1, g2, g3 = st.tabs(["🔐 Giriş", "📝 Kayıt Ol", "🔑 Şifremi Unuttum"])
             
             with g1:
-                if ayarlar.get("sistem_kilitli", False): st.warning("🔒 Sistem kapalı.")
+                if ayarlar.get("sistem_kilitli", False): 
+                    st.warning("🔒 Sistem kapalı.")
                 k_adi = st.text_input("Kullanıcı Adı", key="l_kadi")
                 sifre = st.text_input("Şifre", type="password", key="l_sifre")
                 if st.button("Giriş Yap →", use_container_width=True):
@@ -597,7 +600,7 @@ def giris_ekrani(df, ayarlar):
                     else:
                         st.error("❌ Hatalı bilgi!")
 
-           with g2:
+            with g2:
                 st.markdown("##### 📍 Kurum Bilgileri")
                 st.info("💡 Lütfen önce okulunuzun listede olup olmadığını kontrol edin. Aynı okulun 2 farklı isimle kaydedilmemesi için, sadece listede YOKSA 'Yeni Okul Ekle' seçeneğini kullanın.")
                 
