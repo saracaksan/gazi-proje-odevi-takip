@@ -863,14 +863,75 @@ def yonetim_paneli(df, ayarlar):
                             ayarlar["okullar"][secili_il_admin][secili_ilce_admin].remove(secili_okul_admin)
                             ayar_kaydet(ayarlar); st.rerun()
 
-        elif aktif_ayar == "profil":
-            with st.form("profil_form"):
-                p_ad = st.text_input("Ad Soyad", value=kb["ad"])
-                p_sifre = st.text_input("Yeni Şifre", type="password")
-                if st.form_submit_button("Güncelle"):
-                    ayarlar["kullanicilar"][aktif_id].update({"ad": p_ad, "sifre": p_sifre if p_sifre else kb["sifre"]})
-                    ayar_kaydet(ayarlar); st.success("Güncellendi!")
-        st.markdown('</div>', unsafe_allow_html=True)
+        elif aktif_ayar == "okullar" and rol == "admin":
+            st.markdown("### 🏢 Türkiye Geneli İl / İlçe / Okul Hiyerarşisi Yönetimi")
+            
+            tab_ekle, tab_birlestir = st.tabs(["➕ Ekle / Sil", "🔗 Mükerrer Okulları Birleştir"])
+
+            with tab_ekle:
+                c_il, c_ilce, c_ok = st.columns(3)
+                mevcut_iller = list(ayarlar["okullar"].keys())
+                secili_il_admin = c_il.selectbox("İl Seç", ["— Seçiniz —", "➕ İl Ekle"] + mevcut_iller)
+                if secili_il_admin == "➕ İl Ekle":
+                    yeni_il = c_il.selectbox("Türkiye İlleri", ["— Listeden Seç —"] + TUM_ILLER)
+                    if c_il.button("İli Ekle") and yeni_il != "— Listeden Seç —":
+                        ayarlar["okullar"][yeni_il] = {}
+                        ayar_kaydet(ayarlar); st.rerun()
+                
+                if secili_il_admin and secili_il_admin not in ["— Seçiniz —", "➕ İl Ekle"]:
+                    mevcut_ilceler = list(ayarlar["okullar"][secili_il_admin].keys())
+                    secili_ilce_admin = c_ilce.selectbox("İlçe Seç", ["— Seçiniz —", "➕ İlçe Ekle"] + mevcut_ilceler)
+                    if secili_ilce_admin == "➕ İlçe Ekle":
+                        yeni_ilce = c_ilce.text_input("Yeni İlçe Adı")
+                        if c_ilce.button("İlçeyi Ekle") and yeni_ilce:
+                            ayarlar["okullar"][secili_il_admin][yeni_ilce.strip().title()] = []
+                            ayar_kaydet(ayarlar); st.rerun()
+                            
+                    if secili_ilce_admin and secili_ilce_admin not in ["— Seçiniz —", "➕ İlçe Ekle"]:
+                        mevcut_okullar_admin = ayarlar["okullar"][secili_il_admin][secili_ilce_admin]
+                        secili_okul_admin = c_ok.selectbox("Okul Seç (Silmek İçin)", ["— Seçiniz —", "➕ Okul Ekle"] + mevcut_okullar_admin)
+                        if secili_okul_admin == "➕ Okul Ekle":
+                            yeni_okul = c_ok.text_input("Yeni Okul Adı")
+                            if c_ok.button("Okulu Ekle") and yeni_okul:
+                                ayarlar["okullar"][secili_il_admin][secili_ilce_admin].append(yeni_okul.strip().title())
+                                ayar_kaydet(ayarlar); st.rerun()
+                        elif secili_okul_admin != "— Seçiniz —":
+                            if c_ok.button("🗑️ Okulu Sil"):
+                                ayarlar["okullar"][secili_il_admin][secili_ilce_admin].remove(secili_okul_admin)
+                                ayar_kaydet(ayarlar); st.rerun()
+
+            with tab_birlestir:
+                st.markdown("#### 🔗 Hatalı veya Farklı Yazılan Okulları Birleştir")
+                st.markdown('<div class="info-banner">Örn: "Süleyman Akademi" ve "Süleyman Academy" olarak iki defa açılmış okulları tek isimde birleştirir. Hatalı okuldaki tüm öğretmen ve öğrenciler otomatik olarak doğru okula aktarılır.</div>', unsafe_allow_html=True)
+                
+                okul_listesi_duz = tum_okul_listesi_duz_getir(ayarlar["okullar"])
+                col_b1, col_b2 = st.columns(2)
+                
+                hatali_okul = col_b1.selectbox("Silinecek (Hatalı) Okul", ["— Seçiniz —"] + okul_listesi_duz)
+                hedef_okul  = col_b2.selectbox("Aktarılacak (Doğru) Okul", ["— Seçiniz —"] + okul_listesi_duz)
+
+                if st.button("🔗 Okulları Birleştir ve Verileri Aktar", type="primary", use_container_width=True):
+                    if hatali_okul == "— Seçiniz —" or hedef_okul == "— Seçiniz —" or hatali_okul == hedef_okul:
+                        st.error("Lütfen iki farklı okul seçin.")
+                    else:
+                        # 1. Veritabanındaki Görevleri/Öğrencileri Güncelle
+                        supabase.table('gorevler').update({'okul': hedef_okul}).eq('okul', hatali_okul).execute()
+                        
+                        # 2. Öğretmenlerin Kayıtlı Olduğu Okulu Güncelle
+                        for k, u in ayarlar["kullanicilar"].items():
+                            if u.get("okul") == hatali_okul:
+                                ayarlar["kullanicilar"][k]["okul"] = hedef_okul
+                        
+                        # 3. Hatalı Okulu JSON Listesinden Sil
+                        h_il, h_ilce, h_ok = [x.strip() for x in hatali_okul.split(" / ")]
+                        if h_il in ayarlar["okullar"] and h_ilce in ayarlar["okullar"][h_il]:
+                            if h_ok in ayarlar["okullar"][h_il][h_ilce]:
+                                ayarlar["okullar"][h_il][h_ilce].remove(h_ok)
+                            
+                        ayar_kaydet(ayarlar)
+                        st.success(f"✅ '{h_ok}' isimli hatalı okul silindi! İçindeki tüm veriler '{hedef_okul.split('/')[-1].strip()}' okuluna aktarıldı.")
+                        time.sleep(2)
+                        st.rerun()
 
 # ==========================================
 # 16. ANA ÇALIŞTIRMA VE FOOTER
