@@ -47,18 +47,17 @@ except Exception:
     EMAIL_PASSWORD = ""
 
 # ==========================================
-# 3. YENİ NESİL KOYU TEMA (DARK GLASS) VE RENKLİ MENÜ CSS
+# 3. GLOBAL CSS VE RENK HİYERARŞİSİ
 # ==========================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-
-.stApp {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f2044 100%);
-    min-height: 100vh;
-    color: rgba(255,255,255,0.9);
+/* ── Temel ── */
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #f0f4f8;
+    color: #0f172a;
 }
 .block-container {
     padding-top: 1rem !important;
@@ -66,95 +65,90 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     max-width: 1400px !important;
 }
 
-/* ── HERO ── */
+/* ── Hero Başlık ── */
 .hero-header {
-    background: linear-gradient(135deg, #1e40af, #3b82f6, #60a5fa);
-    border-radius: 20px; padding: 32px 40px; margin-bottom: 28px;
-    text-align: center; box-shadow: 0 20px 60px rgba(59,130,246,0.4);
-    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #0f2d6b 0%, #1e56c7 60%, #3b82f6 100%);
+    border-radius: 16px;
+    padding: 22px 30px;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(30,58,138,0.25);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
 }
 .hero-header::before {
-    content:''; position:absolute; top:-50%; left:-50%;
-    width:200%; height:200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
-    animation: shimmer 6s infinite linear;
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle at 70% 50%, rgba(255,255,255,0.06) 0%, transparent 60%);
 }
-@keyframes shimmer { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 .hero-title {
-    font-family:'Nunito',sans-serif; font-size:clamp(1.4rem, 4vw, 2.4rem); font-weight:900;
-    color:white; margin:0 0 6px 0; text-shadow:0 2px 10px rgba(0,0,0,0.3);
-    letter-spacing:-0.5px; position:relative; z-index:1;
+    font-family: 'Nunito', sans-serif; font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 900; color: #ffffff; margin: 0; letter-spacing: -0.5px;
 }
-.hero-subtitle {
-    font-size:clamp(0.85rem, 2.5vw, 1rem); color:rgba(255,255,255,0.85);
-    margin:0; font-weight:500; position:relative; z-index:1;
-}
+.hero-subtitle { font-size: clamp(0.85rem, 2.5vw, 1rem); color: #bfdbfe; margin-top: 5px; font-weight: 600; }
 .hero-badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; padding: 3px 14px; border-radius: 20px; font-size: 0.75rem; margin-top: 8px; font-weight: 700; }
 
-/* ── KARTLAR (GLASSMORPHISM) ── */
-.glass-card {
-    background:rgba(15, 23, 42, 0.6) !important; border:1px solid rgba(255,255,255,0.12) !important;
-    border-radius:18px; padding:24px; margin-bottom:18px; backdrop-filter:blur(12px);
+/* ── MENÜ RENK HİYERARŞİSİ (Mavi -> Yeşil -> Kırmızı) ── */
+/* Ana Menü: Pasif (Mavi), Aktif (Yeşil) */
+div[data-testid="stHorizontalBlock"] .ana-menu-btn > button {
+    background: #2563eb !important; 
     color: white !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s !important;
 }
-.stat-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px 20px; border-left: 5px solid #3b82f6; margin-bottom: 12px; }
+div[data-testid="stHorizontalBlock"] .ana-menu-btn.active-btn > button {
+    background: #10b981 !important; /* Aktif Ana Menü Yeşil */
+    box-shadow: 0 4px 15px rgba(16,185,129,0.4) !important;
+}
+
+/* Alt Menü: Pasif (Yeşil), Aktif (Kırmızı) */
+div[data-testid="stHorizontalBlock"] .alt-menu-btn > button {
+    background: #10b981 !important; /* Pasif Alt Menü Yeşil */
+    color: white !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s !important;
+}
+div[data-testid="stHorizontalBlock"] .alt-menu-btn.active-btn > button {
+    background: #ef4444 !important; /* Aktif Alt Menü Kırmızı */
+    box-shadow: 0 4px 15px rgba(239,68,68,0.4) !important;
+}
+
+/* Hover Efektleri */
+div[data-testid="stHorizontalBlock"] button:hover {
+    transform: translateY(-2px) !important;
+    filter: brightness(1.1);
+}
+
+/* ── Kart & Paneller ── */
+.glass-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: box-shadow 0.2s; }
+.glass-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+.stat-card { background: white; border-radius: 12px; padding: 16px 20px; border-left: 5px solid #2563eb; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
 .stat-card.green  { border-left-color: #10b981; }
 .stat-card.orange { border-left-color: #f59e0b; }
 .stat-card.red    { border-left-color: #ef4444; }
-.stat-number { font-size: 2rem; font-weight: 900; color: white; line-height: 1; }
-.stat-label  { font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 600; margin-top: 4px; }
-.section-header { font-family:'Nunito',sans-serif; color: #93c5fd; font-weight: 800; font-size: 1.2rem; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+.stat-number { font-size: 2rem; font-weight: 900; color: #0f172a; line-height: 1; }
+.stat-label  { font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 4px; }
+.section-header { color: #1e40af; font-weight: 800; font-size: 1.1rem; margin-bottom: 16px; border-bottom: 2px solid #bfdbfe; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 
-/* ── INPUTS & TABLOLAR (Beyaz Yüzeyde Beyaz Yazı Sorunu Çözümü) ── */
-.stTextInput > div > div > input,
-.stTextArea  > div > div > textarea,
-.stNumberInput > div > div > input,
-[data-baseweb="select"] > div {
-    background:rgba(255,255,255,0.08) !important;
-    border:1px solid rgba(255,255,255,0.18) !important;
-    border-radius:10px !important; color:white !important;
-}
-.stTextInput > div > div > input::placeholder,
-.stTextArea  > div > div > textarea::placeholder { color:rgba(255,255,255,0.35) !important; }
-[data-baseweb="popover"] { background:#1e293b !important; border:1px solid rgba(255,255,255,0.15) !important; }
-[data-baseweb="menu"] li { color:white !important; }
-[data-baseweb="menu"] li:hover, [data-baseweb="menu"] [aria-selected="true"] { background:rgba(59,130,246,0.25) !important; }
-[data-baseweb="select"] span, [data-baseweb="select"] svg { color: white !important; fill: white !important; }
+/* ── Streamlit Native Tabs (sadece giriş ekranı için) ── */
+[data-testid="stTabs"] > div[data-baseweb="tab-list"] { background: #1e293b; border-radius: 12px; padding: 7px; gap: 5px; }
+[data-testid="stTabs"] > div[data-baseweb="tab-list"] > button { background: transparent !important; color: #94a3b8 !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 0.88rem !important; padding: 8px 16px !important; }
+[data-testid="stTabs"] > div[data-baseweb="tab-list"] > button[aria-selected="true"] { background: #3b82f6 !important; color: #ffffff !important; box-shadow: 0 2px 10px rgba(59,130,246,0.4) !important; }
 
-[data-testid="stDataFrame"] { border-radius:14px; overflow:hidden; background: rgba(15, 23, 42, 0.8) !important; }
-[data-testid="stDataFrame"] div[data-baseweb="table-custom"] { background: transparent !important; }
-[data-testid="stDataFrame"] span { color: #f1f5f9 !important; }
-label, [data-testid="stWidgetLabel"] { color:rgba(255,255,255,0.8) !important; font-weight:600 !important; font-size:0.85rem !important; }
+/* ── Bildirim Banner'lar ── */
+.info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #1e40af; font-weight: 600; font-size: 0.9rem; }
+.warn-banner { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #92400e; font-weight: 600; font-size: 0.9rem; }
+.success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #166534; font-weight: 600; font-size: 0.9rem; }
 
-/* ── MENÜ RENK HİYERARŞİSİ VE ÇİFT TIKLAMA ÇÖZÜMÜ ── */
-/* Animasyonu sadece bilgisayarlarla sınırla (Mobilde çift tıklamayı önler) */
-@media (hover: hover) and (pointer: fine) {
-    .ana-menu-btn button:hover, .alt-menu-btn button:hover {
-        transform: translateY(-2px) !important;
-        filter: brightness(1.1) !important;
-    }
-}
-.ana-menu-btn.inactive-btn button { background-color: #2563eb !important; color: white !important; border-radius: 9px !important; border:none !important;}
-.ana-menu-btn.active-btn button { background-color: #10b981 !important; color: white !important; border-radius: 9px !important; border:none !important; box-shadow: 0 4px 15px rgba(16,185,129,0.4) !important; }
-.alt-menu-btn.inactive-btn button { background-color: #10b981 !important; color: white !important; border-radius: 9px !important; border:none !important;}
-.alt-menu-btn.active-btn button { background-color: #ef4444 !important; color: white !important; border-radius: 9px !important; border:none !important; box-shadow: 0 4px 15px rgba(239,68,68,0.4) !important; }
-.ana-menu-btn button p, .alt-menu-btn button p { font-weight: 700 !important; margin: 0 !important; }
-
-/* ── STANDART BUTONLAR ── */
-.stButton > button { background:linear-gradient(135deg,#2563eb,#3b82f6) !important; color:white !important; border:none !important; border-radius:12px !important; font-weight:700 !important; transition:all 0.25s !important; box-shadow:0 4px 16px rgba(37,99,235,0.4) !important; }
-.stButton > button:hover { transform:translateY(-2px) !important; box-shadow:0 8px 24px rgba(37,99,235,0.6) !important; }
-
-/* ── BİLDİRİM BANNER'LAR ── */
-.info-banner { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #93c5fd; font-weight: 600; font-size: 0.9rem; }
-.warn-banner { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #fcd34d; font-weight: 600; font-size: 0.9rem; }
-.success-banner { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; color: #6ee7b7; font-weight: 600; font-size: 0.9rem; }
-
-.kriter-card { background: rgba(255,255,255,0.04); padding: 14px; border-radius: 12px; border-left: 4px solid #3b82f6; margin-bottom: 12px; }
-.kriter-card .baslik { color: #93c5fd; font-weight: 700; font-size: 0.95rem; }
-.kriter-card .aciklama { color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 4px; }
+/* ── Kriter Kartı ── */
+.kriter-card { background: #f0f9ff; padding: 12px 16px; border-radius: 9px; border-left: 4px solid #2563eb; margin-bottom: 10px; }
+.kriter-card .baslik { color: #1e3a8a; font-weight: 700; font-size: 0.95rem; }
+.kriter-card .aciklama { color: #94a3b8; font-size: 0.82rem; margin-top: 2px; }
 
 /* ── Footer ── */
-.app-footer { background: rgba(15,23,42,0.8); color: rgba(255,255,255,0.6); border-radius: 12px; padding: 22px 30px; margin-top: 32px; text-align: center; font-size: 0.85rem; }
+.app-footer { background: #0f172a; color: #94a3b8; border-radius: 12px; padding: 22px 30px; margin-top: 32px; text-align: center; font-size: 0.85rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -239,7 +233,7 @@ ALT_MENU_SIL = [
 ]
 
 # ==========================================
-# 5. ÖZEL NAVİGASYON YARDIMCILARI (KUSURSUZ RENK VE TIKLAMA ÇÖZÜMÜ)
+# 5. ÖZEL NAVİGASYON YARDIMCILARI (RENKLİ VE MOBİL UYUMLU)
 # ==========================================
 def _init_nav():
     if "nav_ana" not in st.session_state: st.session_state["nav_ana"] = "ogr_gorev"
@@ -249,7 +243,7 @@ def _init_nav():
     if "nav_sil_alt" not in st.session_state: st.session_state["nav_sil_alt"] = "tekil_sil"
 
 def render_nav_bar(menu_items: list, state_key: str, is_main=False):
-    # Mobilde butonların düzgün yayılması ve tasarımın korunması için sütun yapısı
+    # Mobilde butonların düzgün yayılması için sütun yapısı
     cols = st.columns(len(menu_items))
     aktif = st.session_state.get(state_key, menu_items[0][0])
     
@@ -261,7 +255,7 @@ def render_nav_bar(menu_items: list, state_key: str, is_main=False):
         display_label = f"◉ {label}" if is_active else label
         active_class = "active-btn" if is_active else "inactive-btn"
         
-        # 'with col:' kullanarak butonları Streamlit konteynerinde hapsediyoruz
+        # 'with col:' kullanarak butonları Streamlit konteynerinde hapsediyoruz (Mobil taşmaları engeller)
         with col:
             st.markdown(f'<div class="{menu_class} {active_class}">', unsafe_allow_html=True)
             if st.button(display_label, key=f"navbtn_{state_key}_{key}", use_container_width=True):
@@ -283,7 +277,6 @@ def render_ana_nav(rol: str, admin_bakis: bool):
     st.markdown('<div style="margin-bottom:15px;">', unsafe_allow_html=True)
     render_nav_bar(items, "nav_ana", is_main=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
 # ==========================================
 # 6. VERİTABANI YÖNETİMİ
 # ==========================================
@@ -1130,12 +1123,12 @@ def yonetim_paneli(df, ayarlar):
                          f'border-radius:6px;font-size:0.75rem;margin-left:8px;">👁 GÖZATMA → {admin_bakis_ogrt}</span>'
                          if admin_bakis else '')
         st.markdown(f"""
-        <div style="background:rgba(15, 23, 42, 0.6); padding:14px 22px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px; border-left: 5px solid #2563eb; color:white;">
+        <div style="background:white; padding:14px 22px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px; border-left: 5px solid #2563eb;">
             <div>
-                <div style="font-size:1.15rem;font-weight:900;color:white;">
+                <div style="font-size:1.15rem;font-weight:900;color:#1e293b;">
                     {'👁️ ' if admin_bakis else '👋 '}{kb['ad']} {gozatma_badge}
                 </div>
-                <div style="font-size:0.88rem;color:rgba(255,255,255,0.7);font-weight:600;margin-top:2px;">
+                <div style="font-size:0.88rem;color:#64748b;font-weight:600;margin-top:2px;">
                     {kb.get('okul','') or 'Yönetici'} &nbsp;|&nbsp; {kb.get('brans','')} {admin_etiket}
                 </div>
             </div>
@@ -1559,8 +1552,8 @@ def yonetim_paneli(df, ayarlar):
                         st.session_state["vg"] = str(bilgi.get('Genel Değerlendirme Yorumu', ""))
 
                     st.markdown(f"""
-                    <div style="background:rgba(59,130,246,0.15);padding:14px;border-radius:10px;border-left:4px solid #3b82f6;margin-bottom:14px;color:#93c5fd;">
-                        <strong style="color:white;">{bilgi.get('Öğrenci Adı Soyadı','')}</strong> &nbsp;|&nbsp;
+                    <div style="background:#eff6ff;padding:14px;border-radius:10px;border-left:4px solid #3b82f6;margin-bottom:14px;">
+                        <strong>{bilgi.get('Öğrenci Adı Soyadı','')}</strong> &nbsp;|&nbsp;
                         {bilgi.get('Sınıf','')} &nbsp;|&nbsp;
                         {bilgi.get('Gorev_Adi','')} &nbsp;|&nbsp;
                         No: {bilgi.get('Okul No','')}
@@ -1609,7 +1602,7 @@ def yonetim_paneli(df, ayarlar):
                             st.markdown(f"""
                             <div class="kriter-card">
                                 <div class="baslik">{k.get('icon','📌')} {k['baslik']}
-                                  <span style="color:rgba(255,255,255,0.4);font-size:0.82rem;font-weight:400;"> (Max: {k['max']} puan)</span>
+                                  <span style="color:#94a3b8;font-size:0.82rem;font-weight:400;"> (Max: {k['max']} puan)</span>
                                 </div>
                                 <div class="aciklama">{k['aciklama']}</div>
                             </div>""", unsafe_allow_html=True)
@@ -1619,9 +1612,9 @@ def yonetim_paneli(df, ayarlar):
                             av = cc2.text_area("Açıklama", key=f"va_{k['id']}", height=68, label_visibility="collapsed")
                             toplam_h += pv
                         gv = st.text_area("💬 Genel Yorum", key="vg", height=90)
-                        st.markdown(f"""<div style="background:rgba(16,185,129,0.15);padding:12px;border-radius:8px;
+                        st.markdown(f"""<div style="background:#f0fdf4;padding:12px;border-radius:8px;
                             border-left:4px solid #10b981;font-size:1.05rem;font-weight:800;">
-                            Toplam: <span style="color:#6ee7b7;">{toplam_h} / 100</span></div>""",
+                            Toplam: <span style="color:#059669;">{toplam_h} / 100</span></div>""",
                             unsafe_allow_html=True)
                         if st.form_submit_button("💾 Veritabanına Kaydet", use_container_width=True):
                             d_k_flat = {}
@@ -1721,103 +1714,154 @@ def yonetim_paneli(df, ayarlar):
             st.markdown('</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════
-    # SEKME: E-OKUL KARNE (Veritabanı Kalıcı Hafıza Sistemi)
+    # SEKME: E-OKUL KARNE (Gelişmiş Yapay Zeka, Grafik ve Arşiv)
     # ══════════════════════════════════════════════════
     elif aktif_ana == "eokul":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü Yazıcı ve Arşivi</div>", unsafe_allow_html=True)
-        st.info("Bu modülde yüklediğiniz not listeleri veritabanında 'Karne Gorusu' adıyla saklanır. İstediğiniz zaman arşiv sekmesinden öğrenciyi bulup yapay zeka ile görüş üretebilir ve arşivleyebilirsiniz.")
-
-        tab_yukle, tab_liste = st.tabs(["📥 Yeni Karne Listesi Yükle", "📂 Arşivlenmiş Karne Görüşleri (Düzenle)"])
+        st.markdown("<div class='section-header'>📝 Gelişmiş E-Okul Karne Görüşü & Arşiv Sistemi</div>", unsafe_allow_html=True)
         
-        with tab_yukle:
+        c_donem, c_bos = st.columns([1, 3])
+        secili_donem = c_donem.selectbox("Dönem Seçimi", ["1. Dönem", "2. Dönem"])
+
+        tab_islem, tab_arsiv = st.tabs(["⚙️ Karne Listesi Yükle ve Değerlendir", "📂 Onaylanmış Arşiv Kayıtları"])
+        
+        with tab_islem:
             col_down, col_up = st.columns([1, 2])
             col_down.download_button("📄 Örnek Not Şablonu İndir", data=eokul_sablon_olustur(), file_name="Eokul_Sablon.xlsx")
-            k_dosya = col_up.file_uploader("Öğrenci Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
+            k_dosya = col_up.file_uploader("E-Okul Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
 
-            if k_dosya and st.button("🚀 Listeyi Veritabanına Aktar"):
-                try:
+            if k_dosya:
+                # NaN hatasını çözmek ve veriyi session_state'te tutmak için
+                if "aktif_karne_df" not in st.session_state or st.session_state.get("son_yuklenen_karne") != k_dosya.name:
                     kdf = pd.read_csv(k_dosya, sep=None, engine='python') if k_dosya.name.endswith('.csv') else pd.read_excel(k_dosya)
-                    kdf = kdf.fillna("") 
-                    cols = kdf.columns.tolist()
-                    no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
-                    ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
-                    sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
-                    not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col]]
-                    
-                    db_karne_records = []
-                    
-                    for _, row in kdf.iterrows():
-                        o_no = str(row[no_col]).strip().replace('.0', '')
-                        if not o_no or o_no.lower() == "nan" or o_no == "": continue
-                        
-                        notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
-                        
-                        kontrol = df[(df['Okul'] == kb.get("okul")) & (df['Okul No'] == o_no) & (df['Gorev_Turu'] == 'Karne Gorusu')]
-                        if kontrol.empty:
-                            db_karne_records.append({
-                                'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
-                                'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
-                                'sinif': str(row[sinif_col]) if sinif_col and str(row[sinif_col]).strip() != "" else "Bilinmiyor", 
-                                'gorev_turu': 'Karne Gorusu', 'gorev_adi': f"{time.strftime('%Y')} Dönem Sonu", 
-                                'dinamik_json': {"notlar": notlar_dict},
-                                'genel_degerlendirme_yorumu': "" 
-                            })
-                    if db_karne_records:
-                        supabase.table('gorevler').insert(db_karne_records).execute()
-                        st.cache_data.clear()
-                        st.success(f"✅ {len(db_karne_records)} öğrenci karne arşivine eklendi! Şimdi yandaki sekmeden işlem yapabilirsiniz.")
-                        time.sleep(2); st.rerun()
-                    else: st.warning("Bu öğrenciler zaten arşivde mevcut veya liste boş.")
-                except Exception as e: st.error(f"Hata: {e}")
-                
-        with tab_liste:
-            df_karne = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu']
-            if df_karne.empty:
-                st.info("Sistemde arşivlenmiş karne görüşü bulunmuyor. Önce Excel yükleyiniz.")
-            else:
-                ogr_liste_k = df_karne.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist()
-                secili_ogrenci_k = st.selectbox("🎯 İşlem Yapılacak Öğrenciyi Seçin", ["— Seçiniz —"] + ogr_liste_k)
-                
-                if secili_ogrenci_k != "— Seçiniz —":
-                    o_no_k = secili_ogrenci_k.split(" - ")[0].strip()
-                    satir_k = df_karne[df_karne['Okul No'] == o_no_k].iloc[0]
-                    
-                    st.markdown(f"#### 📊 {satir_k['Öğrenci Adı Soyadı']} — Not Profili")
-                    eski_notlar = {}
-                    try:
-                        if pd.notna(satir_k.get('Dinamik_JSON', '')):
-                            eski_notlar = json.loads(str(satir_k['Dinamik_JSON'])).get("notlar", {})
-                    except: pass
-                    
-                    not_html = "<div style='display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px;'>"
-                    for ders, notu in eski_notlar.items():
-                        not_html += f"<div style='background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);padding:8px 12px;border-radius:8px;'><strong style='color:#93c5fd;'>{ders}:</strong> {notu}</div>"
-                    not_html += "</div>"
-                    st.markdown(not_html, unsafe_allow_html=True)
-                    
-                    c_a1, c_a2 = st.columns([1, 2])
-                    obs = c_a1.text_area("Öğretmen Özel Gözlemi (Opsiyonel)", placeholder="Örn: Bu dönem çok gayretliydi...")
-                    if c_a1.button("✨ AI Görüş Üret", use_container_width=True):
-                        with st.spinner("Görüş yazılıyor..."):
-                            try:
-                                g_metin = ai_karne_gorusu_yaz(satir_k['Öğrenci Adı Soyadı'], satir_k['Sınıf'], eski_notlar, obs, kb["ad"])
-                                supabase.table('gorevler').update({'genel_degerlendirme_yorumu': g_metin}).eq('okul_no', o_no_k).eq('gorev_turu', 'Karne Gorusu').execute()
-                                st.cache_data.clear()
-                                st.success("Görüş Üretildi!"); time.sleep(1); st.rerun()
-                            except Exception as e: st.error(f"Hata: {e}")
-                            
-                    y_gorus = c_a2.text_area("Görüşü Düzenle / Onayla", value=satir_k.get('Genel Değerlendirme Yorumu', ''), height=180)
-                    if c_a2.button("💾 Manuel Değişikliği Arşive Kaydet"):
-                        supabase.table('gorevler').update({'genel_degerlendirme_yorumu': y_gorus}).eq('okul_no', o_no_k).eq('gorev_turu', 'Karne Gorusu').execute()
-                        st.cache_data.clear()
-                        st.success("Arşive kaydedildi!"); time.sleep(1); st.rerun()
-                        
+                    kdf = kdf.fillna("") # NaN hatasını kökten çözer
+                    if "YapayZeka_Gorus" not in kdf.columns:
+                        kdf["YapayZeka_Gorus"] = ""
+                    if "Onay_Durumu" not in kdf.columns:
+                        kdf["Onay_Durumu"] = "Bekliyor ⏳"
+                    st.session_state["aktif_karne_df"] = kdf
+                    st.session_state["son_yuklenen_karne"] = k_dosya.name
+
+            if "aktif_karne_df" in st.session_state and not st.session_state["aktif_karne_df"].empty:
+                kdf = st.session_state["aktif_karne_df"]
+                cols = kdf.columns.tolist()
+                no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
+                ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
+                sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
+                not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col, "YapayZeka_Gorus", "Onay_Durumu"]]
+
                 st.markdown("---")
-                out_k = io.BytesIO()
-                with pd.ExcelWriter(out_k, engine='xlsxwriter') as writer:
-                    df_karne[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Genel Değerlendirme Yorumu']].to_excel(writer, index=False, sheet_name='Arsiv_Gorusleri')
-                st.download_button("📥 Tüm Arşivlenmiş Görüşleri Excel İndir", data=out_k.getvalue(), file_name="E_Okul_Arsiv.xlsx")
+                
+                # --- TOPLU AI İŞLEMİ ---
+                if st.button("🤖 Tüm Sınıf İçin Toplu Yapay Zeka Görüşü Üret", type="primary"):
+                    bar = st.progress(0)
+                    for i, row in kdf.iterrows():
+                        if kdf.at[i, "Onay_Durumu"] == "Onaylandı ✅": continue # Onaylananları ezme
+                        notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
+                        try:
+                            g_metin = ai_karne_gorusu_yaz(row[ad_col], row[sinif_col], notlar_dict, "", kb["ad"])
+                            kdf.at[i, "YapayZeka_Gorus"] = g_metin
+                        except Exception as e:
+                            kdf.at[i, "YapayZeka_Gorus"] = "AI Hatası oluştu."
+                        bar.progress((i + 1) / len(kdf))
+                    st.session_state["aktif_karne_df"] = kdf
+                    st.success("Tüm sınıf için görüşler üretildi! Aşağıdan inceleyip onaylayabilirsiniz.")
+                    time.sleep(1)
+                    st.rerun()
+
+                c_list1, c_list2 = st.columns([1, 2])
+                
+                # Sadece onay bekleyenleri listele
+                bekleyen_df = kdf[kdf["Onay_Durumu"] == "Bekliyor ⏳"]
+                secilen_ogrenci = c_list1.selectbox("🎯 Düzenlenecek / Onaylanacak Öğrenci", bekleyen_df[ad_col].tolist() if not bekleyen_df.empty else ["Tümü Onaylandı"])
+
+                if secilen_ogrenci != "Tümü Onaylandı":
+                    idx = kdf[kdf[ad_col] == secilen_ogrenci].index[0]
+                    satir = kdf.iloc[idx]
+                    
+                    # Sayısal notları grafiğe dökme
+                    sayisal_notlar = {}
+                    for d in not_cols:
+                        val = str(satir[d]).replace(",",".")
+                        if val.replace('.','',1).isdigit():
+                            sayisal_notlar[d] = float(val)
+                    
+                    if sayisal_notlar:
+                        c_list2.markdown("**📈 Öğrenci Performans Grafiği**")
+                        chart_data = pd.DataFrame(list(sayisal_notlar.items()), columns=["Ders", "Puan"]).set_index("Ders")
+                        c_list2.bar_chart(chart_data)
+
+                    guncel_gorus = c_list2.text_area(
+                        "✏️ Karne Görüşü (Önizleme & Düzenleme)", 
+                        value=satir["YapayZeka_Gorus"], 
+                        height=150,
+                        help="Görüşü düzenleyebilir ve panoya kopyalayabilirsiniz."
+                    )
+                    
+                    c_btn1, c_btn2 = c_list2.columns(2)
+                    if c_btn1.button("✅ Bu Görüşü Onayla ve Arşive Gönder", use_container_width=True):
+                        # Veritabanına Kalıcı Kayıt
+                        o_no = str(satir[no_col]).strip()
+                        notlar_dict = {d: str(satir[d]) for d in not_cols if str(satir[d]).strip() != ""}
+                        hedef_gorev_adi = f"{time.strftime('%Y')} - {secili_donem}"
+                        
+                        # Varsa güncelle, yoksa ekle
+                        kontrol = supabase.table('gorevler').select('id').eq('okul_no', o_no).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', hedef_gorev_adi).execute()
+                        
+                        if len(kontrol.data) > 0:
+                            supabase.table('gorevler').update({'genel_degerlendirme_yorumu': guncel_gorus, 'dinamik_json': {"notlar": notlar_dict}}).eq('okul_no', o_no).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', hedef_gorev_adi).execute()
+                        else:
+                            supabase.table('gorevler').insert({
+                                'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
+                                'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': secilen_ogrenci,
+                                'sinif': str(satir[sinif_col]), 'gorev_turu': 'Karne Gorusu', 
+                                'gorev_adi': hedef_gorev_adi, 'dinamik_json': {"notlar": notlar_dict},
+                                'genel_degerlendirme_yorumu': guncel_gorus
+                            }).execute()
+
+                        kdf.at[idx, "YapayZeka_Gorus"] = guncel_gorus
+                        kdf.at[idx, "Onay_Durumu"] = "Onaylandı ✅"
+                        st.session_state["aktif_karne_df"] = kdf
+                        st.success(f"{secilen_ogrenci} onaylandı ve arşive eklendi!")
+                        time.sleep(1)
+                        st.rerun()
+                        
+                    if c_btn2.button("✨ Sadece Bu Öğrenciye Tekrar AI Üret", use_container_width=True):
+                        notlar_dict = {d: str(satir[d]) for d in not_cols if str(satir[d]).strip() != ""}
+                        yeni_metin = ai_karne_gorusu_yaz(secilen_ogrenci, satir[sinif_col], notlar_dict, "", kb["ad"])
+                        kdf.at[idx, "YapayZeka_Gorus"] = yeni_metin
+                        st.session_state["aktif_karne_df"] = kdf
+                        st.rerun()
+
+                st.markdown("#### 📋 Yüklenen Liste Durumu")
+                st.dataframe(kdf[[no_col, ad_col, "Onay_Durumu", "YapayZeka_Gorus"]], use_container_width=True)
+
+        with tab_arsiv:
+            df_karne_arsiv = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu']
+            if df_karne_arsiv.empty:
+                st.info("Sistemde onaylanmış/arşivlenmiş karne görüşü bulunmuyor.")
+            else:
+                arsiv_donem_filtresi = st.selectbox("Arşiv Dönemi Filtrele", ["Tümü"] + sorted(df_karne_arsiv['Gorev_Adi'].dropna().unique().tolist()))
+                if arsiv_donem_filtresi != "Tümü":
+                    df_karne_arsiv = df_karne_arsiv[df_karne_arsiv['Gorev_Adi'] == arsiv_donem_filtresi]
+
+                st.dataframe(
+                    df_karne_arsiv[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Adi', 'Genel Değerlendirme Yorumu']],
+                    use_container_width=True
+                )
+                
+                st.markdown("**Arşivden Tekil Düzenleme**")
+                duzenle_secim = st.selectbox("Düzenlenecek Öğrenciyi Seçin", ["— Seçiniz —"] + df_karne_arsiv.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist())
+                if duzenle_secim != "— Seçiniz —":
+                    o_no_duzenle = duzenle_secim.split(" - ")[0].strip()
+                    s_veri = df_karne_arsiv[df_karne_arsiv['Okul No'] == o_no_duzenle].iloc[0]
+                    yeni_arsiv_gorus = st.text_area("Görüşü Güncelle", value=s_veri['Genel Değerlendirme Yorumu'])
+                    if st.button("💾 Arşivdeki Görüşü Güncelle"):
+                        supabase.table('gorevler').update({'genel_degerlendirme_yorumu': yeni_arsiv_gorus}).eq('okul_no', o_no_duzenle).eq('gorev_adi', s_veri['Gorev_Adi']).execute()
+                        st.cache_data.clear()
+                        st.success("Arşiv güncellendi!")
+                        time.sleep(1)
+                        st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1868,7 +1912,7 @@ def yonetim_paneli(df, ayarlar):
                         col_o1.markdown(f"""
                         <div class="ogrt-card {'bekliyor' if not user.get('onayli',True) else ''}">
                             {onay_icon} <strong>{user['ad']}</strong><br>
-                            <span style="color:rgba(255,255,255,0.6);font-size:0.82rem;">{user.get('brans','')} | {ogrt_gorev} görev | {user.get('eposta','—')}</span>
+                            <span style="color:#64748b;font-size:0.82rem;">{user.get('brans','')} | {ogrt_gorev} görev | {user.get('eposta','—')}</span>
                         </div>""", unsafe_allow_html=True)
                         if col_o2.button("👁️ Gözat", key=f"goz_{kadi}"):
                             st.session_state["admin_bakis_modu"] = True
