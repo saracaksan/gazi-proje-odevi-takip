@@ -747,15 +747,30 @@ SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel"
 def ai_karne_gorusu_yaz(tam_isim, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad):
     ogrenci_isim = isme_hitap_et(tam_isim)
     notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if str(notu).strip() != ""])
+    
+    # Davranış notunu tespit edip özel kural ekleme
+    davranis_puani = notlar_sozlugu.get("Davranış", 100)
+    try:
+        d_puan = float(str(davranis_puani).replace(",", "."))
+    except:
+        d_puan = 100.0
+        
+    davranis_uyarisi = ""
+    if d_puan < 50:
+        davranis_uyarisi = "Öğrencinin davranış notu 50'nin altında. Lütfen karnesinde davranışlarını düzeltmesi gerektiğine dair yapıcı, pedagojik ama ciddi bir uyarıda bulun."
+    else:
+        davranis_uyarisi = "Öğrencinin davranış notu gayet iyi. Bu olumlu tutumunu takdir eden ve motive eden cümleler kur."
+
     prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_isim} adlı öğrenciye e-okul karne görüşü yaz.
 Öğrencinin Ders Notları ve Davranış Puanı (Hepsi 100 Üzerindendir):
 {notlar_metni}
+
 Ekstra Öğretmen Gözlemi: {ekstra_gozlem}
-Lütfen yukarıdaki notlara ve özellikle 'Davranış' notuna bakarak 'Sevgili {ogrenci_isim}' diye hitap eden, pedagojik, 3-4 cümlelik motive edici bir dönem sonu karne görüşü üret. Türkçe."""
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"response_mime_type": "text/plain"}
-    }
+ÖZEL TALİMAT: {davranis_uyarisi}
+
+Lütfen yukarıdaki verilere bakarak 'Sevgili {ogrenci_isim}' diye hitap eden, 3-4 cümlelik, e-okul sistemine doğrudan yapıştırılabilecek kalitede bir dönem sonu karne görüşü üret."""
+    
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
     r = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
     r.raise_for_status()
     return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
@@ -1697,105 +1712,154 @@ def yonetim_paneli(df, ayarlar):
             st.markdown('</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════
-    # SEKME: E-OKUL KARNE (Veritabanı Kalıcı Hafıza Sistemi)
+    # SEKME: E-OKUL KARNE (Gelişmiş Yapay Zeka, Grafik ve Arşiv)
     # ══════════════════════════════════════════════════
     elif aktif_ana == "eokul":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü Yazıcı ve Arşivi</div>", unsafe_allow_html=True)
-        st.info("Bu modülde yüklediğiniz not listeleri veritabanında 'Karne Gorusu' adıyla saklanır. İstediğiniz zaman arşiv sekmesinden öğrenciyi bulup yapay zeka ile görüş üretebilir ve arşivleyebilirsiniz.")
-
-        tab_yukle, tab_liste = st.tabs(["📥 Yeni Karne Listesi Yükle", "📂 Arşivlenmiş Karne Görüşleri (Düzenle)"])
+        st.markdown("<div class='section-header'>📝 Gelişmiş E-Okul Karne Görüşü & Arşiv Sistemi</div>", unsafe_allow_html=True)
         
-        with tab_yukle:
+        c_donem, c_bos = st.columns([1, 3])
+        secili_donem = c_donem.selectbox("Dönem Seçimi", ["1. Dönem", "2. Dönem"])
+
+        tab_islem, tab_arsiv = st.tabs(["⚙️ Karne Listesi Yükle ve Değerlendir", "📂 Onaylanmış Arşiv Kayıtları"])
+        
+        with tab_islem:
             col_down, col_up = st.columns([1, 2])
             col_down.download_button("📄 Örnek Not Şablonu İndir", data=eokul_sablon_olustur(), file_name="Eokul_Sablon.xlsx")
-            k_dosya = col_up.file_uploader("Öğrenci Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
+            k_dosya = col_up.file_uploader("E-Okul Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
 
-            if k_dosya and st.button("🚀 Listeyi Veritabanına Aktar"):
-                try:
+            if k_dosya:
+                # NaN hatasını çözmek ve veriyi session_state'te tutmak için
+                if "aktif_karne_df" not in st.session_state or st.session_state.get("son_yuklenen_karne") != k_dosya.name:
                     kdf = pd.read_csv(k_dosya, sep=None, engine='python') if k_dosya.name.endswith('.csv') else pd.read_excel(k_dosya)
-                    # HATA ÇÖZÜMÜ: Boş/NaN hücreleri temizle
-                    kdf = kdf.fillna("")
-                    cols = kdf.columns.tolist()
-                    no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
-                    ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
-                    sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
-                    not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col]]
-                    
-                    db_karne_records = []
-                    
-                    for _, row in kdf.iterrows():
-                        o_no = str(row[no_col]).strip().replace('.0', '')
-                        # HATA ÇÖZÜMÜ: Boş satırları atla
-                        if not o_no or o_no.lower() == "nan" or o_no == "": continue
-                        
-                        notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
-                        
-                        kontrol = df[(df['Okul'] == kb.get("okul")) & (df['Okul No'] == o_no) & (df['Gorev_Turu'] == 'Karne Gorusu')]
-                        if kontrol.empty:
-                            db_karne_records.append({
-                                'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
-                                'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
-                                'sinif': str(row[sinif_col]) if sinif_col and str(row[sinif_col]).strip() != "" else "Bilinmiyor", 
-                                'gorev_turu': 'Karne Gorusu', 'gorev_adi': f"{time.strftime('%Y')} Dönem Sonu", 
-                                'dinamik_json': {"notlar": notlar_dict},
-                                'genel_degerlendirme_yorumu': "" 
-                            })
-                    if db_karne_records:
-                        supabase.table('gorevler').insert(db_karne_records).execute()
-                        st.cache_data.clear()
-                        st.success(f"✅ {len(db_karne_records)} öğrenci karne arşivine eklendi! Şimdi yandaki sekmeden işlem yapabilirsiniz.")
-                        time.sleep(2); st.rerun()
-                    else: st.warning("Bu öğrenciler zaten arşivde mevcut veya liste boş.")
-                except Exception as e: st.error(f"Hata: {e}")
-                
-        with tab_liste:
-            df_karne = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu']
-            if df_karne.empty:
-                st.info("Sistemde arşivlenmiş karne görüşü bulunmuyor. Önce Excel yükleyiniz.")
-            else:
-                ogr_liste_k = df_karne.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist()
-                secili_ogrenci_k = st.selectbox("🎯 İşlem Yapılacak Öğrenciyi Seçin", ["— Seçiniz —"] + ogr_liste_k)
-                
-                if secili_ogrenci_k != "— Seçiniz —":
-                    o_no_k = secili_ogrenci_k.split(" - ")[0].strip()
-                    satir_k = df_karne[df_karne['Okul No'] == o_no_k].iloc[0]
-                    
-                    st.markdown(f"#### 📊 {satir_k['Öğrenci Adı Soyadı']} — Not Profili")
-                    eski_notlar = {}
-                    try:
-                        if pd.notna(satir_k.get('Dinamik_JSON', '')):
-                            eski_notlar = json.loads(str(satir_k['Dinamik_JSON'])).get("notlar", {})
-                    except: pass
-                    
-                    not_html = "<div style='display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px;'>"
-                    for ders, notu in eski_notlar.items():
-                        not_html += f"<div style='background:white;border:1px solid #bfdbfe;padding:8px 12px;border-radius:8px;'><strong style='color:#1e40af;'>{ders}:</strong> {notu}</div>"
-                    not_html += "</div>"
-                    st.markdown(not_html, unsafe_allow_html=True)
-                    
-                    c_a1, c_a2 = st.columns([1, 2])
-                    obs = c_a1.text_area("Öğretmen Özel Gözlemi (Opsiyonel)", placeholder="Örn: Bu dönem çok gayretliydi...")
-                    if c_a1.button("✨ AI Görüş Üret", use_container_width=True):
-                        with st.spinner("Görüş yazılıyor..."):
-                            try:
-                                g_metin = ai_karne_gorusu_yaz(satir_k['Öğrenci Adı Soyadı'], satir_k['Sınıf'], eski_notlar, obs, kb["ad"])
-                                supabase.table('gorevler').update({'genel_degerlendirme_yorumu': g_metin}).eq('okul_no', o_no_k).eq('gorev_turu', 'Karne Gorusu').execute()
-                                st.cache_data.clear()
-                                st.success("Görüş Üretildi!"); time.sleep(1); st.rerun()
-                            except Exception as e: st.error(f"Hata: {e}")
-                            
-                    y_gorus = c_a2.text_area("Görüşü Düzenle / Onayla", value=satir_k.get('Genel Değerlendirme Yorumu', ''), height=180)
-                    if c_a2.button("💾 Manuel Değişikliği Arşive Kaydet"):
-                        supabase.table('gorevler').update({'genel_degerlendirme_yorumu': y_gorus}).eq('okul_no', o_no_k).eq('gorev_turu', 'Karne Gorusu').execute()
-                        st.cache_data.clear()
-                        st.success("Arşive kaydedildi!"); time.sleep(1); st.rerun()
-                        
+                    kdf = kdf.fillna("") # NaN hatasını kökten çözer
+                    if "YapayZeka_Gorus" not in kdf.columns:
+                        kdf["YapayZeka_Gorus"] = ""
+                    if "Onay_Durumu" not in kdf.columns:
+                        kdf["Onay_Durumu"] = "Bekliyor ⏳"
+                    st.session_state["aktif_karne_df"] = kdf
+                    st.session_state["son_yuklenen_karne"] = k_dosya.name
+
+            if "aktif_karne_df" in st.session_state and not st.session_state["aktif_karne_df"].empty:
+                kdf = st.session_state["aktif_karne_df"]
+                cols = kdf.columns.tolist()
+                no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
+                ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
+                sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
+                not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col, "YapayZeka_Gorus", "Onay_Durumu"]]
+
                 st.markdown("---")
-                out_k = io.BytesIO()
-                with pd.ExcelWriter(out_k, engine='xlsxwriter') as writer:
-                    df_karne[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Genel Değerlendirme Yorumu']].to_excel(writer, index=False, sheet_name='Arsiv_Gorusleri')
-                st.download_button("📥 Tüm Arşivlenmiş Görüşleri Excel İndir", data=out_k.getvalue(), file_name="E_Okul_Arsiv.xlsx")
+                
+                # --- TOPLU AI İŞLEMİ ---
+                if st.button("🤖 Tüm Sınıf İçin Toplu Yapay Zeka Görüşü Üret", type="primary"):
+                    bar = st.progress(0)
+                    for i, row in kdf.iterrows():
+                        if kdf.at[i, "Onay_Durumu"] == "Onaylandı ✅": continue # Onaylananları ezme
+                        notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
+                        try:
+                            g_metin = ai_karne_gorusu_yaz(row[ad_col], row[sinif_col], notlar_dict, "", kb["ad"])
+                            kdf.at[i, "YapayZeka_Gorus"] = g_metin
+                        except Exception as e:
+                            kdf.at[i, "YapayZeka_Gorus"] = "AI Hatası oluştu."
+                        bar.progress((i + 1) / len(kdf))
+                    st.session_state["aktif_karne_df"] = kdf
+                    st.success("Tüm sınıf için görüşler üretildi! Aşağıdan inceleyip onaylayabilirsiniz.")
+                    time.sleep(1)
+                    st.rerun()
+
+                c_list1, c_list2 = st.columns([1, 2])
+                
+                # Sadece onay bekleyenleri listele
+                bekleyen_df = kdf[kdf["Onay_Durumu"] == "Bekliyor ⏳"]
+                secilen_ogrenci = c_list1.selectbox("🎯 Düzenlenecek / Onaylanacak Öğrenci", bekleyen_df[ad_col].tolist() if not bekleyen_df.empty else ["Tümü Onaylandı"])
+
+                if secilen_ogrenci != "Tümü Onaylandı":
+                    idx = kdf[kdf[ad_col] == secilen_ogrenci].index[0]
+                    satir = kdf.iloc[idx]
+                    
+                    # Sayısal notları grafiğe dökme
+                    sayisal_notlar = {}
+                    for d in not_cols:
+                        val = str(satir[d]).replace(",",".")
+                        if val.replace('.','',1).isdigit():
+                            sayisal_notlar[d] = float(val)
+                    
+                    if sayisal_notlar:
+                        c_list2.markdown("**📈 Öğrenci Performans Grafiği**")
+                        chart_data = pd.DataFrame(list(sayisal_notlar.items()), columns=["Ders", "Puan"]).set_index("Ders")
+                        c_list2.bar_chart(chart_data)
+
+                    guncel_gorus = c_list2.text_area(
+                        "✏️ Karne Görüşü (Önizleme & Düzenleme)", 
+                        value=satir["YapayZeka_Gorus"], 
+                        height=150,
+                        help="Görüşü düzenleyebilir ve panoya kopyalayabilirsiniz."
+                    )
+                    
+                    c_btn1, c_btn2 = c_list2.columns(2)
+                    if c_btn1.button("✅ Bu Görüşü Onayla ve Arşive Gönder", use_container_width=True):
+                        # Veritabanına Kalıcı Kayıt
+                        o_no = str(satir[no_col]).strip()
+                        notlar_dict = {d: str(satir[d]) for d in not_cols if str(satir[d]).strip() != ""}
+                        hedef_gorev_adi = f"{time.strftime('%Y')} - {secili_donem}"
+                        
+                        # Varsa güncelle, yoksa ekle
+                        kontrol = supabase.table('gorevler').select('id').eq('okul_no', o_no).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', hedef_gorev_adi).execute()
+                        
+                        if len(kontrol.data) > 0:
+                            supabase.table('gorevler').update({'genel_degerlendirme_yorumu': guncel_gorus, 'dinamik_json': {"notlar": notlar_dict}}).eq('okul_no', o_no).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', hedef_gorev_adi).execute()
+                        else:
+                            supabase.table('gorevler').insert({
+                                'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
+                                'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': secilen_ogrenci,
+                                'sinif': str(satir[sinif_col]), 'gorev_turu': 'Karne Gorusu', 
+                                'gorev_adi': hedef_gorev_adi, 'dinamik_json': {"notlar": notlar_dict},
+                                'genel_degerlendirme_yorumu': guncel_gorus
+                            }).execute()
+
+                        kdf.at[idx, "YapayZeka_Gorus"] = guncel_gorus
+                        kdf.at[idx, "Onay_Durumu"] = "Onaylandı ✅"
+                        st.session_state["aktif_karne_df"] = kdf
+                        st.success(f"{secilen_ogrenci} onaylandı ve arşive eklendi!")
+                        time.sleep(1)
+                        st.rerun()
+                        
+                    if c_btn2.button("✨ Sadece Bu Öğrenciye Tekrar AI Üret", use_container_width=True):
+                        notlar_dict = {d: str(satir[d]) for d in not_cols if str(satir[d]).strip() != ""}
+                        yeni_metin = ai_karne_gorusu_yaz(secilen_ogrenci, satir[sinif_col], notlar_dict, "", kb["ad"])
+                        kdf.at[idx, "YapayZeka_Gorus"] = yeni_metin
+                        st.session_state["aktif_karne_df"] = kdf
+                        st.rerun()
+
+                st.markdown("#### 📋 Yüklenen Liste Durumu")
+                st.dataframe(kdf[[no_col, ad_col, "Onay_Durumu", "YapayZeka_Gorus"]], use_container_width=True)
+
+        with tab_arsiv:
+            df_karne_arsiv = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu']
+            if df_karne_arsiv.empty:
+                st.info("Sistemde onaylanmış/arşivlenmiş karne görüşü bulunmuyor.")
+            else:
+                arsiv_donem_filtresi = st.selectbox("Arşiv Dönemi Filtrele", ["Tümü"] + sorted(df_karne_arsiv['Gorev_Adi'].dropna().unique().tolist()))
+                if arsiv_donem_filtresi != "Tümü":
+                    df_karne_arsiv = df_karne_arsiv[df_karne_arsiv['Gorev_Adi'] == arsiv_donem_filtresi]
+
+                st.dataframe(
+                    df_karne_arsiv[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Adi', 'Genel Değerlendirme Yorumu']],
+                    use_container_width=True
+                )
+                
+                st.markdown("**Arşivden Tekil Düzenleme**")
+                duzenle_secim = st.selectbox("Düzenlenecek Öğrenciyi Seçin", ["— Seçiniz —"] + df_karne_arsiv.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist())
+                if duzenle_secim != "— Seçiniz —":
+                    o_no_duzenle = duzenle_secim.split(" - ")[0].strip()
+                    s_veri = df_karne_arsiv[df_karne_arsiv['Okul No'] == o_no_duzenle].iloc[0]
+                    yeni_arsiv_gorus = st.text_area("Görüşü Güncelle", value=s_veri['Genel Değerlendirme Yorumu'])
+                    if st.button("💾 Arşivdeki Görüşü Güncelle"):
+                        supabase.table('gorevler').update({'genel_degerlendirme_yorumu': yeni_arsiv_gorus}).eq('okul_no', o_no_duzenle).eq('gorev_adi', s_veri['Gorev_Adi']).execute()
+                        st.cache_data.clear()
+                        st.success("Arşiv güncellendi!")
+                        time.sleep(1)
+                        st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True)
 
