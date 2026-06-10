@@ -233,7 +233,7 @@ ALT_MENU_SIL = [
 ]
 
 # ==========================================
-# 5. ÖZEL NAVİGASYON YARDIMCILARI (RENKLİ)
+# 5. ÖZEL NAVİGASYON YARDIMCILARI (RENKLİ VE MOBİL UYUMLU)
 # ==========================================
 def _init_nav():
     if "nav_ana" not in st.session_state: st.session_state["nav_ana"] = "ogr_gorev"
@@ -243,58 +243,40 @@ def _init_nav():
     if "nav_sil_alt" not in st.session_state: st.session_state["nav_sil_alt"] = "tekil_sil"
 
 def render_nav_bar(menu_items: list, state_key: str, is_main=False):
-    cols = st.columns(len(menu_items))
-    aktif = st.session_state.get(state_key, menu_items[0][0])
-    
-    menu_class = "ana-menu-btn" if is_main else "alt-menu-btn"
-    
-    for col, (key, label) in zip(cols, menu_items):
-        is_active = aktif == key
-        display_label = f"◉ {label}" if is_active else label
-        active_class = "active-btn" if is_active else ""
-        
-        col.markdown(f'<div class="{menu_class} {active_class}">', unsafe_allow_html=True)
-        if col.button(display_label, key=f"navbtn_{state_key}_{key}", use_container_width=True):
-            st.session_state[state_key] = key
-            st.rerun()
-        col.markdown('</div>', unsafe_allow_html=True)
+    # Mobilde butonların düzgün yayılması için sütun yapısı
+    cols = st.columns(len(menu_items))
+    aktif = st.session_state.get(state_key, menu_items[0][0])
+    
+    # CSS için tetikleyici sınıflar
+    menu_class = "ana-menu-btn" if is_main else "alt-menu-btn"
+    
+    for col, (key, label) in zip(cols, menu_items):
+        is_active = aktif == key
+        display_label = f"◉ {label}" if is_active else label
+        active_class = "active-btn" if is_active else "inactive-btn"
+        
+        # 'with col:' kullanarak butonları Streamlit konteynerinde hapsediyoruz (Mobil taşmaları engeller)
+        with col:
+            st.markdown(f'<div class="{menu_class} {active_class}">', unsafe_allow_html=True)
+            if st.button(display_label, key=f"navbtn_{state_key}_{key}", use_container_width=True):
+                st.session_state[state_key] = key
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
 def render_ana_nav(rol: str, admin_bakis: bool):
-    items = [
-        ("ogr_gorev",         "👥 Öğrenci & Görev"),
-        ("ai_degerlendirme",  "🤖 AI Değerlendirme"),
-        ("raporlar",          "📊 Raporlar"),
-        ("eokul",             "📝 E-Okul Karne"),
-    ]
-    if rol == "admin" and not admin_bakis:
-        items.append(("ogretmen_yonetim", "👨‍🏫 Öğretmen Yönetimi"))
-    items.append(("ayarlar", "⚙️ Ayarlar & Profil"))
-    
-    st.markdown('<div style="margin-bottom:15px;">', unsafe_allow_html=True)
-    render_nav_bar(items, "nav_ana", is_main=True)
-    st.markdown('</div>', unsafe_allow_html=True)
- yerine bu kod mo def render_nav_bar(menu_items: list, state_key: str, is_main=False):
-    # Mobilde daha rahat çalışması ve çift tıklama sorununu çözmesi için yatay radio buton mantığı
-    options = [item[0] for item in menu_items]
-    format_dict = {item[0]: item[1] for item in menu_items}
-    
-    # Eğer session state'de yoksa ilk elemanı ata
-    if state_key not in st.session_state:
-        st.session_state[state_key] = options[0]
-        
-    secim = st.radio(
-        "Menü", 
-        options, 
-        index=options.index(st.session_state[state_key]),
-        format_func=lambda x: format_dict[x],
-        horizontal=True, 
-        label_visibility="collapsed",
-        key=f"radio_{state_key}"
-    )
-    
-    if secim != st.session_state[state_key]:
-        st.session_state[state_key] = secim
-        st.rerun()
+    items = [
+        ("ogr_gorev",         "👥 Öğrenci & Görev"),
+        ("ai_degerlendirme",  "🤖 AI Değerlendirme"),
+        ("raporlar",          "📊 Raporlar"),
+        ("eokul",             "📝 E-Okul Karne"),
+    ]
+    if rol == "admin" and not admin_bakis:
+        items.append(("ogretmen_yonetim", "👨‍🏫 Öğretmen Yönetimi"))
+    items.append(("ayarlar", "⚙️ Ayarlar & Profil"))
+    
+    st.markdown('<div style="margin-bottom:15px;">', unsafe_allow_html=True)
+    render_nav_bar(items, "nav_ana", is_main=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 # ==========================================
 # 6. VERİTABANI YÖNETİMİ
 # ==========================================
