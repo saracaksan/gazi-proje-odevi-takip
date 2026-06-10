@@ -210,7 +210,7 @@ ALT_MENU_OGR_GOREV = [
     ("excel_yukle",   "📥 Excel ile Yükle"),
     ("tekil_ekle",    "➕ Tekil Ekle"),
     ("havuz_ata",     "🏫 Havuzdan Görev Ata"),
-    ("gecmis_duzenle","✏️ Geçmişi Düzenle"), # YENİ EKLENEN ÖZELLİK
+    ("gecmis_duzenle","✏️ Geçmişi Düzenle"),
     ("silme",         "🗑️ Silme İşlemleri"),
 ]
 ALT_MENU_RAPORLAR = [
@@ -243,10 +243,6 @@ def _init_nav():
     if "nav_sil_alt" not in st.session_state: st.session_state["nav_sil_alt"] = "tekil_sil"
 
 def render_nav_bar(menu_items: list, state_key: str, is_main=False):
-    """
-    CSS sınıflarını (ana-menu-btn / alt-menu-btn ve active-btn) uygulayabilmek için
-    Streamlit sütunlarında HTML wrapper kullanıyoruz.
-    """
     cols = st.columns(len(menu_items))
     aktif = st.session_state.get(state_key, menu_items[0][0])
     
@@ -257,7 +253,6 @@ def render_nav_bar(menu_items: list, state_key: str, is_main=False):
         display_label = f"◉ {label}" if is_active else label
         active_class = "active-btn" if is_active else ""
         
-        # Sütun içine gizli CSS sınıfı enjekte etme tekniği
         col.markdown(f'<div class="{menu_class} {active_class}">', unsafe_allow_html=True)
         if col.button(display_label, key=f"navbtn_{state_key}_{key}", use_container_width=True):
             st.session_state[state_key] = key
@@ -426,7 +421,7 @@ def isme_hitap_et(tam_isim):
     return tam_isim
 
 # ==========================================
-# 9. HTML RAPOR ŞABLONLARİ (Tamamen Orijinal)
+# 9. HTML RAPOR ŞABLONLARİ
 # ==========================================
 def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
     if tekil_gorev_idx is not None:
@@ -751,7 +746,7 @@ SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel"
 
 def ai_karne_gorusu_yaz(tam_isim, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad):
     ogrenci_isim = isme_hitap_et(tam_isim)
-    notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if pd.notna(notu)])
+    notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if str(notu).strip() != ""])
     prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_isim} adlı öğrenciye e-okul karne görüşü yaz.
 Öğrencinin Ders Notları ve Davranış Puanı (Hepsi 100 Üzerindendir):
 {notlar_metni}
@@ -855,7 +850,7 @@ def ogrenci_sorgu_ekrani(df, ayarlar):
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 12. GİRİŞ EKRANI (Tamamen orijinal, Öğrenci dahil)
+# 12. GİRİŞ EKRANI
 # ==========================================
 def giris_ekrani(df, ayarlar):
     tab_ogr, tab_ogrt = st.tabs(["🎓 Öğrenci ve Veli Girişi", "👨‍🏫 Öğretmen / İdare Girişi"])
@@ -978,7 +973,7 @@ def giris_ekrani(df, ayarlar):
             st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 13. KULLANIM KILAVUZU (Orijinal)
+# 13. KULLANIM KILAVUZU
 # ==========================================
 def kullanim_kilavuzu():
     with st.expander("📖 PUSULA 360 Kullanım Kılavuzu — Tıkla, Aç", expanded=False):
@@ -1018,7 +1013,7 @@ def kullanim_kilavuzu():
         """, unsafe_allow_html=True)
 
 # ==========================================
-# 14. ŞABLON YÖNETİM MODÜLÜ (Orijinal)
+# 14. ŞABLON YÖNETİM MODÜLÜ
 # ==========================================
 def sablon_yonetimi_ui(ayarlar, kb, rol):
     st.markdown("#### 📐 Değerlendirme Ölçeği (Şablon) Yönetimi")
@@ -1197,22 +1192,25 @@ def yonetim_paneli(df, ayarlar):
                 else:
                     try:
                         excel_df = pd.read_excel(uploaded_file, dtype={"Okul No": str})
+                        # HATA ÇÖZÜMÜ: Boş/NaN hücreleri temizle
+                        excel_df = excel_df.fillna("") 
                         no_col    = next((c for c in excel_df.columns if "no" in str(c).lower()), excel_df.columns[0])
                         ad_col    = next((c for c in excel_df.columns if "ad" in str(c).lower()), excel_df.columns[1])
                         sinif_col = next((c for c in excel_df.columns if "sınıf" in str(c).lower() or "sinif" in str(c).lower()),
                                           excel_df.columns[2] if len(excel_df.columns) > 2 else None)
-                        excel_df.dropna(subset=[no_col], inplace=True)
-                        excel_df[no_col] = excel_df[no_col].astype(str).str.strip().str.replace('.0', '', regex=False)
 
                         db_records = []
                         for _, row in excel_df.iterrows():
-                            o_no   = row[no_col]
+                            o_no = str(row[no_col]).strip().replace('.0', '')
+                            # HATA ÇÖZÜMÜ: Boş veya tanımsız "nan" satırlarını atla
+                            if not o_no or o_no.lower() == "nan": continue
+                            
                             kontrol = df[(df['Okul'] == h_okul) & (df['Okul No'] == o_no) &
                                           (df['Gorev_Adi'] == g_isim.strip()) & (df['Atanan_Ogretmen'] == hedef_ogrt_ex)]
                             if kontrol.empty:
                                 target_ders = (kb_aktif.get("brans","Genel") if hedef_ogrt_ex == aktif_id
                                                else ayarlar["kullanicilar"].get(hedef_ogrt_ex,{}).get("brans","Genel"))
-                                sinif_val   = str(row[sinif_col]) if sinif_col and sinif_col in row else "Bilinmiyor"
+                                sinif_val   = str(row[sinif_col]) if sinif_col and str(row[sinif_col]).strip() != "" else "Bilinmiyor"
                                 db_records.append({
                                     'okul': h_okul, 'ekleyen': aktif_id, 'atanan_ogretmen': hedef_ogrt_ex,
                                     'ders': target_ders, 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
@@ -1225,7 +1223,7 @@ def yonetim_paneli(df, ayarlar):
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.warning("Tüm öğrenciler için bu görev zaten atanmış. Mükerrer kayıt engellendi.")
+                            st.warning("Geçerli bir öğrenci bulunamadı veya görev daha önce bu öğrencilere atanmış.")
                     except Exception as e:
                         st.error(f"Hata: {e}")
             st.markdown('</div>', unsafe_allow_html=True)
@@ -1506,7 +1504,6 @@ def yonetim_paneli(df, ayarlar):
             st.warning("Değerlendirilecek görev bulunamadı.")
         else:
             c_sec1, c_sec2 = st.columns([2, 1])
-            # Karne görüşlerini bu listeden çıkaralım
             df_g = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
             puan_liste      = df_g.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']}", axis=1).tolist()
             secili_gorev    = c_sec1.selectbox("🎯 Öğrenci ve Görevi Seçin", ["— Seçiniz —"] + puan_liste)
@@ -1630,7 +1627,6 @@ def yonetim_paneli(df, ayarlar):
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             st.markdown("<div class='section-header'>📊 Sınıf Raporları</div>", unsafe_allow_html=True)
             if not df_yetkili.empty:
-                # Sadece karne görüşü olmayan görevleri raporla
                 df_r_yetkili = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
                 
                 c_r1, c_r2 = st.columns([1, 1])
@@ -1718,25 +1714,29 @@ def yonetim_paneli(df, ayarlar):
             if k_dosya and st.button("🚀 Listeyi Veritabanına Aktar"):
                 try:
                     kdf = pd.read_csv(k_dosya, sep=None, engine='python') if k_dosya.name.endswith('.csv') else pd.read_excel(k_dosya)
+                    # HATA ÇÖZÜMÜ: Boş/NaN hücreleri temizle
+                    kdf = kdf.fillna("")
                     cols = kdf.columns.tolist()
                     no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
                     ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
                     sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
                     not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col]]
                     
-                    kdf.dropna(subset=[no_col], inplace=True)
                     db_karne_records = []
                     
                     for _, row in kdf.iterrows():
                         o_no = str(row[no_col]).strip().replace('.0', '')
-                        notlar_dict = {d: row[d] for d in not_cols if pd.notna(row.get(d))}
+                        # HATA ÇÖZÜMÜ: Boş satırları atla
+                        if not o_no or o_no.lower() == "nan" or o_no == "": continue
+                        
+                        notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
                         
                         kontrol = df[(df['Okul'] == kb.get("okul")) & (df['Okul No'] == o_no) & (df['Gorev_Turu'] == 'Karne Gorusu')]
                         if kontrol.empty:
                             db_karne_records.append({
                                 'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
                                 'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
-                                'sinif': str(row[sinif_col]) if sinif_col else "Bilinmiyor", 
+                                'sinif': str(row[sinif_col]) if sinif_col and str(row[sinif_col]).strip() != "" else "Bilinmiyor", 
                                 'gorev_turu': 'Karne Gorusu', 'gorev_adi': f"{time.strftime('%Y')} Dönem Sonu", 
                                 'dinamik_json': {"notlar": notlar_dict},
                                 'genel_degerlendirme_yorumu': "" 
@@ -1746,7 +1746,7 @@ def yonetim_paneli(df, ayarlar):
                         st.cache_data.clear()
                         st.success(f"✅ {len(db_karne_records)} öğrenci karne arşivine eklendi! Şimdi yandaki sekmeden işlem yapabilirsiniz.")
                         time.sleep(2); st.rerun()
-                    else: st.warning("Bu öğrenciler zaten arşivde mevcut.")
+                    else: st.warning("Bu öğrenciler zaten arşivde mevcut veya liste boş.")
                 except Exception as e: st.error(f"Hata: {e}")
                 
         with tab_liste:
