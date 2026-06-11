@@ -465,20 +465,15 @@ def _init_nav():
         if k not in st.session_state:
             st.session_state[k] = v
 
+# BUNU BULUP DEĞİŞTİRİN (Yaklaşık 109. Satır)
 def render_main_nav(rol, admin_bakis):
     items = list(ANA_MENU)
     if rol != "admin" or admin_bakis:
         items = [i for i in items if i[0] != "yonetim"]
 
     aktif = st.session_state.get("nav_ana", "ogr_gorev")
-    html = '<div class="nav-container">'
-    for key, label in items:
-        cls = "nav-item aktif" if aktif == key else "nav-item"
-        html += f'<div class="{cls}" id="navbtn_{key}">{label}</div>'
-    html += '</div>'
-    st.markdown(html, unsafe_allow_html=True)
 
-    # Buton bazlı fallback (Streamlit state için)
+    # Çift menü yaratan sahte HTML kodları silindi, sadece çalışan gerçek butonlar bırakıldı
     cols = st.columns(len(items))
     for col, (key, label) in zip(cols, items):
         is_a = aktif == key
@@ -1969,7 +1964,7 @@ def yonetim_paneli(df, ayarlar):
 
                 # Öğrenci Listesi
                 st.markdown("---")
-                for _, satir_k in df_kf.iterrows():
+                for index_k, satir_k in df_kf.iterrows():
                     yorum = satir_k.get('Genel Değerlendirme Yorumu','')
                     onayli = satir_k.get('Onaylandi', False)
                     notlar, davranis = {}, 75
@@ -2007,7 +2002,9 @@ def yonetim_paneli(df, ayarlar):
                     with col_k2:
                         o_no_k  = satir_k['Okul No']
                         donem_k_val = satir_k.get('Donem','1. Dönem')
-                        btn_key = f"karne_edit_{o_no_k}_{donem_k_val}"
+                        
+                        # DEĞİŞİKLİK BURADA: btn_key içine 'index_k' eklenerek buton kimliği eşsiz (unique) hale getirildi
+                        btn_key = f"karne_edit_{index_k}_{o_no_k}_{donem_k_val}"
 
                         if st.button("✏️ Düzenle", key=btn_key, use_container_width=True, type="primary"):
                             st.session_state["karne_sec_no"]    = o_no_k
