@@ -436,7 +436,7 @@ def isme_hitap_et(tam_isim):
     return tam_isim
 
 # ==========================================
-# 9. HTML RAPOR ŞABLONLARİ
+# 9. HTML RAPOR ŞABLONLARİ (PROFESYONEL ÇIKTILAR)
 # ==========================================
 def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
     if tekil_gorev_idx is not None:
@@ -561,33 +561,67 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
 
 def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler):
     html = """<!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Değerlendirme Raporu</title>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Öğrenci Performans Karnesi</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
-  body {{ font-family:'Plus Jakarta Sans',Arial,sans-serif; background:#f0f4f8; margin:0; padding:20px; }}
-  .page {{ background:white; width:100%; max-width:750px; margin:0 auto 24px; padding:20px;
-          border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.1);
-          page-break-after:always; border-top:7px solid #2563eb; }}
-  table {{ width:100%; border-collapse:collapse; margin-top:18px; }}
-  th {{ background:#f1f5f9; color:#1e293b; padding:11px; text-align:left; font-size:0.85rem; border-bottom:2px solid #cbd5e1; }}
-  td {{ padding:11px; border-bottom:1px solid #e2e8f0; font-size:0.88rem; line-height:1.5; color:#334155; }}
-  .header {{ background:linear-gradient(135deg,#0f2d6b,#2563eb); color:white; padding:18px 22px;
-             border-radius:10px; display:flex; justify-content:space-between; align-items:center; }}
-  .header h1 {{ margin:0; font-size:1.2rem; }}
-  .info-box {{ display:flex; flex-wrap:wrap; gap:16px; margin-top:14px; padding:14px;
-               background:#eff6ff; border-radius:10px; border-left:4px solid #3b82f6; }}
-  .info-item {{ display:flex; flex-direction:column; }}
-  .info-label {{ font-size:0.72rem; color:#64748b; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; }}
-  .info-value {{ font-size:1rem; font-weight:800; color:#0f172a; }}
-  .yorum {{ background:#fffbeb; padding:14px; margin-top:18px; border-radius:10px;
-            border-left:5px solid #f59e0b; color:#78350f; font-size:0.92rem; line-height:1.65; }}
-  .puan-daire {{ font-size:2rem; font-weight:900; background:white; color:#2563eb;
-                padding:4px 18px; border-radius:10px; }}
-  .imza {{ text-align:right; margin-top:24px; color:#475569; padding-top:12px; border-top:1px dashed #cbd5e1; }}
-  @media print {{ .page {{ box-shadow:none; page-break-after:always; }} }}
-  @media (max-width:600px) {{ .header {{ flex-direction:column; gap:10px; }} }}
-</style></head><body>"""
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; background: #e2e8f0; margin: 0; padding: 20px; }
+  .page { 
+      background: #ffffff; width: 100%; max-width: 800px; margin: 0 auto 30px auto; padding: 40px; 
+      border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+      page-break-after: always; position: relative; overflow: hidden;
+  }
+  .page::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 8px;
+      background: linear-gradient(90deg, #1e3a8a, #3b82f6, #10b981);
+  }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 25px; }
+  .kurum-bilgi { font-size: 0.9rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .baslik-ana { font-size: 1.6rem; color: #0f172a; font-weight: 800; margin: 0; }
+  .baslik-alt { font-size: 1.1rem; color: #3b82f6; font-weight: 600; margin-top: 5px; }
+  .puan-rozet { 
+      background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 16px; 
+      padding: 15px 25px; text-align: center; min-width: 100px;
+  }
+  .puan-deger { font-size: 2.5rem; font-weight: 900; color: #1e3a8a; line-height: 1; }
+  .puan-metin { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-top: 5px; text-transform: uppercase; }
+  
+  .ogrenci-karti { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
+  .bilgi-öğe { flex: 1; min-width: 150px; }
+  .bilgi-etiket { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+  .bilgi-deger { font-size: 1.1rem; color: #0f172a; font-weight: 700; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; }
+  
+  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  th { background: #1e293b; color: #ffffff; padding: 14px; text-align: left; font-size: 0.9rem; font-weight: 600; }
+  th:first-child { border-radius: 8px 0 0 0; }
+  th:last-child { border-radius: 0 8px 0 0; }
+  td { padding: 14px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .kriter-ikon { font-size: 1.2rem; margin-right: 8px; vertical-align: middle; }
+  .kriter-ad { font-weight: 700; color: #1e293b; }
+  .td-puan { text-align: center; font-weight: 800; color: #2563eb; font-size: 1.1rem; }
+  .td-max { text-align: center; font-size: 0.85rem; color: #94a3b8; }
+  
+  .yorum-alani { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 8px 8px 0; margin-bottom: 30px; }
+  .yorum-baslik { font-size: 0.9rem; font-weight: 800; color: #b45309; margin-bottom: 10px; text-transform: uppercase; }
+  .yorum-metin { font-size: 1rem; color: #78350f; line-height: 1.6; font-style: italic; }
+  
+  .imza-grid { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+  .imza-kutu { width: 45%; }
+  .imza-cizgi { border-bottom: 1px solid #94a3b8; width: 80%; margin: 40px auto 10px auto; }
+  .imza-isim { font-weight: 700; color: #0f172a; }
+  .imza-unvan { font-size: 0.85rem; color: #64748b; }
+  
+  @media print {
+      body { background: white; padding: 0; }
+      .page { box-shadow: none; margin: 0; border: none; padding: 20px; }
+  }
+</style>
+</head>
+<body>"""
 
     for i in range(len(df_sinif)):
         b = df_sinif.iloc[i]
@@ -596,39 +630,68 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
 
         html += f"""
 <div class="page">
-  <div class="header">
-    <div>
-      <div style="opacity:0.8;font-size:0.85rem;">{b.get('Okul','')}</div>
-      <h1>{b.get('Gorev_Adi','Değerlendirme')} ({b.get('Ders',ogrt_brans)})</h1>
+    <div class="header">
+        <div>
+            <div class="kurum-bilgi">{b.get('Okul','')}</div>
+            <h1 class="baslik-ana">Öğrenci Performans Karnesi</h1>
+            <div class="baslik-alt">{b.get('Ders',ogrt_brans)} &nbsp;|&nbsp; {b.get('Gorev_Turu','Değerlendirme')}</div>
+        </div>
+        <div class="puan-rozet">
+            <div class="puan-deger">{toplam}</div>
+            <div class="puan-metin">Toplam Puan</div>
+        </div>
     </div>
-    <div style="text-align:center;">
-      <div class="puan-daire">{toplam}</div>
-      <div style="font-size:0.7rem;margin-top:4px;font-weight:700;">/ 100 PUAN</div>
+    
+    <div class="ogrenci-karti">
+        <div class="bilgi-öğe"><div class="bilgi-etiket">Öğrenci Adı Soyadı</div><div class="bilgi-deger">{b.get('Öğrenci Adı Soyadı','')}</div></div>
+        <div class="bilgi-öğe"><div class="bilgi-etiket">Okul Numarası</div><div class="bilgi-deger">{b.get('Okul No','')}</div></div>
+        <div class="bilgi-öğe"><div class="bilgi-etiket">Sınıfı / Şubesi</div><div class="bilgi-deger">{b.get('Sınıf','')}</div></div>
+        <div class="bilgi-öğe"><div class="bilgi-etiket">Görev Adı</div><div class="bilgi-deger">{b.get('Gorev_Adi','')}</div></div>
     </div>
-  </div>
-  <div class="info-box">
-    <div class="info-item"><span class="info-label">Öğrenci</span><span class="info-value">{b.get('Öğrenci Adı Soyadı','')}</span></div>
-    <div class="info-item"><span class="info-label">Sınıf</span><span class="info-value">{b.get('Sınıf','')}</span></div>
-    <div class="info-item"><span class="info-label">Okul No</span><span class="info-value">{b.get('Okul No','')}</span></div>
-    <div class="info-item"><span class="info-label">Görev Türü</span><span class="info-value">{b.get('Gorev_Turu','')}</span></div>
-  </div>
-  <table>
-    <tr>
-      <th style="width:26%">Kriter</th>
-      <th style="text-align:center;width:9%">Maks</th>
-      <th style="text-align:center;width:9%">Alınan</th>
-      <th>Açıklama</th>
-    </tr>"""
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 35%;">Değerlendirme Kriteri</th>
+                <th style="width: 10%; text-align: center;">Maks.</th>
+                <th style="width: 15%; text-align: center;">Kazanılan</th>
+                <th style="width: 40%;">Öğretmen Açıklaması</th>
+            </tr>
+        </thead>
+        <tbody>"""
 
         for k in aktif_kriterler:
             p = dinamik.get(f"{k['id']}_puan", 0)
             a = dinamik.get(f"{k['id']}_aciklama", "-")
-            html += f"<tr><td><strong>{k.get('icon','')} {k['baslik']}</strong></td><td style='text-align:center;'>{k['max']}</td><td style='text-align:center;font-weight:800;color:#2563eb;'>{p}</td><td>{a}</td></tr>"
+            html += f"""
+            <tr>
+                <td><span class="kriter-ikon">{k.get('icon','📌')}</span><span class="kriter-ad">{k['baslik']}</span></td>
+                <td class="td-max">{k['max']}</td>
+                <td class="td-puan">{p}</td>
+                <td>{a}</td>
+            </tr>"""
 
         html += f"""
-  </table>
-  <div class="yorum"><strong>💬 Genel Yorum:</strong><br><br>{b.get('Genel Değerlendirme Yorumu','Değerlendirme bekleniyor.')}</div>
-  <div class="imza"><strong>{ogrt_ad}</strong><br>{b.get('Ders',ogrt_brans)} Öğretmeni</div>
+        </tbody>
+    </table>
+    
+    <div class="yorum-alani">
+        <div class="yorum-baslik">💬 Öğretmen Genel Değerlendirmesi</div>
+        <div class="yorum-metin">"{b.get('Genel Değerlendirme Yorumu','Değerlendirme bekleniyor.')}"</div>
+    </div>
+    
+    <div class="imza-grid">
+        <div class="imza-kutu">
+            <div class="imza-cizgi"></div>
+            <div class="imza-isim">Öğrenci / Veli</div>
+            <div class="imza-unvan">Okudum, teslim aldım.</div>
+        </div>
+        <div class="imza-kutu">
+            <div class="imza-cizgi"></div>
+            <div class="imza-isim">{ogrt_ad}</div>
+            <div class="imza-unvan">{b.get('Ders',ogrt_brans)} Öğretmeni</div>
+        </div>
+    </div>
 </div>"""
 
     html += "</body></html>"
@@ -647,83 +710,208 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
     orta_grp  = len(df_p[(df_p['Toplam Puan'] >= 65) & (df_p['Toplam Puan'] < 85)])
     asagida   = len(df_p[df_p['Toplam Puan'] < 65])
     toplam_d  = max(1, puan_plus)
+    
+    yuzde_basari = round((yukarida + orta_grp) / toplam_d * 100) if toplam_d > 0 else 0
+
+    if ortalama >= 80:
+        analiz_renk = "#10b981" 
+        analiz_ikon = "🌟"
+        analiz_baslik = "Kazanımlar Yüksek Oranda İçselleştirilmiş"
+        analiz_metin = f"{sinif_adi} sınıfı, bu görev/konu kapsamında {ortalama} genel ortalama ile üstün bir performans göstermiştir. Öğrencilerin büyük çoğunluğu (%{yuzde_basari}) temel kazanımları başarıyla kavramış ve konuyu öğrenmiştir. Sınıf genelinde öğrenme hedeflerine ulaşılmıştır."
+    elif ortalama >= 65:
+        analiz_renk = "#f59e0b" 
+        analiz_ikon = "📈"
+        analiz_baslik = "Kabul Edilebilir Öğrenme Düzeyi, Kısmi Eksikler Var"
+        analiz_metin = f"{sinif_adi} sınıfı, bu görevde {ortalama} ortalama ile yeterli bir başarı sergilemiştir. Sınıfın %{yuzde_basari}'lik kesimi konuyu kavramış görünse de, {asagida} öğrencinin kazanımlara ulaşmakta zorlandığı tespit edilmiştir. Alt gruptaki öğrencilere yönelik telafi çalışmaları pekişmeyi sağlayacaktır."
+    else:
+        analiz_renk = "#ef4444" 
+        analiz_ikon = "⚠️"
+        analiz_baslik = "Kazanımlarda Eksiklikler ve Anlaşılmayan Noktalar Mevcut"
+        analiz_metin = f"{sinif_adi} sınıfının genel ortalamasının {ortalama} düzeyinde kalması, bu konudaki temel kazanımların sınıf genelinde henüz tam olarak yapılandırılamadığını işaret etmektedir. Konunun öğretim stratejisi gözden geçirilerek genel bir konu tekrarı yapılması faydalı olacaktır."
 
     html = f"""<!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{sinif_adi} Analiz Raporu</title>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{sinif_adi} - Başarı Analiz Raporu</title>
 <style>
-  body {{ font-family:Arial,sans-serif; background:#f0f4f8; margin:0; padding:20px; }}
-  .container {{ max-width:900px; margin:0 auto; }}
-  .header {{ background:linear-gradient(135deg,#0f2d6b,#2563eb); color:white;
-             padding:25px 30px; border-radius:14px; margin-bottom:20px; }}
-  .stats-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-                gap:14px; margin-bottom:20px; }}
-  .stat-box {{ background:white; border-radius:12px; padding:16px; text-align:center;
-               box-shadow:0 2px 8px rgba(0,0,0,0.06); }}
-  .stat-num {{ font-size:2.2rem; font-weight:900; }}
-  .stat-lbl {{ font-size:0.8rem; color:#64748b; font-weight:600; }}
-  .bar-section {{ background:white; border-radius:12px; padding:20px; margin-bottom:20px;
-                 box-shadow:0 2px 8px rgba(0,0,0,0.06); }}
-  .bar-row {{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }}
-  .bar-label {{ width:180px; font-size:0.85rem; font-weight:600; color:#334155; }}
-  .bar-track {{ flex:1; background:#e2e8f0; border-radius:6px; height:22px; overflow:hidden; }}
-  .bar-fill {{ height:100%; border-radius:6px; display:flex; align-items:center;
-               padding-left:8px; color:white; font-size:0.78rem; font-weight:700; }}
-  table {{ width:100%; border-collapse:collapse; background:white; border-radius:12px;
-          overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06); }}
-  th {{ background:#1e3a8a; color:white; padding:12px; text-align:left; font-size:0.85rem; }}
-  td {{ padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:0.88rem; }}
-  tr:hover td {{ background:#f8fafc; }}
-  .badge {{ display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.78rem; font-weight:700; }}
-  .badge-g {{ background:#d1fae5; color:#065f46; }}
-  .badge-o {{ background:#fef9c3; color:#854d0e; }}
-  .badge-k {{ background:#fee2e2; color:#991b1b; }}
-  .footer {{ text-align:center; color:#94a3b8; font-size:0.82rem; margin-top:20px;
-             padding:16px; background:white; border-radius:10px; }}
-</style></head><body><div class="container">
-<div class="header">
-  <h1 style="margin:0;font-size:1.6rem;">{sinif_adi} — Değerlendirme Analiz Raporu</h1>
-  <p style="margin:5px 0 0;opacity:0.85;">Öğretmen: {ogrt_ad} &nbsp;|&nbsp; Oluşturma: {time.strftime('%d.%m.%Y %H:%M')}</p>
-</div>
-<div class="stats-grid">
-  <div class="stat-box"><div class="stat-num" style="color:#2563eb;">{len(df_sinif)}</div><div class="stat-lbl">Toplam Öğrenci</div></div>
-  <div class="stat-box"><div class="stat-num" style="color:#10b981;">{ortalama}</div><div class="stat-lbl">Sınıf Ortalaması</div></div>
-  <div class="stat-box"><div class="stat-num" style="color:#059669;">{en_yuksek}</div><div class="stat-lbl">En Yüksek Puan</div></div>
-  <div class="stat-box"><div class="stat-num" style="color:#ef4444;">{en_dusuk}</div><div class="stat-lbl">En Düşük Puan</div></div>
-  <div class="stat-box"><div class="stat-num" style="color:#f59e0b;">{puan_0}</div><div class="stat-lbl">Değerlendirilmemiş</div></div>
-</div>
-<div class="bar-section">
-  <h3 style="margin-top:0;color:#1e3a8a;">Başarı Dağılımı</h3>
-  <div class="bar-row">
-    <div class="bar-label">🟢 Başarılı (85+)</div>
-    <div class="bar-track"><div class="bar-fill" style="width:{round(yukarida/toplam_d*100)}%;background:#10b981;">{yukarida} öğrenci</div></div>
-  </div>
-  <div class="bar-row">
-    <div class="bar-label">🟡 Orta (65-84)</div>
-    <div class="bar-track"><div class="bar-fill" style="width:{round(orta_grp/toplam_d*100)}%;background:#f59e0b;">{orta_grp} öğrenci</div></div>
-  </div>
-  <div class="bar-row">
-    <div class="bar-label">🔴 Gelişmeli (&lt;65)</div>
-    <div class="bar-track"><div class="bar-fill" style="width:{round(asagida/toplam_d*100)}%;background:#ef4444;">{asagida} öğrenci</div></div>
-  </div>
-</div>
-<table>
-<tr><th>#</th><th>Okul No</th><th>Öğrenci Adı Soyadı</th><th>Sınıf</th><th>Görev</th><th>Puan</th><th>Durum</th></tr>"""
+  body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; margin: 0; padding: 20px; color: #0f172a; }}
+  .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }}
+  .header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }}
+  .header h1 {{ margin: 0; font-size: 2rem; color: #1e293b; }}
+  .header p {{ margin: 5px 0 0; color: #64748b; font-size: 1rem; }}
+  
+  .ozet-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }}
+  .kutu {{ background: #f1f5f9; padding: 20px; border-radius: 12px; text-align: center; border-top: 4px solid #3b82f6; }}
+  .kutu.green {{ border-color: #10b981; }}
+  .kutu.red {{ border-color: #ef4444; }}
+  .kutu-sayi {{ font-size: 2.5rem; font-weight: 900; color: #1e293b; line-height: 1; }}
+  .kutu-etiket {{ font-size: 0.85rem; font-weight: 600; color: #64748b; margin-top: 8px; text-transform: uppercase; }}
+  
+  .analiz-paneli {{ background: {analiz_renk}15; border-left: 5px solid {analiz_renk}; padding: 25px; border-radius: 8px; margin-bottom: 40px; }}
+  .analiz-baslik {{ font-size: 1.2rem; font-weight: 800; color: {analiz_renk}; margin: 0 0 10px 0; }}
+  .analiz-metin {{ font-size: 1.05rem; line-height: 1.6; color: #334155; margin: 0; }}
+  
+  .grafik-alani {{ margin-bottom: 40px; }}
+  .grafik-baslik {{ font-size: 1.2rem; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; }}
+  .bar-row {{ display: flex; align-items: center; margin-bottom: 15px; }}
+  .bar-etiket {{ width: 200px; font-weight: 600; color: #475569; }}
+  .bar-bg {{ flex: 1; background: #e2e8f0; height: 30px; border-radius: 15px; overflow: hidden; position: relative; }}
+  .bar-fill {{ height: 100%; display: flex; align-items: center; padding-left: 15px; color: white; font-weight: bold; font-size: 0.9rem; }}
+  
+  table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+  th, td {{ padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }}
+  th {{ background: #f8fafc; font-weight: 700; color: #334155; text-transform: uppercase; font-size: 0.85rem; }}
+  td.puan {{ font-weight: 800; font-size: 1.1rem; }}
+  .durum-badge {{ padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: white; }}
+  .bg-basarili {{ background: #10b981; }}
+  .bg-orta {{ background: #f59e0b; }}
+  .bg-gelisim {{ background: #ef4444; }}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>{sinif_adi} Başarı Analiz Raporu</h1>
+            <p><strong>Öğretmen:</strong> {ogrt_ad} &nbsp;|&nbsp; <strong>Tarih:</strong> {time.strftime('%d.%m.%Y')}</p>
+        </div>
+    </div>
+    
+    <div class="ozet-grid">
+        <div class="kutu"><div class="kutu-sayi">{len(df_sinif)}</div><div class="kutu-etiket">Sınıf Mevcudu</div></div>
+        <div class="kutu green"><div class="kutu-sayi">{ortalama}</div><div class="kutu-etiket">Sınıf Ortalaması</div></div>
+        <div class="kutu"><div class="kutu-sayi">{en_yuksek}</div><div class="kutu-etiket">En Yüksek Puan</div></div>
+        <div class="kutu red"><div class="kutu-sayi">{en_dusuk}</div><div class="kutu-etiket">En Düşük Puan</div></div>
+    </div>
+
+    <div class="analiz-paneli">
+        <h3 class="analiz-baslik">{analiz_ikon} Pedagojik Değerlendirme: {analiz_baslik}</h3>
+        <p class="analiz-metin">{analiz_metin}</p>
+    </div>
+
+    <div class="grafik-alani">
+        <div class="grafik-baslik">📊 Öğrenme Düzeyi ve Başarı Dağılımı Grafiği</div>
+        
+        <div class="bar-row">
+            <div class="bar-etiket">🟢 İleri Düzey (85-100)</div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: {round(yukarida/toplam_d*100) if toplam_d else 0}%; background: #10b981;">{yukarida} Öğrenci (%{round(yukarida/toplam_d*100) if toplam_d else 0})</div>
+            </div>
+        </div>
+        
+        <div class="bar-row">
+            <div class="bar-etiket">🟡 Yeterli Düzey (65-84)</div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: {round(orta_grp/toplam_d*100) if toplam_d else 0}%; background: #f59e0b;">{orta_grp} Öğrenci (%{round(orta_grp/toplam_d*100) if toplam_d else 0})</div>
+            </div>
+        </div>
+        
+        <div class="bar-row">
+            <div class="bar-etiket">🔴 Destek Gereken (<65)</div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: {round(asagida/toplam_d*100) if toplam_d else 0}%; background: #ef4444;">{asagida} Öğrenci (%{round(asagida/toplam_d*100) if toplam_d else 0})</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grafik-baslik">📋 Detaylı Öğrenci Listesi</div>
+    <table>
+        <thead>
+            <tr><th>No</th><th>Okul No</th><th>Öğrenci Adı Soyadı</th><th>Görev Adı</th><th>Toplam Puan</th><th>Öğrenme Durumu</th></tr>
+        </thead>
+        <tbody>"""
 
     df_sorted = df_sinif.copy()
     df_sorted['Toplam Puan'] = pd.to_numeric(df_sorted['Toplam Puan'], errors='coerce').fillna(0)
     df_sorted = df_sorted.sort_values('Toplam Puan', ascending=False)
 
     for i, (_, row) in enumerate(df_sorted.iterrows(), 1):
-        p     = int(row.get('Toplam Puan', 0))
-        badge = 'badge-g' if p >= 85 else ('badge-o' if p >= 65 else 'badge-k')
-        durum = 'Başarılı' if p >= 85 else ('Orta' if p >= 65 else ('Gelişmeli' if p > 0 else 'Bekliyor'))
-        html += f"<tr><td>{i}</td><td>{row.get('Okul No','')}</td><td><strong>{row.get('Öğrenci Adı Soyadı','')}</strong></td><td>{row.get('Sınıf','')}</td><td>{row.get('Gorev_Adi','')}</td><td style='font-weight:800;'>{p}</td><td><span class='badge {badge}'>{durum}</span></td></tr>"
+        p = int(row.get('Toplam Puan', 0))
+        if p >= 85:
+            badge_class = "bg-basarili"
+            durum_text = "İleri Düzey"
+        elif p >= 65:
+            badge_class = "bg-orta"
+            durum_text = "Yeterli Düzey"
+        else:
+            badge_class = "bg-gelisim"
+            durum_text = "Destek Gerekiyor"
+            
+        html += f"""
+        <tr>
+            <td>{i}</td>
+            <td>{row.get('Okul No','')}</td>
+            <td><strong>{row.get('Öğrenci Adı Soyadı','')}</strong></td>
+            <td>{row.get('Gorev_Adi','')}</td>
+            <td class="puan" style="color: {'#10b981' if p>=85 else ('#f59e0b' if p>=65 else '#ef4444')}">{p}</td>
+            <td><span class="durum-badge {badge_class}">{durum_text}</span></td>
+        </tr>"""
 
-    html += f"""</table>
-<div class="footer">PUSULA 360 Bütüncül Değerlendirme Platformu &nbsp;|&nbsp; {time.strftime('%d.%m.%Y')}<br>
-Tasarım: Sıraç AKSAN — <a href="mailto:saracaksan@gmail.com" style="color:#2563eb;">saracaksan@gmail.com</a></div>
-</div></body></html>"""
+    html += """
+        </tbody>
+    </table>
+</div>
+</body>
+</html>"""
+    return html
+
+def proje_teslim_tutanagi_html(df_sinif, gorev_adi, sinif_adi, ders_adi, ogrt_ad):
+    html = f"""<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Teslim Tutanağı - {sinif_adi}</title>
+<style>
+    body {{ font-family: 'Segoe UI', Arial, sans-serif; background: white; color: black; padding: 20px; }}
+    .belge-kutu {{ max-width: 800px; margin: 0 auto; }}
+    .baslik {{ text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; }}
+    .baslik h2 {{ margin: 0; color: #0f172a; font-size: 1.5rem; text-transform: uppercase; }}
+    .baslik p {{ margin: 5px 0 0; font-size: 1.1rem; color: #334155; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+    th, td {{ border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; font-size: 0.95rem; color: #0f172a; }}
+    th {{ background-color: #f8fafc; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }}
+    tr:nth-child(even) {{ background-color: #fbfbfc; }}
+    .imza-alani {{ text-align: right; margin-top: 50px; font-size: 1.1rem; color: #0f172a; }}
+    @media print {{ 
+        body {{ padding: 0; }} 
+        .belge-kutu {{ max-width: 100%; }}
+    }}
+</style>
+</head>
+<body>
+    <div class="belge-kutu">
+        <div class="baslik">
+            <h2>{sinif_adi} Sınıfı Proje / Performans Teslim Tutanağı</h2>
+            <p><strong>Ders:</strong> {ders_adi} &nbsp;|&nbsp; <strong>Görev:</strong> {gorev_adi}</p>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 15%;">Okul No</th>
+                    <th style="width: 40%;">Öğrenci Adı Soyadı</th>
+                    <th style="width: 20%;">Teslim Tarihi</th>
+                    <th style="width: 20%;">İmza</th>
+                </tr>
+            </thead>
+            <tbody>
+"""
+    for i, (_, row) in enumerate(df_sinif.iterrows(), 1):
+        html += f"<tr><td>{i}</td><td>{row['Okul No']}</td><td><strong>{row['Öğrenci Adı Soyadı']}</strong></td><td>..../..../202..</td><td></td></tr>"
+        
+    html += f"""
+            </tbody>
+        </table>
+        <div class="imza-alani">
+            <p><strong>Ders Öğretmeni:</strong> {ogrt_ad}</p>
+            <p><strong>İmza:</strong> .......................................</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
     return html
 
 # ==========================================
