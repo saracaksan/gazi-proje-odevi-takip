@@ -25,12 +25,7 @@ st.set_page_config(
 # ==========================================
 # 2. GİZLİ KASA (SECRETS) VE API BAĞLANTILARI
 # ==========================================
-try:
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"].strip()
-    GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-except Exception:
-    st.error("⚠️ HATA: GEMINI_API_KEY gizli kasada (secrets) bulunamadı!")
-    st.stop()
+import random
 
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"].strip()
@@ -45,6 +40,24 @@ try:
     EMAIL_PASSWORD = st.secrets.get("EMAIL_PASSWORD", "")
 except Exception:
     EMAIL_PASSWORD = ""
+
+def get_gemini_api_url(kullanici_anahtari=None):
+    """Kullanıcının kendi anahtarı varsa onu, yoksa havuzdan rastgele birini seçer."""
+    secilen_key = ""
+    if kullanici_anahtari and kullanici_anahtari.strip().startswith("AIzaSy"):
+        secilen_key = kullanici_anahtari.strip()
+    else:
+        try:
+            havuz = st.secrets["GEMINI_API_KEYS"]
+            secilen_key = random.choice(havuz)
+        except Exception:
+            # Geriye dönük uyumluluk için (Eğer eski tekli anahtar kaldıysa)
+            secilen_key = st.secrets.get("GEMINI_API_KEY", "").strip()
+            
+    if not secilen_key:
+        return None
+        
+    return f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={secilen_key}"
 
 # ==========================================
 # 3. GLOBAL CSS VE RENK HİYERARŞİSİ
@@ -716,7 +729,10 @@ Tasarım: Sıraç AKSAN — <a href="mailto:saracaksan@gmail.com" style="color:#
 # ==========================================
 # 10. YAPAY ZEKA BAĞLANTILARI
 # ==========================================
-def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans):
+def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans, ogrt_api_key=""):
+    api_url = get_gemini_api_url(ogrt_api_key)
+    if not api_url: return {"genel": "Sistemde API Anahtarı bulunamadı."}
+
     sinif_str = str(bilgi_dict.get("Sınıf", "7"))
     seviye    = "".join(filter(str.isdigit, sinif_str)) or "7"
     ogrenci_isim = isme_hitap_et(bilgi_dict.get('Öğrenci Adı Soyadı', 'Öğrenci'))
@@ -737,43 +753,34 @@ Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
     prompt += """\nEKSTRA: "genel" anahtarında öğrenciye ("Sevgili İsim, ...") hitap eden motive edici genel bir yorum yaz.
 SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel": "Sevgili..." }"""
 
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"response_mime_type": "application/json"}
-    }
-    r = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
     r.raise_for_status()
     raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     return json.loads(raw.replace("```json", "").replace("```", "").strip())
 
-def ai_karne_gorusu_yaz(tam_isim, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad):
+def ai_karne_gorusu_yaz(tam_isim, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad, ogrt_api_key=""):
+    api_url = get_gemini_api_url(ogrt_api_key)
+    if not api_url: return "Sistemde API Anahtarı bulunamadı."
+
     ogrenci_isim = isme_hitap_et(tam_isim)
     notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if str(notu).strip() != ""])
     
-    # Davranış notunu tespit edip özel kural ekleme
     davranis_puani = notlar_sozlugu.get("Davranış", 100)
-    try:
-        d_puan = float(str(davranis_puani).replace(",", "."))
-    except:
-        d_puan = 100.0
+    try: d_puan = float(str(davranis_puani).replace(",", "."))
+    except: d_puan = 100.0
         
-    davranis_uyarisi = ""
-    if d_puan < 50:
-        davranis_uyarisi = "Öğrencinin davranış notu 50'nin altında. Lütfen karnesinde davranışlarını düzeltmesi gerektiğine dair yapıcı, pedagojik ama ciddi bir uyarıda bulun."
-    else:
-        davranis_uyarisi = "Öğrencinin davranış notu gayet iyi. Bu olumlu tutumunu takdir eden ve motive eden cümleler kur."
+    davranis_uyarisi = "Öğrencinin davranış notu 50'nin altında. Lütfen yapıcı ve pedagojik bir uyarıda bulun." if d_puan < 50 else "Öğrencinin davranış notu gayet iyi. Bu olumlu tutumunu takdir et."
 
     prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_isim} adlı öğrenciye e-okul karne görüşü yaz.
 Öğrencinin Ders Notları ve Davranış Puanı (Hepsi 100 Üzerindendir):
 {notlar_metni}
-
 Ekstra Öğretmen Gözlemi: {ekstra_gozlem}
 ÖZEL TALİMAT: {davranis_uyarisi}
-
-Lütfen yukarıdaki verilere bakarak 'Sevgili {ogrenci_isim}' diye hitap eden, 3-4 cümlelik, e-okul sistemine doğrudan yapıştırılabilecek kalitede bir dönem sonu karne görüşü üret."""
+Lütfen 'Sevgili {ogrenci_isim}' diye hitap eden, 3-4 cümlelik bir dönem sonu karne görüşü üret."""
     
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
-    r = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+    r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
     r.raise_for_status()
     return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
@@ -1792,6 +1799,10 @@ def yonetim_paneli(df, ayarlar):
                 
                 # --- Yardımcı Yapay Zeka Fonksiyonu ---
                 def dogal_karne_yazdir_api(isim, sinif, ders_notlari_metni, davranis, ogretmen_tuyosu, ogrt_isim):
+                    # Profildeki anahtarı kullanması için aktarıyoruz
+                    api_url = get_gemini_api_url(kb.get("api_key", ""))
+                    if not api_url: return "API Hatası: Sistemde anahtar yok."
+                    
                     prompt = f"""Sen tecrübeli ve şefkatli bir öğretmensin. Adın {ogrt_isim}. {sinif} sınıfından öğrencin '{isim}' için e-okul sistemine girilecek bir dönem sonu karne görüşü yazıyorsun.
 Öğrencinin Ders Notları:
 {ders_notlari_metni}
@@ -1807,7 +1818,7 @@ LÜTFEN ŞUNLARA DİKKAT ET:
 Karne Görüşü:"""
                     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
                     try:
-                        r = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+                        r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
                         r.raise_for_status()
                         return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
                     except Exception as e:
@@ -2207,20 +2218,24 @@ Karne Görüşü:"""
         elif aktif_ayar == "profil":
             st.markdown("<div class='section-header'>👤 Kişisel Profil Ayarları</div>", unsafe_allow_html=True)
             with st.form("profil_form"):
-                p_ad     = st.text_input("Ad Soyad", value=kb["ad"])
+                p_ad     = st.text_input("Ad Soyad", value=kb.get("ad", ""))
                 p_brans  = st.text_input("Branş", value=kb.get("brans",""))
                 p_eposta = st.text_input("E-posta Adresiniz", value=kb.get("eposta",""))
                 p_sifre  = st.text_input("Yeni Şifre (boş bırakırsan değişmez)", type="password")
+                
+                st.markdown("---")
+                st.markdown("**🔑 Kişisel Yapay Zeka Anahtarı (Opsiyonel)**")
+                st.info("Sistemin yoğun olduğu dönemlerde (karne haftası) beklemeden hızlıca işlem yapmak için kendi ücretsiz Google Gemini API anahtarınızı buraya girebilirsiniz. Sistem önce sizin anahtarınızı kullanır, boş bırakırsanız okul havuzunu kullanır. [Nasıl alınır öğrenmek için tıklayın](https://aistudio.google.com/app/apikey)")
+                p_api = st.text_input("Gemini API Anahtarınız", value=kb.get("api_key",""), type="password", placeholder="AIzaSy ile başlayan anahtarı yapıştırın...")
+                
                 if st.form_submit_button("💾 Bilgilerimi Güncelle"):
-                    guncelleme = {"ad": p_ad, "brans": p_brans, "eposta": p_eposta}
+                    guncelleme = {"ad": p_ad, "brans": p_brans, "eposta": p_eposta, "api_key": p_api.strip()}
                     if p_sifre.strip():
                         guncelleme["sifre"] = p_sifre
                     ayarlar["kullanicilar"][aktif_id].update(guncelleme)
                     ayar_kaydet(ayarlar)
                     st.session_state["kullanici_bilgi"] = ayarlar["kullanicilar"][aktif_id]
                     st.success("✅ Profiliniz güncellendi!")
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ==========================================
