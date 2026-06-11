@@ -1724,11 +1724,12 @@ def yonetim_paneli(df, ayarlar):
     # SEKME: E-OKUL KARNE (Gelişmiş Yapay Zeka, Kalıcı Liste ve Excel Arşivi)
     # ══════════════════════════════════════════════════
     elif aktif_ana == "eokul":
+        import random
+        
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü & Kalıcı Sınıf Listesi Yönetimi</div>", unsafe_allow_html=True)
         st.info("💡 Listenizi bir kez yükleyin, silene kadar sistemde kalsın. Öğrencilerin notlarını, davranış puanlarını ve AI görüşlerini yan yana görüp kolayca düzenleyebilirsiniz.")
         
-        # 1. DİNAMİK YIL VE DÖNEM SEÇİMİ (2015'ten 2035'e kadar genişletildi)
         yillar = []
         for y in range(2015, 2035):
             yillar.append(f"{y}-{y+1} Eğitim Yılı - 1. Dönem")
@@ -1739,7 +1740,6 @@ def yonetim_paneli(df, ayarlar):
         c_donem, c_bos = st.columns([1, 2])
         secili_donem = c_donem.selectbox("📚 İşlem Yapılacak Dönemi Seçin", yillar, index=varsayilan_index)
 
-        # Aktif kullanıcının bu dönemdeki verilerini veritabanından çek
         df_karne = df_yetkili[(df_yetkili['Gorev_Turu'] == 'Karne Gorusu') & (df_yetkili['Gorev_Adi'] == secili_donem)].copy()
         
         tab_aktif, tab_arsiv = st.tabs(["📋 Karne Listesi ve Görüş Yazma", "📥 Excel Çıktısı Al ve Arşive Gözat"])
@@ -1797,11 +1797,22 @@ def yonetim_paneli(df, ayarlar):
             else:
                 st.success(f"✅ {secili_donem} dönemi aktif. Toplam {len(df_karne)} öğrenciniz bulunuyor.")
                 
-                # --- Yardımcı Yapay Zeka Fonksiyonu ---
+                # --- YÜK DAĞITIMLI (API POOL) YAPAY ZEKA FONKSİYONU ---
                 def dogal_karne_yazdir_api(isim, sinif, ders_notlari_metni, davranis, ogretmen_tuyosu, ogrt_isim):
-                    # Profildeki anahtarı kullanması için aktarıyoruz
-                    api_url = get_gemini_api_url(kb.get("api_key", ""))
-                    if not api_url: return "API Hatası: Sistemde anahtar yok."
+                    secilen_key = ""
+                    # Öğretmen profiline kendi anahtarını girdiyse önce onu kullan
+                    profil_key = kb.get("api_key", "")
+                    if profil_key and len(profil_key) > 10:
+                        secilen_key = profil_key
+                    else:
+                        # Girmediyse secrets havuzundan rastgele bir tane seç
+                        try:
+                            havuz = st.secrets["GEMINI_API_KEYS"]
+                            secilen_key = random.choice(havuz)
+                        except:
+                            secilen_key = st.secrets.get("GEMINI_API_KEY", "").strip()
+
+                    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={secilen_key}"
                     
                     prompt = f"""Sen tecrübeli ve şefkatli bir öğretmensin. Adın {ogrt_isim}. {sinif} sınıfından öğrencin '{isim}' için e-okul sistemine girilecek bir dönem sonu karne görüşü yazıyorsun.
 Öğrencinin Ders Notları:
@@ -1822,7 +1833,7 @@ Karne Görüşü:"""
                         r.raise_for_status()
                         return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
                     except Exception as e:
-                        return f"API Hatası: Lütfen tekrar deneyin. Detay: {str(e)[:50]}"
+                        return f"API Hatası: Aşırı yoğunluk olabilir. Lütfen tekrar deneyin."
 
                 # ÜST BUTONLAR: TOPLU İŞLEMLER
                 col_b1, col_b2, col_b3 = st.columns(3)
@@ -1830,6 +1841,9 @@ Karne Görüşü:"""
                 if col_b1.button("🤖 Tüm Sınıf İçin AI Karne Üret", type="primary", use_container_width=True):
                     bar = st.progress(0)
                     satirlar = df_karne.to_dict('records')
+                    
+                    st.info("⏳ Yük 15 farklı API anahtarına dağıtılıyor ve her öğrenci arası 4 saniye bekleniyor. Lütfen işlem bitene kadar sayfayı kapatmayın...")
+                    
                     for i, r in enumerate(satirlar):
                         d_json = json.loads(str(r['Dinamik_JSON'])) if isinstance(r['Dinamik_JSON'], str) else r['Dinamik_JSON']
                         
@@ -1837,23 +1851,29 @@ Karne Görüşü:"""
                         anlik_tuyo = st.session_state.get(f"tuyo_{r['id']}", d_json.get('ogretmen_notu', ''))
                         
                         n_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in d_json.get('notlar', {}).items() if str(notu).strip() != ""])
+                        
+                        # API'yi çağır (Rastgele hesap seçilecek)
                         yeni_gorus = dogal_karne_yazdir_api(r['Öğrenci Adı Soyadı'], r['Sınıf'], n_metni, anlik_davranis, anlik_tuyo, kb["ad"])
                         
                         d_json['davranis'] = anlik_davranis
                         d_json['ogretmen_notu'] = anlik_tuyo
                         
-                        # Session state'i temizle/güncelle (Ekrandaki kutuyu yenilemesi için kritik adım)
                         st.session_state[f"gorus_{r['id']}"] = yeni_gorus
                         
                         supabase.table('gorevler').update({
                             'genel_degerlendirme_yorumu': yeni_gorus,
                             'dinamik_json': d_json
                         }).eq('id', r['id']).execute()
+                        
                         bar.progress((i + 1) / len(satirlar))
                         
+                        # DİNLENME SÜRESİ (Limitsiz işlem için zorunlu)
+                        if i < len(satirlar) - 1:
+                            time.sleep(4)
+                            
                     st.cache_data.clear()
-                    st.success("Tüm sınıf için karne görüşleri başarıyla üretildi!")
-                    time.sleep(1)
+                    st.success("✅ Tüm sınıf için karne görüşleri başarıyla üretildi!")
+                    time.sleep(2)
                     st.rerun()
 
                 if col_b2.button("💾 Tüm Değişiklikleri Veritabanına Kaydet", use_container_width=True):
@@ -1915,12 +1935,12 @@ Karne Görüşü:"""
                                 with st.spinner("Yorum yazılıyor..."):
                                     n_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_dict.items() if str(notu).strip() != ""])
                                     
+                                    # API'yi çağır (Rastgele hesap seçilecek)
                                     yeni_gorus = dogal_karne_yazdir_api(row['Öğrenci Adı Soyadı'], row['Sınıf'], n_metni, dav_val, tuyo_val, kb["ad"])
                                     
                                     d_json['davranis'] = dav_val
                                     d_json['ogretmen_notu'] = tuyo_val
                                     
-                                    # Kutu hafızasını (session_state) güncellemek
                                     st.session_state[f"gorus_{row['id']}"] = yeni_gorus
                                     
                                     supabase.table('gorevler').update({
@@ -1983,7 +2003,7 @@ Karne Görüşü:"""
             df_tum_karneler = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu'].copy()
             if not df_tum_karneler.empty:
                 st.dataframe(df_tum_karneler[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Adi', 'Genel Değerlendirme Yorumu']], use_container_width=True)
-                st.info("💡 Not: Yukarıdaki açılır menüden (Dönem Seçimi) geçmiş bir yılı seçerek, o yılın listesini ve notlarını ana ekranda detaylıca inceleyebilirsiniz.")
+                st.info("💡 Not: Yukarıdaki açılır menüden (Dönem Seçimi) geçmiş bir yılı seçerek, o yılın listesini ve notlarını ana ekranda detaylıca inceleyebilir ve düzenleyebilirsiniz.")
             else:
                 st.info("Sistemde henüz arşivlenmiş geçmiş karne bulunmuyor.")
                 
