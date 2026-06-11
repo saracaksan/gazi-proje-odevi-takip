@@ -1725,11 +1725,65 @@ def yonetim_paneli(df, ayarlar):
     # ══════════════════════════════════════════════════
     elif aktif_ana == "eokul":
         import random
+        import time
         
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü & Kalıcı Sınıf Listesi Yönetimi</div>", unsafe_allow_html=True)
-        st.info("💡 Listenizi bir kez yükleyin, silene kadar sistemde kalsın. Öğrencilerin notlarını, davranış puanlarını ve AI görüşlerini yan yana görüp kolayca düzenleyebilirsiniz.")
+        st.info("💡 Liste bir kez yüklenir ve sistemde kalır. Hibrit AI (Groq + Gemini) sayesinde sistem tıkanmadan saniyeler içinde tüm sınıfa karne üretebilirsiniz.")
         
+        # --- API ANAHTARLARINI GİZLİ KASADAN (SECRETS) ÇEKME ---
+        try:
+            GROQ_KEYS = st.secrets["GROQ_API_KEYS"]
+            GEMINI_KEYS = st.secrets["GEMINI_API_KEYS"]
+        except Exception as e:
+            st.error("⚠️ HATA: API Anahtarları Streamlit gizli kasasında (secrets.toml) bulunamadı. Lütfen ayarlarınızı kontrol edin.")
+            st.stop()
+
+        def call_ai_with_fallback(prompt):
+            # Önce GROQ dener (Çok daha hızlıdır ve kota sorunu yoktur)
+            for _ in range(2):
+                try:
+                    g_key = random.choice(GROQ_KEYS)
+                    url = "https://api.groq.com/openai/v1/chat/completions"
+                    headers = {"Authorization": f"Bearer {g_key}", "Content-Type": "application/json"}
+                    payload = {"model": "llama3-70b-8192", "messages": [{"role": "user", "content": prompt}], "temperature": 0.7}
+                    r = requests.post(url, headers=headers, json=payload, timeout=10)
+                    r.raise_for_status()
+                    return r.json()["choices"][0]["message"]["content"].strip()
+                except:
+                    continue
+            
+            # Groq başarısız olursa GEMINI dener
+            for _ in range(2):
+                try:
+                    gm_key = random.choice(GEMINI_KEYS)
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gm_key}"
+                    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
+                    r = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=10)
+                    r.raise_for_status()
+                    return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                except:
+                    continue
+                    
+            return "API Hatası: Sistem şu an aşırı yoğun. Lütfen 1 dakika sonra tekrar deneyin."
+
+        def dogal_karne_yazdir(isim, sinif, ders_notlari_metni, davranis, ogretmen_tuyosu, ogrt_isim):
+            davranis_mesaji = "Davranış notu düşük, bunu nazik ve pedagojik bir uyarıyla dile getir." if int(davranis) < 60 else "Davranışları çok iyi, bunu mutlaka öv."
+            prompt = f"""Sen tecrübeli ve şefkatli bir öğretmensin. Adın {ogrt_isim}. {sinif} sınıfından öğrencin '{isim}' için e-okul sistemine girilecek bir dönem sonu karne görüşü yazıyorsun.
+Öğrencinin Ders Notları:
+{ders_notlari_metni}
+Davranış Puanı (100 üzerinden): {davranis}
+Sisteme tuttuğum not (Bunu yoruma doğalca yedir): "{ogretmen_tuyosu}"
+
+LÜTFEN ŞUNLARA DİKKAT ET:
+1. Son derece doğal ve insani bir dil kullan. Çocuğu yıllardır tanıyormuşsun gibi hissettir.
+2. Doğrudan 'Sevgili {isim},' diye başla. Soyadını kullanma.
+3. {davranis_mesaji}
+4. Toplam 3-4 cümleyi geçmesin.
+Karne Görüşü:"""
+            return call_ai_with_fallback(prompt)
+
+        # --- YIL VE DÖNEM DİNAMİĞİ ---
         yillar = []
         for y in range(2015, 2035):
             yillar.append(f"{y}-{y+1} Eğitim Yılı - 1. Dönem")
@@ -1744,9 +1798,6 @@ def yonetim_paneli(df, ayarlar):
         
         tab_aktif, tab_arsiv = st.tabs(["📋 Karne Listesi ve Görüş Yazma", "📥 Excel Çıktısı Al ve Arşive Gözat"])
 
-        # ---------------------------------------------------------
-        # SEKME 1: KARNE LİSTESİ VE GÖRÜŞ YAZMA
-        # ---------------------------------------------------------
         with tab_aktif:
             if df_karne.empty:
                 st.markdown(f"**📌 {secili_donem} için henüz liste yüklenmemiş. Lütfen aşağıdan Excel dosyanızı yükleyin.**")
@@ -1755,7 +1806,12 @@ def yonetim_paneli(df, ayarlar):
                 k_dosya = col_up.file_uploader("E-Okul Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
                 
                 if k_dosya:
-                    if st.button("💾 Listeyi Yükle ve Öğrencileri Getir", type="primary", use_container_width=True):
+                    yukleme_tercihi = st.radio("Yükleme Seçeneği", [
+                        "➕ Eski listeyi KORU, sadece yeni öğrencileri ekle", 
+                        "🗑️ Eski listeyi SİL ve sadece bu dosyayı yükle"
+                    ], horizontal=True)
+                    
+                    if st.button("💾 Listeyi Veritabanına Kaydet", type="primary", use_container_width=True):
                         with st.spinner("Liste analiz ediliyor ve kaydediliyor..."):
                             kdf = pd.read_csv(k_dosya, sep=None, engine='python') if k_dosya.name.endswith('.csv') else pd.read_excel(k_dosya)
                             kdf = kdf.fillna("") 
@@ -1764,9 +1820,11 @@ def yonetim_paneli(df, ayarlar):
                             no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
                             ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
                             sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
-                            
                             davranis_col = next((c for c in cols if "davran" in str(c).lower()), None)
                             not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col, davranis_col]]
+
+                            if "SİL" in yukleme_tercihi and not df_karne.empty:
+                                supabase.table('gorevler').delete().eq('atanan_ogretmen', aktif_id).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', secili_donem).execute()
 
                             yeni_kayitlar = []
                             for i, row in kdf.iterrows():
@@ -1779,15 +1837,17 @@ def yonetim_paneli(df, ayarlar):
                                     except: pass
 
                                 notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
-                                dinamik_veri = {"notlar": notlar_dict, "davranis": dav_val, "ogretmen_notu": ""}
+                                dinamik_veri = {"notlar": notlar_dict, "davranis": dav_val, "ogretmen_notu": "", "durum": "Bekliyor ⏳"}
                                 
-                                yeni_kayitlar.append({
-                                    'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
-                                    'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
-                                    'sinif': str(row[sinif_col]) if sinif_col else "Bilinmiyor", 
-                                    'gorev_turu': 'Karne Gorusu', 'gorev_adi': secili_donem, 
-                                    'dinamik_json': dinamik_veri, 'genel_degerlendirme_yorumu': ""
-                                })
+                                var_mi = not df_karne[df_karne['Okul No'] == o_no].empty if not df_karne.empty else False
+                                if not var_mi or "SİL" in yukleme_tercihi:
+                                    yeni_kayitlar.append({
+                                        'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
+                                        'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
+                                        'sinif': str(row[sinif_col]) if sinif_col else "Bilinmiyor", 
+                                        'gorev_turu': 'Karne Gorusu', 'gorev_adi': secili_donem, 
+                                        'dinamik_json': dinamik_veri, 'genel_degerlendirme_yorumu': ""
+                                    })
                             
                             if yeni_kayitlar:
                                 supabase.table('gorevler').insert(yeni_kayitlar).execute()
@@ -1797,52 +1857,14 @@ def yonetim_paneli(df, ayarlar):
             else:
                 st.success(f"✅ {secili_donem} dönemi aktif. Toplam {len(df_karne)} öğrenciniz bulunuyor.")
                 
-                # --- YÜK DAĞITIMLI (API POOL) YAPAY ZEKA FONKSİYONU ---
-                def dogal_karne_yazdir_api(isim, sinif, ders_notlari_metni, davranis, ogretmen_tuyosu, ogrt_isim):
-                    secilen_key = ""
-                    # Öğretmen profiline kendi anahtarını girdiyse önce onu kullan
-                    profil_key = kb.get("api_key", "")
-                    if profil_key and len(profil_key) > 10:
-                        secilen_key = profil_key
-                    else:
-                        # Girmediyse secrets havuzundan rastgele bir tane seç
-                        try:
-                            havuz = st.secrets["GEMINI_API_KEYS"]
-                            secilen_key = random.choice(havuz)
-                        except:
-                            secilen_key = st.secrets.get("GEMINI_API_KEY", "").strip()
-
-                    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={secilen_key}"
-                    
-                    prompt = f"""Sen tecrübeli ve şefkatli bir öğretmensin. Adın {ogrt_isim}. {sinif} sınıfından öğrencin '{isim}' için e-okul sistemine girilecek bir dönem sonu karne görüşü yazıyorsun.
-Öğrencinin Ders Notları:
-{ders_notlari_metni}
-Davranış Puanı (100 üzerinden): {davranis}
-Öğretmen olarak sisteme tuttuğum not (Bu konuyu yoruma çok doğal bir şekilde yedir): "{ogretmen_tuyosu}"
-
-LÜTFEN ŞUNLARA DİKKAT ET:
-1. Son derece doğal, insani ve şefkatli bir dil kullan. Robotik veya otomatik üretilmiş gibi durmasın. Çocuğu gerçekten tanıyormuşsun gibi hissettir.
-2. Doğrudan 'Sevgili {isim},' diye başla. Soyadını kullanma.
-3. {"Davranış notu düşük, bunu nazik, yapıcı ve pedagojik bir uyarıyla dile getir." if int(davranis) < 60 else "Davranışları çok iyi, bunu mutlaka öv ve motive et."}
-4. Toplam 3-4 cümleyi geçmesin.
-
-Karne Görüşü:"""
-                    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
-                    try:
-                        r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-                        r.raise_for_status()
-                        return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-                    except Exception as e:
-                        return f"API Hatası: Aşırı yoğunluk olabilir. Lütfen tekrar deneyin."
-
-                # ÜST BUTONLAR: TOPLU İŞLEMLER
+                # --- ÜST BUTONLAR ---
                 col_b1, col_b2, col_b3 = st.columns(3)
                 
-                if col_b1.button("🤖 Tüm Sınıf İçin AI Karne Üret", type="primary", use_container_width=True):
+                if col_b1.button("🤖 Sınıftaki TÜM ÖĞRENCİLERE Yapay Zeka Karne Üret", type="primary", use_container_width=True):
                     bar = st.progress(0)
                     satirlar = df_karne.to_dict('records')
                     
-                    st.info("⏳ Yük 15 farklı API anahtarına dağıtılıyor ve her öğrenci arası 4 saniye bekleniyor. Lütfen işlem bitene kadar sayfayı kapatmayın...")
+                    st.info("⏳ Hibrit motor devrede. İşlem bitene kadar sayfayı kapatmayın...")
                     
                     for i, r in enumerate(satirlar):
                         d_json = json.loads(str(r['Dinamik_JSON'])) if isinstance(r['Dinamik_JSON'], str) else r['Dinamik_JSON']
@@ -1852,12 +1874,10 @@ Karne Görüşü:"""
                         
                         n_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in d_json.get('notlar', {}).items() if str(notu).strip() != ""])
                         
-                        # API'yi çağır (Rastgele hesap seçilecek)
-                        yeni_gorus = dogal_karne_yazdir_api(r['Öğrenci Adı Soyadı'], r['Sınıf'], n_metni, anlik_davranis, anlik_tuyo, kb["ad"])
+                        yeni_gorus = dogal_karne_yazdir(r['Öğrenci Adı Soyadı'], r['Sınıf'], n_metni, anlik_davranis, anlik_tuyo, kb["ad"])
                         
                         d_json['davranis'] = anlik_davranis
                         d_json['ogretmen_notu'] = anlik_tuyo
-                        
                         st.session_state[f"gorus_{r['id']}"] = yeni_gorus
                         
                         supabase.table('gorevler').update({
@@ -1866,14 +1886,11 @@ Karne Görüşü:"""
                         }).eq('id', r['id']).execute()
                         
                         bar.progress((i + 1) / len(satirlar))
+                        time.sleep(1.5) # Güvenli bekleme süresi
                         
-                        # DİNLENME SÜRESİ (Limitsiz işlem için zorunlu)
-                        if i < len(satirlar) - 1:
-                            time.sleep(4)
-                            
                     st.cache_data.clear()
                     st.success("✅ Tüm sınıf için karne görüşleri başarıyla üretildi!")
-                    time.sleep(2)
+                    time.sleep(1)
                     st.rerun()
 
                 if col_b2.button("💾 Tüm Değişiklikleri Veritabanına Kaydet", use_container_width=True):
@@ -1898,14 +1915,14 @@ Karne Görüşü:"""
                         time.sleep(1)
                         st.rerun()
 
-                if col_b3.button("🗑️ Bu Listeyi Tamamen Sil", use_container_width=True):
+                if col_b3.button("🗑️ Bu Dönemin Listesini Tamamen Sil", use_container_width=True):
                     supabase.table('gorevler').delete().eq('atanan_ogretmen', aktif_id).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', secili_donem).execute()
                     st.cache_data.clear()
                     st.rerun()
 
                 st.markdown("---")
                 
-                # ÖĞRENCİ KARTLARI (LİSTE GÖRÜNÜMÜ)
+                # --- ÖĞRENCİ LİSTESİ ---
                 for idx, row in df_karne.iterrows():
                     d_json = json.loads(str(row['Dinamik_JSON'])) if isinstance(row['Dinamik_JSON'], str) else row['Dinamik_JSON']
                     
@@ -1915,7 +1932,6 @@ Karne Görüşü:"""
                     with st.expander(f"🎓 {row['Okul No']} - {row['Öğrenci Adı Soyadı']} | {durum_ikon}", expanded=False):
                         c_not, c_girdi, c_ai = st.columns([1, 1, 2])
                         
-                        # 1. SÜTUN: DERS NOTLARI
                         with c_not:
                             st.markdown("**📊 Ders Notları**")
                             notlar_dict = d_json.get('notlar', {})
@@ -1925,22 +1941,18 @@ Karne Görüşü:"""
                             else:
                                 st.markdown("<span style='font-size:0.85rem;'>Not bulunamadı.</span>", unsafe_allow_html=True)
                                 
-                        # 2. SÜTUN: DAVRANIŞ VE ÖĞRETMEN TÜYOSU
                         with c_girdi:
                             st.markdown("**✍️ Öğretmen Dokunuşu**")
                             dav_val = st.number_input("Davranış Notu", min_value=0, max_value=100, value=int(d_json.get('davranis', 100)), key=f"dav_{row['id']}")
-                            tuyo_val = st.text_area("AI İçin Tüyo (Notlar)", value=d_json.get('ogretmen_notu', ''), height=85, key=f"tuyo_{row['id']}")
+                            tuyo_val = st.text_area("Yapay Zekaya Özel Not", value=d_json.get('ogretmen_notu', ''), height=85, key=f"tuyo_{row['id']}", placeholder="Örn: Sınıfta çok aktif...")
                             
-                            if st.button("✨ Yapay Zeka Üret", key=f"ai_btn_{row['id']}", use_container_width=True):
+                            if st.button("✨ Sadece Buna AI Üret", key=f"ai_btn_{row['id']}", use_container_width=True):
                                 with st.spinner("Yorum yazılıyor..."):
                                     n_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_dict.items() if str(notu).strip() != ""])
-                                    
-                                    # API'yi çağır (Rastgele hesap seçilecek)
-                                    yeni_gorus = dogal_karne_yazdir_api(row['Öğrenci Adı Soyadı'], row['Sınıf'], n_metni, dav_val, tuyo_val, kb["ad"])
+                                    yeni_gorus = dogal_karne_yazdir(row['Öğrenci Adı Soyadı'], row['Sınıf'], n_metni, dav_val, tuyo_val, kb["ad"])
                                     
                                     d_json['davranis'] = dav_val
                                     d_json['ogretmen_notu'] = tuyo_val
-                                    
                                     st.session_state[f"gorus_{row['id']}"] = yeni_gorus
                                     
                                     supabase.table('gorevler').update({
@@ -1951,24 +1963,17 @@ Karne Görüşü:"""
                                     st.cache_data.clear()
                                     st.rerun()
 
-                        # 3. SÜTUN: AI GÖRÜŞÜ VE DÜZENLEME
                         with c_ai:
                             st.markdown("**🤖 Karne Görüşü (Önizleme & Düzenleme)**")
-                            st.text_area(
-                                "Karne Görüşü", 
-                                value=st.session_state.get(f"gorus_{row['id']}", mevcut_gorus), 
-                                height=170,
-                                key=f"gorus_{row['id']}",
-                                label_visibility="collapsed"
-                            )
+                            st.text_area("Karne Görüşü", value=st.session_state.get(f"gorus_{row['id']}", mevcut_gorus), height=170, key=f"gorus_{row['id']}", label_visibility="collapsed")
 
         # ---------------------------------------------------------
         # SEKME 2: EXCEL ÇIKTISI VE GENEL ARŞİV
         # ---------------------------------------------------------
         with tab_arsiv:
-            st.markdown(f"#### 📂 {secili_donem} - E-Okul'a Yapıştırmak İçin Excel Çıktısı")
+            st.markdown(f"#### 📂 {secili_donem} - E-Okul'a Aktarmak İçin İndir")
             if df_karne.empty:
-                st.info(f"Seçilen {secili_donem} dönemine ait indirilecek karne verisi bulunmuyor.")
+                st.info(f"{secili_donem} dönemine ait indirilecek karne verisi bulunmuyor.")
             else:
                 export_data = []
                 for _, row in df_karne.iterrows():
@@ -1982,7 +1987,6 @@ Karne Görüşü:"""
                     })
                 
                 df_export = pd.DataFrame(export_data)
-                
                 out_xls = io.BytesIO()
                 with pd.ExcelWriter(out_xls, engine='xlsxwriter') as writer:
                     df_export.to_excel(writer, index=False, sheet_name='Karneler')
@@ -2003,142 +2007,10 @@ Karne Görüşü:"""
             df_tum_karneler = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu'].copy()
             if not df_tum_karneler.empty:
                 st.dataframe(df_tum_karneler[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Adi', 'Genel Değerlendirme Yorumu']], use_container_width=True)
-                st.info("💡 Not: Yukarıdaki açılır menüden (Dönem Seçimi) geçmiş bir yılı seçerek, o yılın listesini ve notlarını ana ekranda detaylıca inceleyebilir ve düzenleyebilirsiniz.")
+                st.info("💡 Not: Yukarıdaki açılır menüden geçmiş bir yılı seçerek, o yılın listesini ana ekranda düzenleyebilirsiniz.")
             else:
-                st.info("Sistemde henüz arşivlenmiş geçmiş karne bulunmuyor.")
+                st.info("Sistemde henüz arşivlenmiş karne bulunmuyor.")
                 
-        st.markdown('</div>', unsafe_allow_html=True)
-    # ══════════════════════════════════════════════════
-    # SEKME: ÖĞRETMEN YÖNETİMİ (sadece Admin)
-    # ══════════════════════════════════════════════════
-    elif aktif_ana == "ogretmen_yonetim" and rol == "admin" and not admin_bakis:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown("<div class='section-header'>👨‍🏫 Öğretmen Yönetimi</div>", unsafe_allow_html=True)
-
-        col_nav1, col_nav2 = st.columns([1, 2])
-        with col_nav1:
-            st.markdown("#### 🏢 Okullar")
-            tum_okullar = sorted(ayarlar["okullar"])
-            if "nav_okul" not in st.session_state:
-                st.session_state["nav_okul"] = tum_okullar[0] if tum_okullar else ""
-
-            for okul in tum_okullar:
-                o_ogretmen = [v for v in ayarlar["kullanicilar"].values() if v.get("okul") == okul and v.get("rol") == "ogretmen"]
-                bek_sayisi = sum(1 for v in o_ogretmen if not v.get("onayli", True))
-                bek_badge  = f" ⏳{bek_sayisi}" if bek_sayisi > 0 else ""
-                is_selected = okul == st.session_state.get("nav_okul", "")
-                label = f"{'▶ ' if is_selected else ''}{okul} ({len(o_ogretmen)}{bek_badge})"
-                if st.button(label, key=f"okul_{okul}", use_container_width=True,
-                             type="primary" if is_selected else "secondary"):
-                    st.session_state["nav_okul"] = okul
-                    st.session_state["nav_ogretmen"] = None
-                    st.rerun()
-
-        with col_nav2:
-            secili_okul = st.session_state.get("nav_okul", "")
-            if secili_okul:
-                st.markdown(f"#### 👨‍🏫 {secili_okul} — Öğretmenler")
-                okul_ogretmenler = {k: v for k, v in ayarlar["kullanicilar"].items()
-                                    if v.get("okul") == secili_okul and v.get("rol") == "ogretmen"}
-                bekleyenler_okul = [k for k, v in okul_ogretmenler.items() if not v.get("onayli", True)]
-                if bekleyenler_okul:
-                    st.markdown(f'<div class="warn-banner">⏳ {len(bekleyenler_okul)} öğretmen onay bekliyor.</div>', unsafe_allow_html=True)
-
-                if not okul_ogretmenler:
-                    st.info("Bu okulda kayıtlı öğretmen yok.")
-                else:
-                    for kadi, user in okul_ogretmenler.items():
-                        onay_renk = "#10b981" if user.get("onayli", True) else "#f59e0b"
-                        onay_icon = "✅" if user.get("onayli", True) else "⏳"
-                        ogrt_gorev = len(df[(df['Okul'] == secili_okul) & (df['Atanan_Ogretmen'] == kadi)])
-                        col_o1, col_o2, col_o3 = st.columns([3, 1, 1])
-                        col_o1.markdown(f"""
-                        <div class="ogrt-card {'bekliyor' if not user.get('onayli',True) else ''}">
-                            {onay_icon} <strong>{user['ad']}</strong><br>
-                            <span style="color:#64748b;font-size:0.82rem;">{user.get('brans','')} | {ogrt_gorev} görev | {user.get('eposta','—')}</span>
-                        </div>""", unsafe_allow_html=True)
-                        if col_o2.button("👁️ Gözat", key=f"goz_{kadi}"):
-                            st.session_state["admin_bakis_modu"] = True
-                            st.session_state["admin_bakis_ogretmen"] = kadi
-                            st.rerun()
-                        if col_o3.button("✏️ Düzenle", key=f"duz_{kadi}"):
-                            st.session_state["nav_ogretmen"] = kadi
-                            st.rerun()
-
-                sec_ogrt_duzenle = st.session_state.get("nav_ogretmen")
-                if sec_ogrt_duzenle and sec_ogrt_duzenle in ayarlar["kullanicilar"]:
-                    user_d = ayarlar["kullanicilar"][sec_ogrt_duzenle]
-                    st.markdown(f"---\n#### ✏️ {user_d['ad']} — Bilgi Düzenleme")
-                    with st.form(f"ogrt_duzenle_{sec_ogrt_duzenle}"):
-                        col_d1, col_d2 = st.columns(2)
-                        y_ad    = col_d1.text_input("Ad Soyad", value=user_d['ad'])
-                        y_brans = col_d2.text_input("Branş", value=user_d.get('brans',''))
-                        y_okul_idx = sorted(ayarlar["okullar"]).index(user_d['okul']) if user_d['okul'] in ayarlar["okullar"] else 0
-                        y_okul  = st.selectbox("Okul", sorted(ayarlar["okullar"]), index=y_okul_idx)
-                        y_eposta = st.text_input("E-posta", value=user_d.get('eposta',''))
-                        y_sifre  = st.text_input("Şifre", value=user_d['sifre'], type="password")
-                        y_onayli = st.checkbox("Onaylı Hesap", value=user_d.get("onayli", True))
-                        col_f1, col_f2 = st.columns(2)
-                        if col_f1.form_submit_button("💾 Güncelle"):
-                            ayarlar["kullanicilar"][sec_ogrt_duzenle].update({
-                                "ad": y_ad, "okul": y_okul, "brans": y_brans,
-                                "eposta": y_eposta, "sifre": y_sifre, "onayli": y_onayli
-                            })
-                            ayar_kaydet(ayarlar)
-                            st.success("✅ Güncellendi!")
-                            time.sleep(1)
-                            st.rerun()
-                        if col_f2.form_submit_button("🗑️ Sil", type="primary"):
-                            del ayarlar["kullanicilar"][sec_ogrt_duzenle]
-                            ayar_kaydet(ayarlar)
-                            st.session_state["nav_ogretmen"] = None
-                            st.rerun()
-
-        st.markdown("---")
-        col_ek1, col_ek2 = st.columns(2)
-        with col_ek1:
-            st.markdown("#### ➕ Yeni Öğretmen Ekle (Manuel)")
-            with st.form("manuel_ogrt_ekle"):
-                e_kadi   = st.text_input("Kullanıcı Adı")
-                e_ad     = st.text_input("Ad Soyad")
-                e_okul   = st.selectbox("Okul", sorted(ayarlar["okullar"]))
-                e_brans  = st.text_input("Branş")
-                e_eposta = st.text_input("E-posta")
-                e_sifre  = st.text_input("Şifre")
-                if st.form_submit_button("➕ Ekle ve Onayla"):
-                    if e_kadi in ayarlar["kullanicilar"]:
-                        st.error("Kullanıcı adı mevcut!")
-                    elif e_kadi and e_sifre and e_ad:
-                        ayarlar["kullanicilar"][e_kadi] = {
-                            "sifre": e_sifre, "rol": "ogretmen", "ad": e_ad,
-                            "okul": e_okul, "brans": e_brans, "eposta": e_eposta, "onayli": True
-                        }
-                        ayar_kaydet(ayarlar)
-                        st.success("✅ Eklendi!")
-                        st.rerun()
-
-        with col_ek2:
-            st.markdown("#### ⏳ Onay Bekleyenler")
-            oto_onay = st.checkbox("Otomatik Onay Aktif", value=ayarlar.get("otomatik_onay", True))
-            if oto_onay != ayarlar.get("otomatik_onay", True):
-                ayarlar["otomatik_onay"] = oto_onay
-                ayar_kaydet(ayarlar)
-                st.rerun()
-            bekleyenler_tum = {k: v for k, v in ayarlar["kullanicilar"].items() if not v.get("onayli", True)}
-            if bekleyenler_tum:
-                for bk, bv in bekleyenler_tum.items():
-                    c1b, c2b, c3b = st.columns([2, 1, 1])
-                    c1b.markdown(f"**{bv['ad']}** ({bv.get('okul','')})")
-                    if c2b.button("✅", key=f"onay_{bk}"):
-                        ayarlar["kullanicilar"][bk]["onayli"] = True
-                        ayar_kaydet(ayarlar)
-                        st.rerun()
-                    if c3b.button("❌", key=f"red_{bk}"):
-                        del ayarlar["kullanicilar"][bk]
-                        ayar_kaydet(ayarlar)
-                        st.rerun()
-            else:
-                st.info("Onay bekleyen yok.")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════
