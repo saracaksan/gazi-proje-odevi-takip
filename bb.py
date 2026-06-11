@@ -1968,50 +1968,65 @@ Karne Görüşü:"""
                             st.text_area("Karne Görüşü", value=st.session_state.get(f"gorus_{row['id']}", mevcut_gorus), height=170, key=f"gorus_{row['id']}", label_visibility="collapsed")
 
         # ---------------------------------------------------------
-        # SEKME 2: EXCEL ÇIKTISI VE GENEL ARŞİV
+        # SEKME 2: YILLARA GÖRE POP-UP KARNE ARŞİVİ VE YÖNETİMİ
         # ---------------------------------------------------------
         with tab_arsiv:
-            st.markdown(f"#### 📂 {secili_donem} - E-Okul'a Aktarmak İçin İndir")
-            if df_karne.empty:
-                st.info(f"{secili_donem} dönemine ait indirilecek karne verisi bulunmuyor.")
-            else:
-                export_data = []
-                for _, row in df_karne.iterrows():
-                    d_json = json.loads(str(row['Dinamik_JSON'])) if isinstance(row['Dinamik_JSON'], str) else row['Dinamik_JSON']
-                    export_data.append({
-                        "Okul No": row['Okul No'],
-                        "Öğrenci Adı Soyadı": row['Öğrenci Adı Soyadı'],
-                        "Sınıf": row['Sınıf'],
-                        "Davranış Notu": d_json.get('davranis', 100),
-                        "E-Okul Karne Görüşü": row.get('Genel Değerlendirme Yorumu', '')
-                    })
-                
-                df_export = pd.DataFrame(export_data)
-                out_xls = io.BytesIO()
-                with pd.ExcelWriter(out_xls, engine='xlsxwriter') as writer:
-                    df_export.to_excel(writer, index=False, sheet_name='Karneler')
-                    worksheet = writer.sheets['Karneler']
-                    worksheet.set_column('B:B', 25)
-                    worksheet.set_column('E:E', 80)
-
-                st.download_button(
-                    label=f"📥 {secili_donem} Karne Görüşlerini Excel Olarak İndir", 
-                    data=out_xls.getvalue(), 
-                    file_name=f"Karne_Gorusleri_{secili_donem}.xlsx", 
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    type="primary"
-                )
-
-            st.markdown("---")
-            st.markdown("#### 📚 Geçmiş Yılların Genel Arşivi")
+            st.markdown("#### 🗂️ Yıllara / Dönemlere Göre Karne Görüşü Arşivi")
+            st.info("Arşiv verileri her zaman günceldir. Buradan geçmiş yıllara ait listeleri indirebilir, yanlış yazılan öğrencileri pop-up menüden anında güncelleyip silebilirsiniz.")
+            
+            # Veritabanındaki tüm karne verilerini çek (Canlı ve her zaman güncel)
             df_tum_karneler = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu'].copy()
-            if not df_tum_karneler.empty:
-                st.dataframe(df_tum_karneler[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Adi', 'Genel Değerlendirme Yorumu']], use_container_width=True)
-                st.info("💡 Not: Yukarıdaki açılır menüden geçmiş bir yılı seçerek, o yılın listesini ana ekranda düzenleyebilirsiniz.")
+            
+            if df_tum_karneler.empty:
+                st.warning("Sistemde arşivlenmiş herhangi bir karne verisi bulunamadı.")
             else:
-                st.info("Sistemde henüz arşivlenmiş karne bulunmuyor.")
+                donemler = sorted(df_tum_karneler['Gorev_Adi'].dropna().unique(), reverse=True)
                 
-        st.markdown('</div>', unsafe_allow_html=True)
+                for donem in donemler:
+                    # Yıllara göre klasör mantığı (Açılır kapanır pencere)
+                    with st.expander(f"📂 {donem} Arşivi", expanded=False):
+                        df_donem = df_tum_karneler[df_tum_karneler['Gorev_Adi'] == donem].sort_values(by="Okul No")
+                        
+                        # --- EXCEL ÇIKTISI (ARŞİV İNDİRME) ---
+                        export_data = [{"Okul No": r['Okul No'], "Ad Soyad": r['Öğrenci Adı Soyadı'], "Sınıf": r['Sınıf'], "Karne Görüşü": r.get('Genel Değerlendirme Yorumu', '')} for _, r in df_donem.iterrows()]
+                        df_export = pd.DataFrame(export_data)
+                        out_xls = io.BytesIO()
+                        with pd.ExcelWriter(out_xls, engine='xlsxwriter') as w: 
+                            df_export.to_excel(w, index=False, sheet_name='Arsiv')
+                            w.sheets['Arsiv'].set_column('B:B', 25)
+                            w.sheets['Arsiv'].set_column('D:D', 80)
+                        st.download_button(f"📥 {donem} Excel Arşivini İndir", data=out_xls.getvalue(), file_name=f"Arsiv_{donem}.xlsx", type="primary", key=f"dl_{donem}")
+                        
+                        st.markdown("##### 👩‍🎓 Öğrenci Yönetimi")
+                        
+                        for idx, row in df_donem.iterrows():
+                            # Pop-up (Popover) mantığı ile öğrenci bilgileri alt alta listelenir
+                            col_isim, col_buton = st.columns([3, 1])
+                            col_isim.markdown(f"**{row['Okul No']}** - {row['Öğrenci Adı Soyadı']} ({row['Sınıf']})")
+                            
+                            with col_buton:
+                                # Popover: Tıklanınca açılan minik pencere (Ekranı aşağı kaydırmaz, karmaşa yaratmaz)
+                                with st.popover("⚙️ Düzenle / Sil", use_container_width=True):
+                                    st.markdown(f"**{row['Öğrenci Adı Soyadı']}** için işlem yapıyorsunuz.")
+                                    
+                                    # Canlı Güncelleme
+                                    yeni_gorus = st.text_area("Görüşü Düzenle", value=row.get('Genel Değerlendirme Yorumu', ''), height=100, key=f"arsiv_gorus_{row['id']}")
+                                    
+                                    if st.button("💾 Kaydet", key=f"arsiv_kaydet_{row['id']}", use_container_width=True):
+                                        supabase.table('gorevler').update({'genel_degerlendirme_yorumu': yeni_gorus}).eq('id', row['id']).execute()
+                                        st.cache_data.clear()
+                                        st.success("✅ Arşiv güncellendi!")
+                                        time.sleep(1)
+                                        st.rerun()
+                                        
+                                    st.markdown("---")
+                                    # Silme
+                                    if st.button("🗑️ Öğrenciyi Arşivden Sil", key=f"arsiv_sil_{row['id']}", type="primary", use_container_width=True):
+                                        supabase.table('gorevler').delete().eq('id', row['id']).execute()
+                                        st.cache_data.clear()
+                                        st.success("🗑️ Kayıt silindi!")
+                                        time.sleep(1)
+                                        st.rerun()
 
     # ══════════════════════════════════════════════════
     # SEKME: AYARLAR & PROFİL
