@@ -465,15 +465,20 @@ def _init_nav():
         if k not in st.session_state:
             st.session_state[k] = v
 
-# BUNU BULUP DEĞİŞTİRİN (Yaklaşık 109. Satır)
 def render_main_nav(rol, admin_bakis):
     items = list(ANA_MENU)
     if rol != "admin" or admin_bakis:
         items = [i for i in items if i[0] != "yonetim"]
 
     aktif = st.session_state.get("nav_ana", "ogr_gorev")
+    html = '<div class="nav-container">'
+    for key, label in items:
+        cls = "nav-item aktif" if aktif == key else "nav-item"
+        html += f'<div class="{cls}" id="navbtn_{key}">{label}</div>'
+    html += '</div>'
+    st.markdown(html, unsafe_allow_html=True)
 
-    # Çift menü yaratan sahte HTML kodları silindi, sadece çalışan gerçek butonlar bırakıldı
+    # Buton bazlı fallback (Streamlit state için)
     cols = st.columns(len(items))
     for col, (key, label) in zip(cols, items):
         is_a = aktif == key
@@ -641,94 +646,130 @@ def bildirim_sayisi(ayarlar):
 # ==========================================
 # 8. HTML RAPOR ŞABLONLARİ
 # ==========================================
-def karne_onizleme_html(ad, sinif, okul_no, donem, davranis_notu, yorum, ders_notlari=None):
-    """Karne görüşü için güzel önizleme HTML'i"""
-    renge = "#10b981" if int(davranis_notu or 0) >= 85 else ("#f59e0b" if int(davranis_notu or 0) >= 65 else "#ef4444")
-    durum = "Davranışı Mükemmel" if int(davranis_notu or 0) >= 85 else ("Davranışı Orta" if int(davranis_notu or 0) >= 65 else "Davranışı Gelişmeli")
+def karne_onizleme_html(ad, sinif, okul_no, donem, davranis_notu, yorum, ders_notlari=None, okul_adi="", ogrt_ad=""):
+    """Karne görüşü için profesyonel önizleme HTML'i"""
+    dav = int(davranis_notu or 0)
+    renge = "#10b981" if dav >= 85 else ("#f59e0b" if dav >= 65 else "#ef4444")
+    durum = "Mükemmel Davranış" if dav >= 85 else ("Olumlu Davranış" if dav >= 65 else "Geliştirilmesi Gereken Davranış")
+
     notlar_html = ""
     if ders_notlari:
-        notlar_html = "<div style='display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;'>"
+        notlar_html = "<div style='display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;'>"
         for ders, not_ in ders_notlari.items():
-            if str(not_).strip() and str(not_).strip() not in ["", "nan"]:
-                renk = "#dcfce7" if int(float(not_)) >= 85 else ("#fef9c3" if int(float(not_)) >= 65 else "#fee2e2")
-                notlar_html += f"<div style='background:{renk};padding:5px 10px;border-radius:7px;font-size:0.82rem;font-weight:700;'>{ders}: {not_}</div>"
+            ns = str(not_).strip()
+            if ns and ns not in ["", "nan", "0.0", "0"]:
+                try:
+                    n_int = int(float(ns))
+                    bg = "#dcfce7" if n_int >= 85 else ("#fef9c3" if n_int >= 65 else "#fee2e2")
+                    tc = "#065f46" if n_int >= 85 else ("#854d0e" if n_int >= 65 else "#991b1b")
+                    notlar_html += f"<div style='background:{bg};color:{tc};padding:6px 11px;border-radius:8px;font-size:0.82rem;font-weight:700;white-space:nowrap;'>{ders}: {n_int}</div>"
+                except:
+                    notlar_html += f"<div style='background:#f1f5f9;color:#475569;padding:6px 11px;border-radius:8px;font-size:0.82rem;font-weight:700;'>{ders}: {ns}</div>"
         notlar_html += "</div>"
+
+    tarih = time.strftime('%d.%m.%Y')
+    ilk_harf = ad[0].upper() if ad else "?"
 
     return f"""<!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Karne Görüşü — {ad}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{font-family:'Inter',Arial,sans-serif;background:#f8fafc;padding:20px;min-height:100vh;}}
-  .karne{{background:white;max-width:680px;margin:0 auto;border-radius:16px;overflow:hidden;
-          box-shadow:0 8px 40px rgba(0,0,0,0.12);}}
-  .karne-header{{background:linear-gradient(135deg,#0c1e4a,#2563eb);color:white;padding:24px 28px;}}
-  .karne-header h1{{font-size:1.4rem;font-weight:800;margin-bottom:4px;}}
-  .karne-header p{{font-size:0.85rem;opacity:0.8;}}
-  .karne-body{{padding:24px 28px;}}
+  body{{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;padding:20px;min-height:100vh;}}
+  .karne{{background:white;max-width:700px;margin:0 auto;border-radius:18px;overflow:hidden;
+          box-shadow:0 10px 50px rgba(0,0,0,0.13);}}
+  .karne-header{{background:linear-gradient(135deg,#0c1e4a 0%,#1a3a8f 50%,#2563eb 100%);
+                 color:white;padding:26px 30px;position:relative;overflow:hidden;}}
+  .karne-header::after{{content:'';position:absolute;top:-40%;right:-5%;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(255,255,255,0.07) 0%,transparent 70%);pointer-events:none;}}
+  .karne-header h1{{font-size:1.35rem;font-weight:800;margin-bottom:3px;}}
+  .karne-header .okul{{font-size:0.83rem;opacity:0.75;margin-top:2px;}}
+  .karne-body{{padding:26px 30px;}}
   .ogrenci-kart{{display:flex;align-items:center;gap:16px;background:#f0f9ff;
-                 border-radius:12px;padding:16px;margin-bottom:20px;}}
-  .avatar{{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);
-           display:flex;align-items:center;justify-content:center;color:white;font-size:1.3rem;
-           font-weight:800;flex-shrink:0;}}
-  .ogrenci-bilgi h2{{font-size:1.05rem;font-weight:800;color:#1e293b;}}
-  .ogrenci-bilgi p{{font-size:0.8rem;color:#64748b;margin-top:3px;}}
-  .donem-badge{{display:inline-block;background:#dbeafe;color:#1e40af;padding:3px 10px;
-                border-radius:6px;font-size:0.72rem;font-weight:800;margin-top:6px;}}
-  .davranis-section{{margin:16px 0;}}
-  .davranis-label{{font-size:0.8rem;font-weight:700;color:#64748b;margin-bottom:6px;
-                   display:flex;justify-content:space-between;align-items:center;}}
-  .davranis-bar{{height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;}}
-  .davranis-fill{{height:100%;border-radius:5px;background:{renge};width:{davranis_notu or 0}%;}}
-  .davranis-durum{{display:inline-block;background:{renge}22;color:{renge};
-                   font-size:0.75rem;font-weight:800;padding:2px 8px;border-radius:6px;}}
-  .yorum-kutu{{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;
-               padding:18px;margin-top:16px;}}
-  .yorum-kutu h3{{color:#92400e;font-size:0.85rem;margin-bottom:10px;}}
-  .yorum-metin{{color:#78350f;font-size:0.92rem;line-height:1.7;}}
-  .imza{{text-align:right;margin-top:20px;padding-top:16px;border-top:1px dashed #e2e8f0;
-         color:#64748b;font-size:0.82rem;}}
-  @media print{{body{{padding:0}}.karne{{box-shadow:none;border-radius:0;max-width:100%}}}}
+                 border-radius:13px;padding:16px 20px;margin-bottom:20px;border:1px solid #dbeafe;}}
+  .avatar{{width:54px;height:54px;border-radius:50%;
+           background:linear-gradient(135deg,#2563eb,#7c3aed);
+           display:flex;align-items:center;justify-content:center;
+           color:white;font-size:1.4rem;font-weight:800;flex-shrink:0;}}
+  .ogrenci-bilgi h2{{font-size:1.05rem;font-weight:800;color:#1e293b;margin-bottom:2px;}}
+  .ogrenci-bilgi p{{font-size:0.79rem;color:#64748b;}}
+  .donem-badge{{display:inline-block;background:#dbeafe;color:#1e40af;
+                padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:800;margin-top:5px;}}
+  .notlar-baslik{{font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;
+                  letter-spacing:0.5px;margin-bottom:8px;}}
+  .davranis-blok{{background:#f8fafc;border-radius:10px;padding:14px 16px;margin:16px 0;
+                  border:1px solid #e2e8f0;}}
+  .davranis-ust{{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}}
+  .davranis-lbl{{font-size:0.8rem;font-weight:700;color:#374151;}}
+  .davranis-puan{{font-size:1rem;font-weight:900;color:{renge};}}
+  .davranis-durum{{display:inline-block;background:{renge}20;color:{renge};
+                   font-size:0.72rem;font-weight:800;padding:2px 9px;border-radius:6px;}}
+  .bar-bg{{height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;}}
+  .bar-fill{{height:100%;border-radius:5px;background:{renge};width:{dav}%;transition:width 0.4s;}}
+  .yorum-blok{{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;
+               padding:20px;margin-top:18px;}}
+  .yorum-baslik{{display:flex;align-items:center;gap:8px;margin-bottom:12px;
+                 color:#92400e;font-size:0.85rem;font-weight:800;}}
+  .yorum-metin{{color:#78350f;font-size:0.93rem;line-height:1.78;white-space:pre-wrap;}}
+  .imza{{display:flex;justify-content:space-between;align-items:flex-end;
+         margin-top:22px;padding-top:16px;border-top:1px dashed #e2e8f0;}}
+  .imza-ogrt{{font-size:0.82rem;color:#475569;}}
+  .imza-ogrt strong{{display:block;font-size:0.9rem;color:#1e293b;}}
+  .imza-tarih{{font-size:0.78rem;color:#94a3b8;}}
+  .print-btn{{display:block;text-align:center;margin-top:18px;}}
+  @media print{{
+    body{{background:white;padding:0;}}
+    .karne{{box-shadow:none;border-radius:0;max-width:100%;}}
+    .print-btn{{display:none;}}
+  }}
 </style></head><body>
 <div class="karne">
   <div class="karne-header">
     <h1>🧭 Dönem Sonu Karne Görüşü</h1>
-    <p>{okul} — {donem if 'donem' not in dir() else donem}</p>
+    <div class="okul">{okul_adi or 'PUSULA 360'} &nbsp;·&nbsp; {donem}</div>
   </div>
   <div class="karne-body">
     <div class="ogrenci-kart">
-      <div class="avatar">{ad[0] if ad else '?'}</div>
+      <div class="avatar">{ilk_harf}</div>
       <div class="ogrenci-bilgi">
         <h2>{ad}</h2>
-        <p>Sınıf: <strong>{sinif}</strong> &nbsp;|&nbsp; No: <strong>{okul_no}</strong></p>
+        <p>Sınıf: <strong>{sinif}</strong> &nbsp;·&nbsp; Okul No: <strong>{okul_no}</strong></p>
         <span class="donem-badge">{donem}</span>
       </div>
     </div>
-    {notlar_html}
-    <div class="davranis-section">
-      <div class="davranis-label">
-        <span>Davranış Notu</span>
-        <span><strong>{davranis_notu}</strong>/100 — <span class="davranis-durum">{durum}</span></span>
+    {f'<div class="notlar-baslik">📊 Ders Notları</div>{notlar_html}' if notlar_html else ''}
+    <div class="davranis-blok">
+      <div class="davranis-ust">
+        <span class="davranis-lbl">Davranış Notu</span>
+        <span>
+          <span class="davranis-puan">{dav}/100</span>
+          &nbsp;<span class="davranis-durum">{durum}</span>
+        </span>
       </div>
-      <div class="davranis-bar"><div class="davranis-fill"></div></div>
+      <div class="bar-bg"><div class="bar-fill"></div></div>
     </div>
-    <div class="yorum-kutu">
-      <h3>💬 Öğretmen Karne Görüşü</h3>
+    <div class="yorum-blok">
+      <div class="yorum-baslik">💬 Öğretmen Karne Görüşü</div>
       <div class="yorum-metin">{yorum if yorum else '<em style="color:#94a3b8">Görüş henüz yazılmamış.</em>'}</div>
     </div>
     <div class="imza">
-      <strong>Sınıf Öğretmeni</strong><br>PUSULA 360 · {time.strftime('%d.%m.%Y')}
+      <div class="imza-ogrt">
+        <strong>{ogrt_ad or 'Sınıf Öğretmeni'}</strong>
+        Sınıf Öğretmeni
+      </div>
+      <div class="imza-tarih">PUSULA 360 &nbsp;·&nbsp; {tarih}</div>
     </div>
   </div>
 </div>
-<div style="text-align:center;margin-top:16px;">
+<div class="print-btn">
   <button onclick="window.print()" style="background:#2563eb;color:white;border:none;
-    padding:10px 24px;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;">
+    padding:11px 28px;border-radius:9px;font-size:0.9rem;font-weight:700;cursor:pointer;
+    box-shadow:0 4px 12px rgba(37,99,235,0.3);">
     🖨️ Yazdır / PDF Kaydet
   </button>
 </div>
-</body></html>""".replace("{okul}", "")
+</body></html>"""
 
 def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
     if tekil_gorev_idx is not None:
@@ -965,25 +1006,86 @@ Kriterler:\n{kriter_ozeti}\nMOD: """
     return json.loads(raw.replace("```json","").replace("```","").strip())
 
 def ai_karne_gorusu_yaz(tam_isim, sinif, notlar_dict, davranis_notu, ekstra_gozlem, ogrt_ad):
+    """Gerçek öğretmen diliyle karne görüşü yazar. Davranış notuna göre ton ayarlar."""
     ogrenci_isim = isme_hitap_et(tam_isim)
-    notlar_metni = "\n".join([f"- {ders}: {n}" for ders, n in notlar_dict.items() if str(n).strip() not in ["","nan"]])
-    davranis = int(float(str(davranis_notu or 50)))
-    davranis_yorum = "olumlu" if davranis >= 85 else ("orta" if davranis >= 65 else "geliştirilmesi gereken")
+    dav = int(float(str(davranis_notu or 70)))
 
-    prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinif} sınıfından {ogrenci_isim} için dönem sonu karne görüşü yaz.
-Notlar (100 üzerinden):
-{notlar_metni}
-Davranış Notu: {davranis}/100 ({davranis_yorum} davranış)
-Ekstra Gözlem: {ekstra_gozlem if ekstra_gozlem else 'Yok'}
+    # Ders notlarını analiz et
+    basarili_dersler, gelismeli_dersler = [], []
+    tum_notlar_metni = ""
+    for ders, n in notlar_dict.items():
+        ns = str(n).strip()
+        if ns and ns not in ["","nan","0.0","0"]:
+            tum_notlar_metni += f"  - {ders}: {ns}/100\n"
+            try:
+                n_int = int(float(ns))
+                if n_int >= 85:
+                    basarili_dersler.append(ders)
+                elif n_int < 65:
+                    gelismeli_dersler.append(ders)
+            except: pass
 
-Kurallar:
-1. 'Sevgili {ogrenci_isim},' diye başla
-2. Davranış notu {davranis_yorum} olduğuna göre davranış konusunda {'teşvik edici ve örnek gösterici' if davranis>=85 else ('dengeli' if davranis>=65 else 'yapıcı uyarılar içeren')} bir dil kullan
-3. Akademik başarı için {'güçlü derslere vurgu yap' if notlar_dict else 'genel değerlendirme yap'}
-4. Aileve de hitap eden, 3-4 cümle, motive edici bir metin
-5. Türkçe, resmi ama sıcak bir dil
-Sadece görüş metnini yaz, başlık veya açıklama ekleme."""
-    payload = {"contents":[{"parts":[{"text":prompt}]}],"generationConfig":{"response_mime_type":"text/plain"}}
+    # Davranış durumu ve ton belirleme
+    if dav >= 90:
+        dav_yorum = "son derece olumlu, örnek teşkil eden"
+        dav_ton   = "övgü dolu ve motive edici"
+        dav_ornek = "arkadaşlarına karşı saygılı, sorumluluklarını eksiksiz yerine getiren, derslere aktif katılan"
+    elif dav >= 80:
+        dav_yorum = "olumlu ve takdire değer"
+        dav_ton   = "teşvik edici ve onaylayıcı"
+        dav_ornek = "kurallara uyan, arkadaşlarıyla uyumlu, sorumluluk sahibi"
+    elif dav >= 65:
+        dav_yorum = "gelişim gösteren ve ortalama düzeyde"
+        dav_ton   = "yapıcı, dengeli, gelişime açık"
+        dav_ornek = "zaman zaman uyarı gerektiren ancak genel olarak uyumlu"
+    elif dav >= 50:
+        dav_yorum = "geliştirilmesi gereken"
+        dav_ton   = "uyarıcı ama umut verici, yapıcı"
+        dav_ornek = "kurallara uymada güçlük yaşayan, öz denetim becerilerini geliştirmesi gereken"
+    else:
+        dav_yorum = "ciddi şekilde geliştirilmesi gereken"
+        dav_ton   = "endişe içeren ama çözüm odaklı, aile iş birliğini vurgulayan"
+        dav_ornek = "tutum ve davranışlarında köklü değişime ihtiyaç duyan"
+
+    basarili_str   = ", ".join(basarili_dersler)   if basarili_dersler   else "belirli alanlarda"
+    gelismeli_str  = ", ".join(gelismeli_dersler)  if gelismeli_dersler  else ""
+
+    prompt = f"""Sen deneyimli bir sınıf öğretmenisin. Adın {ogrt_ad}.
+{sinif} sınıfı öğrencisi {tam_isim} için dönem sonu karne görüşü yazacaksın.
+
+ÖĞRENCİNİN DERS NOTLARI (100 üzerinden):
+{tum_notlar_metni if tum_notlar_metni else "  (Not bilgisi girilmemiş)"}
+
+DAVRANIŞ NOTU: {dav}/100 ({dav_yorum} davranış)
+Davranış tonu: {dav_ton}
+Davranış örnek ifade: {dav_ornek}
+
+BAŞARILI OLDUĞU DERSLER: {basarili_str}
+GELİŞTİRMESİ GEREKEN DERSLER: {gelismeli_str if gelismeli_str else "Yok"}
+ÖĞRETMEN ÖZEL GÖZLEM: {ekstra_gozlem if ekstra_gozlem else "Ek gözlem yok."}
+
+YAZIM KURALLARI — BUNLARA KESINLIKLE UY:
+1. "Sevgili {ogrenci_isim}," diye başla — soyadını asla kullanma
+2. Davranış notu {dav}/100 olduğu için ton {dav_ton} olmalı
+3. Davranış ile ilgili somut gözlem cümlesi yaz ({dav_ornek})
+4. Akademik başarıyı değerlendir: {'güçlü dersleri özellikle öv' if basarili_dersler else 'genel gayretini değerlendir'}
+5. {'Gelişmesi gereken derslere nazikçe dikkat çek ve destek söz ver' if gelismeli_dersler else ''}
+6. Son cümle aileye hitap etsin: veli teşekkürü veya iş birliği daveti
+7. 4-5 cümle — kısa değil, dolu ve gerçek öğretmen diliyle
+8. Cümleleri birbirine bağla, liste değil akıcı paragraf
+9. Sıcak, samimi, resmi ama kalp koyan bir dil — klişeden kaçın
+10. Türkçe yazım kurallarına dikkat et
+
+SADECE görüş metnini yaz. Başlık, açıklama, tırnak işareti ekleme."""
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "response_mime_type": "text/plain",
+            "temperature": 0.85,
+            "maxOutputTokens": 400
+        }
+    }
     r = requests.post(GEMINI_API_URL, headers={"Content-Type":"application/json"}, json=payload, timeout=45)
     r.raise_for_status()
     return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
@@ -1964,7 +2066,7 @@ def yonetim_paneli(df, ayarlar):
 
                 # Öğrenci Listesi
                 st.markdown("---")
-                for index_k, satir_k in df_kf.iterrows():
+                for _, satir_k in df_kf.iterrows():
                     yorum = satir_k.get('Genel Değerlendirme Yorumu','')
                     onayli = satir_k.get('Onaylandi', False)
                     notlar, davranis = {}, 75
@@ -2002,9 +2104,7 @@ def yonetim_paneli(df, ayarlar):
                     with col_k2:
                         o_no_k  = satir_k['Okul No']
                         donem_k_val = satir_k.get('Donem','1. Dönem')
-                        
-                        # DEĞİŞİKLİK BURADA: btn_key içine 'index_k' eklenerek buton kimliği eşsiz (unique) hale getirildi
-                        btn_key = f"karne_edit_{index_k}_{o_no_k}_{donem_k_val}"
+                        btn_key = f"karne_edit_{o_no_k}_{donem_k_val}"
 
                         if st.button("✏️ Düzenle", key=btn_key, use_container_width=True, type="primary"):
                             st.session_state["karne_sec_no"]    = o_no_k
