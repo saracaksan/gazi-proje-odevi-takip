@@ -1719,7 +1719,7 @@ def yonetim_paneli(df, ayarlar):
     elif aktif_ana == "eokul":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü & Kalıcı Sınıf Listesi Yönetimi</div>", unsafe_allow_html=True)
-        st.info("💡 Liste bir kez yüklenir ve silene kadar sistemde kalır. Öğrencilerin notlarını, davranış puanlarını ve AI görüşlerini yan yana görüp düzenleyebilirsiniz.")
+        st.info("💡 Listenizi bir kez yükleyin, silene kadar sistemde kalsın. Öğrencilerin notlarını, davranış puanlarını ve AI görüşlerini yan yana görüp kolayca düzenleyebilirsiniz.")
         
         # 1. DİNAMİK YIL VE DÖNEM SEÇİMİ (2015'ten 2035'e kadar genişletildi)
         yillar = []
@@ -1727,74 +1727,53 @@ def yonetim_paneli(df, ayarlar):
             yillar.append(f"{y}-{y+1} Eğitim Yılı - 1. Dönem")
             yillar.append(f"{y}-{y+1} Eğitim Yılı - 2. Dönem")
         
-        # Varsayılan olarak günümüz yılına yakın bir dönemi seçili getirelim
         varsayilan_index = yillar.index("2025-2026 Eğitim Yılı - 2. Dönem") if "2025-2026 Eğitim Yılı - 2. Dönem" in yillar else 0
         
         c_donem, c_bos = st.columns([1, 2])
         secili_donem = c_donem.selectbox("📚 İşlem Yapılacak Dönemi Seçin", yillar, index=varsayilan_index)
 
-        # Seçili döneme ait bu öğretmenin verilerini veritabanından çek
-        df_karne_db = df_yetkili[(df_yetkili['Gorev_Turu'] == 'Karne Gorusu') & (df_yetkili['Gorev_Adi'] == secili_donem)].copy()
+        # Aktif kullanıcının bu dönemdeki verilerini veritabanından çek
+        df_karne = df_yetkili[(df_yetkili['Gorev_Turu'] == 'Karne Gorusu') & (df_yetkili['Gorev_Adi'] == secili_donem)].copy()
         
-        tab_liste, tab_islem, tab_arsiv = st.tabs(["📥 1. Liste Yükle / Sil", "🤖 2. Karne Görüşleri ve Düzenleme (Sınıf Listesi)", "📂 3. Excel Çıktısı Al (Arşiv)"])
-        
-        # ---------------------------------------------------------
-        # SEKME 1: LİSTE YÜKLEME VE SİLME
-        # ---------------------------------------------------------
-        with tab_liste:
-            col_down, col_up = st.columns([1, 2])
-            col_down.download_button("📄 Örnek E-Okul Excel Şablonu İndir", data=eokul_sablon_olustur(), file_name="Eokul_Sablon.xlsx", use_container_width=True)
-            k_dosya = col_up.file_uploader("E-Okul Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
+        tab_aktif, tab_arsiv = st.tabs(["📋 Karne Listesi ve Görüş Yazma", "📥 Excel Çıktısı Al ve Arşive Gözat"])
 
-            if k_dosya:
-                yukleme_tercihi = st.radio("Yükleme Seçeneği", [
-                    "➕ Eski listeyi KORU, sadece yeni öğrencileri ekle (Önerilen)", 
-                    "🗑️ Eski listeyi tamamen SİL ve sadece bu dosyayı yükle"
-                ], horizontal=True)
+        # ---------------------------------------------------------
+        # SEKME 1: KARNE LİSTESİ VE GÖRÜŞ YAZMA
+        # ---------------------------------------------------------
+        with tab_aktif:
+            if df_karne.empty:
+                st.markdown(f"**📌 {secili_donem} için henüz liste yüklenmemiş. Lütfen aşağıdan Excel dosyanızı yükleyin.**")
+                col_dl, col_up = st.columns([1, 2])
+                col_dl.download_button("📄 Örnek E-Okul Excel Şablonu İndir", data=eokul_sablon_olustur(), file_name="Eokul_Sablon.xlsx", use_container_width=True)
+                k_dosya = col_up.file_uploader("E-Okul Not Listesini Yükle (Excel/CSV)", type=['xlsx','csv','xls'])
                 
-                if st.button("💾 Listeyi Veritabanına Kalıcı Olarak Kaydet", type="primary", use_container_width=True):
-                    with st.spinner("Liste analiz ediliyor ve kalıcı olarak kaydediliyor..."):
-                        kdf = pd.read_csv(k_dosya, sep=None, engine='python') if k_dosya.name.endswith('.csv') else pd.read_excel(k_dosya)
-                        kdf = kdf.fillna("") 
-                        cols = kdf.columns.tolist()
-                        
-                        no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
-                        ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
-                        sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
-                        
-                        # Excel'de Davranış sütunu var mı? (Otomatik çekmek için)
-                        davranis_col = next((c for c in cols if "davran" in str(c).lower()), None)
-                        
-                        not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col, davranis_col]]
+                if k_dosya:
+                    if st.button("💾 Listeyi Yükle ve Öğrencileri Getir", type="primary", use_container_width=True):
+                        with st.spinner("Liste analiz ediliyor ve kaydediliyor..."):
+                            kdf = pd.read_csv(k_dosya, sep=None, engine='python') if k_dosya.name.endswith('.csv') else pd.read_excel(k_dosya)
+                            kdf = kdf.fillna("") 
+                            cols = kdf.columns.tolist()
+                            
+                            no_col = next((c for c in cols if "no" in str(c).lower()), cols[0])
+                            ad_col = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols)>1 else cols[0])
+                            sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols)>2 else None)
+                            
+                            davranis_col = next((c for c in cols if "davran" in str(c).lower()), None)
+                            not_cols = [c for c in cols if c not in [no_col, ad_col, sinif_col, davranis_col]]
 
-                        if "SİL" in yukleme_tercihi and not df_karne_db.empty:
-                            supabase.table('gorevler').delete().eq('atanan_ogretmen', aktif_id).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', secili_donem).execute()
-                            df_karne_db = pd.DataFrame() # Anlık güncelleyelim
+                            yeni_kayitlar = []
+                            for i, row in kdf.iterrows():
+                                o_no = str(row[no_col]).strip().replace('.0', '')
+                                if not o_no or o_no.lower() == "nan": continue
+                                
+                                dav_val = 100
+                                if davranis_col and str(row[davranis_col]).strip() != "":
+                                    try: dav_val = int(float(str(row[davranis_col]).replace(",", ".")))
+                                    except: pass
 
-                        yeni_kayitlar = []
-                        for i, row in kdf.iterrows():
-                            o_no = str(row[no_col]).strip().replace('.0', '')
-                            if not o_no or o_no.lower() == "nan": continue
-                            
-                            # Davranış notunu excelden çekmeye çalış, yoksa 100 ver
-                            dav_val = 100
-                            if davranis_col and str(row[davranis_col]).strip() != "":
-                                try:
-                                    dav_val = int(float(str(row[davranis_col]).replace(",", ".")))
-                                except: pass
-
-                            notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
-                            
-                            dinamik_veri = {
-                                "notlar": notlar_dict, 
-                                "davranis": dav_val, 
-                                "ogretmen_notu": "", 
-                                "durum": "Bekliyor ⏳"
-                            }
-                            
-                            var_mi = not df_karne_db[df_karne_db['Okul No'] == o_no].empty if not df_karne_db.empty else False
-                            
-                            if not var_mi or "SİL" in yukleme_tercihi:
+                                notlar_dict = {d: str(row[d]) for d in not_cols if str(row[d]).strip() != ""}
+                                dinamik_veri = {"notlar": notlar_dict, "davranis": dav_val, "ogretmen_notu": ""}
+                                
                                 yeni_kayitlar.append({
                                     'okul': kb.get("okul"), 'ekleyen': aktif_id, 'atanan_ogretmen': aktif_id,
                                     'ders': "Davranış / Karne", 'okul_no': o_no, 'ogrenci_adi_soyadi': row[ad_col],
@@ -1802,54 +1781,28 @@ def yonetim_paneli(df, ayarlar):
                                     'gorev_turu': 'Karne Gorusu', 'gorev_adi': secili_donem, 
                                     'dinamik_json': dinamik_veri, 'genel_degerlendirme_yorumu': ""
                                 })
-                        
-                        if yeni_kayitlar:
-                            supabase.table('gorevler').insert(yeni_kayitlar).execute()
-                            st.cache_data.clear()
-                            st.success(f"✅ {len(yeni_kayitlar)} öğrenci sisteme eklendi! 'Karne Görüşleri' sekmesine geçebilirsiniz.")
-                            time.sleep(2)
-                            st.rerun()
-                        else:
-                            st.warning("Eklenecek yeni öğrenci bulunamadı (Tüm öğrenciler zaten listede olabilir).")
-
-            st.markdown("---")
-            st.markdown(f"#### 🏫 Bu Dönemki Mevcut Öğrencileriniz ({len(df_karne_db)} Öğrenci)")
-            if not df_karne_db.empty:
-                if st.button("⛔ Tüm Dönem Listesini ve Yazılan Karne Görüşlerini SİL", type="primary"):
-                    supabase.table('gorevler').delete().eq('atanan_ogretmen', aktif_id).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', secili_donem).execute()
-                    st.cache_data.clear()
-                    st.success("Tüm liste silindi!")
-                    time.sleep(1)
-                    st.rerun()
+                            
+                            if yeni_kayitlar:
+                                supabase.table('gorevler').insert(yeni_kayitlar).execute()
+                                st.cache_data.clear()
+                                st.rerun()
+            
             else:
-                st.info("Bu dönem için henüz liste yüklenmemiş. Lütfen yukarıdan Excel dosyanızı yükleyin.")
-
-        # ---------------------------------------------------------
-        # SEKME 2: KARNE GÖRÜŞLERİ, NOTLAR VE DÜZENLEME (ASIL EKRAN)
-        # ---------------------------------------------------------
-        with tab_islem:
-            if df_karne_db.empty:
-                st.warning("Lütfen önce 1. sekmeden sınıf listenizi yükleyin.")
-            else:
-                # Yardımcı Metod: Doğal Karne AI Fonksiyonu
+                st.success(f"✅ {secili_donem} dönemi aktif. Toplam {len(df_karne)} öğrenciniz bulunuyor.")
+                
+                # --- Yardımcı Yapay Zeka Fonksiyonu ---
                 def dogal_karne_yazdir_api(isim, sinif, ders_notlari_metni, davranis, ogretmen_tuyosu, ogrt_isim):
-                    davranis_uyarisi = ""
-                    if int(davranis) < 60:
-                        davranis_uyarisi = "Davranış notu düşük, bunu nazik, yapıcı ve pedagojik bir uyarıyla dile getir."
-                    else:
-                        davranis_uyarisi = "Davranışları çok iyi, bunu mutlaka öv ve motive et."
-                        
-                    prompt = f"""Sen tecrübeli, samimi ve şefkatli bir öğretmensin. Adın {ogrt_isim}. {sinif} sınıfından öğrencin '{isim}' için e-okul sistemine girilecek bir dönem sonu karne görüşü yazıyorsun.
+                    prompt = f"""Sen tecrübeli ve şefkatli bir öğretmensin. Adın {ogrt_isim}. {sinif} sınıfından öğrencin '{isim}' için e-okul sistemine girilecek bir dönem sonu karne görüşü yazıyorsun.
 Öğrencinin Ders Notları:
 {ders_notlari_metni}
 Davranış Puanı (100 üzerinden): {davranis}
-Öğretmen olarak sisteme tuttuğum sesli/yazılı notum (Bu konuyu yoruma çok doğal bir şekilde yedir): "{ogretmen_tuyosu}"
+Öğretmen olarak sisteme tuttuğum not (Bu konuyu yoruma çok doğal bir şekilde yedir): "{ogretmen_tuyosu}"
 
 LÜTFEN ŞUNLARA DİKKAT ET:
-1. Son derece doğal, insani ve şefkatli bir dil kullan. Robotik veya otomatik üretilmiş gibi durmasın. Çocuğu yıllardır tanıyormuşsun gibi hissettir.
-2. Doğrudan 'Sevgili {isim},' diye başla.
-3. {davranis_uyarisi}
-4. Toplam 3-4 cümleyi geçmesin, akıcı bir paragraf olsun.
+1. Son derece doğal, insani ve şefkatli bir dil kullan. Robotik veya otomatik üretilmiş gibi durmasın. Çocuğu gerçekten tanıyormuşsun gibi hissettir.
+2. Doğrudan 'Sevgili {isim},' diye başla. Soyadını kullanma.
+3. {"Davranış notu düşük, bunu nazik, yapıcı ve pedagojik bir uyarıyla dile getir." if int(davranis) < 60 else "Davranışları çok iyi, bunu mutlaka öv ve motive et."}
+4. Toplam 3-4 cümleyi geçmesin.
 
 Karne Görüşü:"""
                     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
@@ -1857,21 +1810,18 @@ Karne Görüşü:"""
                         r = requests.post(GEMINI_API_URL, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
                         r.raise_for_status()
                         return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-                    except:
-                        return "API Bağlantı Hatası. Lütfen tekrar deneyin."
+                    except Exception as e:
+                        return f"API Hatası: Lütfen tekrar deneyin. Detay: {str(e)[:50]}"
 
-                # ÜST BUTONLAR: TOPLU KAYDET VE TOPLU ÜRET
-                st.markdown('<div class="info-banner">Aşağıdaki listeden öğrencilerin notlarını görebilir, davranış ve öğretmen tüyolarını düzenleyebilirsiniz. İşlemleriniz bitince "Tüm Değişiklikleri Kaydet" butonuna basmayı unutmayın.</div>', unsafe_allow_html=True)
+                # ÜST BUTONLAR: TOPLU İŞLEMLER
+                col_b1, col_b2, col_b3 = st.columns(3)
                 
-                c_ust1, c_ust2 = st.columns(2)
-                
-                if c_ust1.button("🤖 Sınıftaki TÜM ÖĞRENCİLER İçin AI Karne Görüşü Üret", type="primary", use_container_width=True):
+                if col_b1.button("🤖 Tüm Sınıf İçin AI Karne Üret", type="primary", use_container_width=True):
                     bar = st.progress(0)
-                    satirlar = df_karne_db.to_dict('records')
+                    satirlar = df_karne.to_dict('records')
                     for i, r in enumerate(satirlar):
                         d_json = json.loads(str(r['Dinamik_JSON'])) if isinstance(r['Dinamik_JSON'], str) else r['Dinamik_JSON']
                         
-                        # Session state'te kullanıcının anlık yazdığı değerler varsa onları al
                         anlik_davranis = st.session_state.get(f"dav_{r['id']}", d_json.get('davranis', 100))
                         anlik_tuyo = st.session_state.get(f"tuyo_{r['id']}", d_json.get('ogretmen_notu', ''))
                         
@@ -1880,7 +1830,9 @@ Karne Görüşü:"""
                         
                         d_json['davranis'] = anlik_davranis
                         d_json['ogretmen_notu'] = anlik_tuyo
-                        d_json['durum'] = "Hazır ✅"
+                        
+                        # Session state'i temizle/güncelle (Ekrandaki kutuyu yenilemesi için kritik adım)
+                        st.session_state[f"gorus_{r['id']}"] = yeni_gorus
                         
                         supabase.table('gorevler').update({
                             'genel_degerlendirme_yorumu': yeni_gorus,
@@ -1889,26 +1841,21 @@ Karne Görüşü:"""
                         bar.progress((i + 1) / len(satirlar))
                         
                     st.cache_data.clear()
-                    st.success("Tüm sınıf için karne görüşleri üretildi ve veritabanına işlendi!")
+                    st.success("Tüm sınıf için karne görüşleri başarıyla üretildi!")
                     time.sleep(1)
                     st.rerun()
 
-                if c_ust2.button("💾 Ekrandaki Tüm Değişiklikleri Veritabanına KAYDET", type="primary", use_container_width=True):
-                    # Sayfadaki tüm session_state verilerini veritabanına aktarır
-                    with st.spinner("Değişiklikler kaydediliyor..."):
-                        satirlar = df_karne_db.to_dict('records')
-                        for r in satirlar:
+                if col_b2.button("💾 Tüm Değişiklikleri Veritabanına Kaydet", use_container_width=True):
+                    with st.spinner("Kaydediliyor..."):
+                        for _, r in df_karne.iterrows():
                             d_json = json.loads(str(r['Dinamik_JSON'])) if isinstance(r['Dinamik_JSON'], str) else r['Dinamik_JSON']
                             
-                            # Ekrandaki anlık değerler
-                            anlik_davranis = st.session_state.get(f"dav_{r['id']}", d_json.get('davranis', 100))
+                            anlik_dav = st.session_state.get(f"dav_{r['id']}", d_json.get('davranis', 100))
                             anlik_tuyo = st.session_state.get(f"tuyo_{r['id']}", d_json.get('ogretmen_notu', ''))
-                            anlik_gorus = st.session_state.get(f"gorus_{r['id']}", r.get('Genel Değerlendirme Yorumu', ''))
+                            anlik_gorus = st.session_state.get(f"gorus_{r['id']}", str(r.get('Genel Değerlendirme Yorumu', '')))
                             
-                            d_json['davranis'] = anlik_davranis
+                            d_json['davranis'] = anlik_dav
                             d_json['ogretmen_notu'] = anlik_tuyo
-                            if anlik_gorus.strip() != "":
-                                d_json['durum'] = "Tamamlandı 🔒"
                                 
                             supabase.table('gorevler').update({
                                 'genel_degerlendirme_yorumu': anlik_gorus,
@@ -1920,68 +1867,50 @@ Karne Görüşü:"""
                         time.sleep(1)
                         st.rerun()
 
+                if col_b3.button("🗑️ Bu Listeyi Tamamen Sil", use_container_width=True):
+                    supabase.table('gorevler').delete().eq('atanan_ogretmen', aktif_id).eq('gorev_turu', 'Karne Gorusu').eq('gorev_adi', secili_donem).execute()
+                    st.cache_data.clear()
+                    st.rerun()
+
                 st.markdown("---")
                 
-                # ÖĞRENCİ LİSTESİ (EXPANDER İLE HER ÖĞRENCİ BİR SATIR)
-                for idx, row in df_karne_db.iterrows():
+                # ÖĞRENCİ KARTLARI (LİSTE GÖRÜNÜMÜ)
+                for idx, row in df_karne.iterrows():
                     d_json = json.loads(str(row['Dinamik_JSON'])) if isinstance(row['Dinamik_JSON'], str) else row['Dinamik_JSON']
-                    durum = d_json.get('durum', 'Bekliyor ⏳')
-                    isim_baslik = f"🎓 {row['Okul No']} - {row['Öğrenci Adı Soyadı']} | Durum: {durum}"
                     
-                    with st.expander(isim_baslik, expanded=False):
-                        # İçeride 3 Sütunlu Görünüm (Notlar | Girdiler | AI Sonuç)
-                        col_n, col_g, col_a = st.columns([1, 1, 2])
+                    mevcut_gorus = str(row.get('Genel Değerlendirme Yorumu', ''))
+                    durum_ikon = "✅ Yazıldı" if mevcut_gorus.strip() else "⏳ Bekliyor"
+                    
+                    with st.expander(f"🎓 {row['Okul No']} - {row['Öğrenci Adı Soyadı']} | {durum_ikon}", expanded=False):
+                        c_not, c_girdi, c_ai = st.columns([1, 1, 2])
                         
                         # 1. SÜTUN: DERS NOTLARI
-                        with col_n:
+                        with c_not:
                             st.markdown("**📊 Ders Notları**")
                             notlar_dict = d_json.get('notlar', {})
                             if notlar_dict:
-                                not_tablosu = "".join([f"<li><b>{k}:</b> {v}</li>" for k,v in notlar_dict.items()])
-                                st.markdown(f"<ul style='font-size:0.85rem; color:#334155; margin-left:-20px;'>{not_tablosu}</ul>", unsafe_allow_html=True)
+                                for k, v in notlar_dict.items():
+                                    st.markdown(f"<div style='font-size:0.85rem; padding:2px 0;'><b>{k}:</b> <span style='color:#2563eb; font-weight:bold;'>{v}</span></div>", unsafe_allow_html=True)
                             else:
                                 st.markdown("<span style='font-size:0.85rem;'>Not bulunamadı.</span>", unsafe_allow_html=True)
                                 
-                        # 2. SÜTUN: DAVRANIŞ VE TÜYO GİRDİSİ
-                        with col_g:
+                        # 2. SÜTUN: DAVRANIŞ VE ÖĞRETMEN TÜYOSU
+                        with c_girdi:
                             st.markdown("**✍️ Öğretmen Dokunuşu**")
-                            # Değerleri doğrudan state'e bağlayalım ki "Toplu Kaydet" çalışsın
-                            st.number_input(
-                                "Davranış Notu", 
-                                min_value=0, max_value=100, 
-                                value=int(d_json.get('davranis', 100)),
-                                key=f"dav_{row['id']}"
-                            )
-                            st.text_area(
-                                "Öğretmen Tüyosu/Notu (Sesle yazabilirsiniz)", 
-                                value=d_json.get('ogretmen_notu', ''), 
-                                height=110,
-                                key=f"tuyo_{row['id']}",
-                                placeholder="Örn: Derslere çok ilgili, şiir okumayı seviyor..."
-                            )
-
-                        # 3. SÜTUN: AI GÖRÜŞÜ VE TEKİL BUTON
-                        with col_a:
-                            st.markdown("**🤖 AI Karne Görüşü (Önizleme & Düzenleme)**")
-                            st.text_area(
-                                "Karne Görüşü", 
-                                value=row.get('Genel Değerlendirme Yorumu', ''), 
-                                height=140,
-                                key=f"gorus_{row['id']}",
-                                label_visibility="collapsed"
-                            )
+                            dav_val = st.number_input("Davranış Notu", min_value=0, max_value=100, value=int(d_json.get('davranis', 100)), key=f"dav_{row['id']}")
+                            tuyo_val = st.text_area("AI İçin Tüyo (Notlar)", value=d_json.get('ogretmen_notu', ''), height=85, key=f"tuyo_{row['id']}")
                             
-                            if st.button("✨ Sadece Bu Öğrenci İçin AI Üret", key=f"btn_ai_{row['id']}"):
-                                with st.spinner("Şefkatli bir yorum yazılıyor..."):
-                                    anlik_dav = st.session_state[f"dav_{row['id']}"]
-                                    anlik_tuyo = st.session_state[f"tuyo_{row['id']}"]
+                            if st.button("✨ Yapay Zeka Üret", key=f"ai_btn_{row['id']}", use_container_width=True):
+                                with st.spinner("Yorum yazılıyor..."):
                                     n_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_dict.items() if str(notu).strip() != ""])
                                     
-                                    yeni_gorus = dogal_karne_yazdir_api(row['Öğrenci Adı Soyadı'], row['Sınıf'], n_metni, anlik_dav, anlik_tuyo, kb["ad"])
+                                    yeni_gorus = dogal_karne_yazdir_api(row['Öğrenci Adı Soyadı'], row['Sınıf'], n_metni, dav_val, tuyo_val, kb["ad"])
                                     
-                                    d_json['davranis'] = anlik_dav
-                                    d_json['ogretmen_notu'] = anlik_tuyo
-                                    d_json['durum'] = "Hazır ✅"
+                                    d_json['davranis'] = dav_val
+                                    d_json['ogretmen_notu'] = tuyo_val
+                                    
+                                    # Kutu hafızasını (session_state) güncellemek
+                                    st.session_state[f"gorus_{row['id']}"] = yeni_gorus
                                     
                                     supabase.table('gorevler').update({
                                         'genel_degerlendirme_yorumu': yeni_gorus,
@@ -1991,47 +1920,61 @@ Karne Görüşü:"""
                                     st.cache_data.clear()
                                     st.rerun()
 
+                        # 3. SÜTUN: AI GÖRÜŞÜ VE DÜZENLEME
+                        with c_ai:
+                            st.markdown("**🤖 Karne Görüşü (Önizleme & Düzenleme)**")
+                            st.text_area(
+                                "Karne Görüşü", 
+                                value=st.session_state.get(f"gorus_{row['id']}", mevcut_gorus), 
+                                height=170,
+                                key=f"gorus_{row['id']}",
+                                label_visibility="collapsed"
+                            )
+
         # ---------------------------------------------------------
-        # SEKME 3: EXCEL ÇIKTISI (ARŞİV)
+        # SEKME 2: EXCEL ÇIKTISI VE GENEL ARŞİV
         # ---------------------------------------------------------
         with tab_arsiv:
-            st.markdown("#### 📂 Bu Dönemin Karne Görüşlerini E-Okul'a Aktarmak İçin İndirin")
-            if df_karne_db.empty:
-                st.info("İndirilecek veri bulunmuyor.")
+            st.markdown(f"#### 📂 {secili_donem} - E-Okul'a Yapıştırmak İçin Excel Çıktısı")
+            if df_karne.empty:
+                st.info(f"Seçilen {secili_donem} dönemine ait indirilecek karne verisi bulunmuyor.")
             else:
-                # Dışa aktarmak için temiz bir DataFrame oluşturalım
                 export_data = []
-                for _, row in df_karne_db.iterrows():
+                for _, row in df_karne.iterrows():
                     d_json = json.loads(str(row['Dinamik_JSON'])) if isinstance(row['Dinamik_JSON'], str) else row['Dinamik_JSON']
                     export_data.append({
                         "Okul No": row['Okul No'],
                         "Öğrenci Adı Soyadı": row['Öğrenci Adı Soyadı'],
                         "Sınıf": row['Sınıf'],
                         "Davranış Notu": d_json.get('davranis', 100),
-                        "Öğretmene Ait Not": d_json.get('ogretmen_notu', ''),
-                        "E-Okul Karne Görüşü (AI)": row.get('Genel Değerlendirme Yorumu', '')
+                        "E-Okul Karne Görüşü": row.get('Genel Değerlendirme Yorumu', '')
                     })
                 
                 df_export = pd.DataFrame(export_data)
                 
-                st.dataframe(df_export, use_container_width=True)
-                
                 out_xls = io.BytesIO()
                 with pd.ExcelWriter(out_xls, engine='xlsxwriter') as writer:
-                    df_export.to_excel(writer, index=False, sheet_name='Karne_Gorusleri')
-                    # Sütun genişliklerini ayarlayalım
-                    worksheet = writer.sheets['Karne_Gorusleri']
+                    df_export.to_excel(writer, index=False, sheet_name='Karneler')
+                    worksheet = writer.sheets['Karneler']
                     worksheet.set_column('B:B', 25)
-                    worksheet.set_column('E:E', 30)
-                    worksheet.set_column('F:F', 60)
+                    worksheet.set_column('E:E', 80)
 
                 st.download_button(
-                    label="📥 Tüm Karne Görüşlerini Excel Olarak İndir", 
+                    label=f"📥 {secili_donem} Karne Görüşlerini Excel Olarak İndir", 
                     data=out_xls.getvalue(), 
                     file_name=f"Karne_Gorusleri_{secili_donem}.xlsx", 
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     type="primary"
                 )
+
+            st.markdown("---")
+            st.markdown("#### 📚 Geçmiş Yılların Genel Arşivi")
+            df_tum_karneler = df_yetkili[df_yetkili['Gorev_Turu'] == 'Karne Gorusu'].copy()
+            if not df_tum_karneler.empty:
+                st.dataframe(df_tum_karneler[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Gorev_Adi', 'Genel Değerlendirme Yorumu']], use_container_width=True)
+                st.info("💡 Not: Yukarıdaki açılır menüden (Dönem Seçimi) geçmiş bir yılı seçerek, o yılın listesini ve notlarını ana ekranda detaylıca inceleyebilirsiniz.")
+            else:
+                st.info("Sistemde henüz arşivlenmiş geçmiş karne bulunmuyor.")
                 
         st.markdown('</div>', unsafe_allow_html=True)
     # ══════════════════════════════════════════════════
