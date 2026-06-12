@@ -1903,9 +1903,7 @@ def yonetim_paneli(df, ayarlar):
     # SEKME: E-OKUL KARNE (Gelişmiş Yapay Zeka, Kalıcı Liste ve Excel Arşivi)
     # ══════════════════════════════════════════════════
     elif aktif_ana == "eokul":
-        import random
-        import time
-        
+                
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown("<div class='section-header'>📝 E-Okul Karne Görüşü & Kalıcı Sınıf Listesi Yönetimi</div>", unsafe_allow_html=True)
         st.info("💡 Liste bir kez yüklenir ve sistemde kalır. Hibrit AI (Groq + Gemini) sayesinde sistem tıkanmadan saniyeler içinde tüm sınıfa karne üretebilirsiniz.")
