@@ -2206,7 +2206,150 @@ Karne Görüşü:"""
                                         st.success("🗑️ Kayıt silindi!")
                                         time.sleep(1)
                                         st.rerun()
+# ══════════════════════════════════════════════════
+    # SEKME: SÜPER YÖNETİCİ (ÖĞRETMEN VE OKUL YÖNETİMİ)
+    # ══════════════════════════════════════════════════
+    elif aktif_ana == "ogretmen_yonetim" and rol == "admin" and not admin_bakis:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown("<div class='section-header'>👑 Süper Yönetici Kontrol Merkezi</div>", unsafe_allow_html=True)
+        st.info("💡 Buradan tüm öğretmenlerin şifre/okul bilgilerini düzenleyebilir, onay/engel durumlarını yönetebilir ve tek tıkla onların paneline sızarak (Gözat) yetkili işlem yapabilirsiniz. Ayrıca hatalı açılan mükerrer okulları birleştirebilirsiniz.")
 
+        tab_ogrt, tab_okul = st.tabs(["👨‍🏫 Öğretmen Hesapları & Erişim", "🏢 Okul Hiyerarşisi & Birleştirme"])
+
+        # --- SEKME 1: ÖĞRETMEN YÖNETİMİ ---
+        with tab_ogrt:
+            # Bekleyen Onayları Üste Çıkar
+            bekleyenler = {k: v for k, v in ayarlar["kullanicilar"].items() if v.get("rol") != "admin" and not v.get("onayli", True)}
+            if bekleyenler:
+                st.markdown("#### ⏳ Onay Bekleyen Öğretmenler")
+                for kadi, user in bekleyenler.items():
+                    col_b1, col_b2, col_b3 = st.columns([3, 1, 1])
+                    col_b1.warning(f"**{user['ad']}** | {user.get('okul','')} | {user.get('brans','')}")
+                    if col_b2.button("✅ Onayla", key=f"onay_{kadi}", use_container_width=True):
+                        ayarlar["kullanicilar"][kadi]["onayli"] = True
+                        ayar_kaydet(ayarlar)
+                        st.success("Öğretmen onaylandı!")
+                        time.sleep(1); st.rerun()
+                    if col_b3.button("❌ Reddet", key=f"reddet_{kadi}", type="primary", use_container_width=True):
+                        del ayarlar["kullanicilar"][kadi]
+                        ayar_kaydet(ayarlar)
+                        st.error("Kayıt silindi.")
+                        time.sleep(1); st.rerun()
+                st.markdown("---")
+
+            # Mevcut Öğretmenleri Listele (Okula Göre Filtreleme)
+            st.markdown("#### 📋 Sistemdeki Öğretmenler")
+            filtre_okul = st.selectbox("Okula Göre Filtrele", ["— Tüm Okullar —"] + sorted(ayarlar["okullar"]))
+            
+            for kadi, user in ayarlar["kullanicilar"].items():
+                if user.get("rol") == "admin": continue
+                if filtre_okul != "— Tüm Okullar —" and user.get("okul") != filtre_okul: continue
+                
+                aktif_mi = user.get("onayli", True)
+                durum_renk = "success" if aktif_mi else "error"
+                durum_metin = "Aktif" if aktif_mi else "Engellendi"
+                
+                with st.expander(f"👤 {user['ad']} ({user.get('okul', 'Okul Belirtilmemiş')}) | Durum: {durum_metin}"):
+                    c_detay1, c_detay2 = st.columns([1, 1])
+                    
+                    with c_detay1:
+                        st.markdown(f"**Kullanıcı Adı:** {kadi}")
+                        st.markdown(f"**E-Posta:** {user.get('eposta', 'Belirtilmemiş')}")
+                        st.markdown(f"**Branş:** {user.get('brans', '')}")
+                        
+                        # GÖZATMA (İMPERSONATION) ÖZELLİĞİ
+                        st.markdown("---")
+                        if st.button("👁️ Bu Öğretmenin Hesabına Gir (Gözat)", key=f"gozat_{kadi}", use_container_width=True):
+                            st.session_state["admin_bakis_modu"] = True
+                            st.session_state["admin_bakis_ogretmen"] = kadi
+                            st.rerun()
+                            
+                    with c_detay2:
+                        # BİLGİ DÜZENLEME FORMU
+                        with st.form(f"duzenle_{kadi}"):
+                            st.markdown("**✏️ Bilgileri Düzenle**")
+                            y_ad = st.text_input("Ad Soyad", value=user['ad'])
+                            y_okul = st.selectbox("Okul", sorted(ayarlar["okullar"]), index=sorted(ayarlar["okullar"]).index(user['okul']) if user['okul'] in ayarlar["okullar"] else 0)
+                            y_brans = st.text_input("Branş", value=user.get('brans', ''))
+                            y_sifre = st.text_input("Şifreyi Değiştir (Görünür)", value=user['sifre'])
+                            
+                            islem_btn, iptal_btn = st.columns(2)
+                            if islem_btn.form_submit_button("💾 Güncelle"):
+                                ayarlar["kullanicilar"][kadi].update({"ad": y_ad, "okul": y_okul, "brans": y_brans, "sifre": y_sifre})
+                                ayar_kaydet(ayarlar)
+                                st.success("Bilgiler güncellendi!")
+                                time.sleep(1); st.rerun()
+
+                        # ERİŞİM KONTROLÜ
+                        if aktif_mi:
+                            if st.button("🚫 Hesabı Engelle (Askıya Al)", key=f"engel_{kadi}", type="primary", use_container_width=True):
+                                ayarlar["kullanicilar"][kadi]["onayli"] = False
+                                ayar_kaydet(ayarlar)
+                                st.rerun()
+                        else:
+                            if st.button("✅ Engeli Kaldır", key=f"kaldir_{kadi}", use_container_width=True):
+                                ayarlar["kullanicilar"][kadi]["onayli"] = True
+                                ayar_kaydet(ayarlar)
+                                st.rerun()
+                                
+                        if st.button("🗑️ Öğretmeni Sistemden Tamamen Sil", key=f"sil_ogrt_{kadi}", use_container_width=True):
+                            del ayarlar["kullanicilar"][kadi]
+                            ayar_kaydet(ayarlar)
+                            st.success("Öğretmen silindi!")
+                            time.sleep(1); st.rerun()
+
+        # --- SEKME 2: OKUL YÖNETİMİ VE BİRLEŞTİRME ---
+        with tab_okul:
+            st.markdown("#### 🔗 Hatalı / Mükerrer Okulları Birleştir")
+            st.markdown('<div class="info-banner">Aynı okulun iki farklı isimle (Örn: "Atatürk OO" ve "Atatürk Ortaokulu") sisteme kaydedildiğini tespit ederseniz, hatalı olanı doğru olana aktarıp birleştirebilirsiniz. Hatalı okuldaki tüm öğrenci verileri, karne kayıtları ve öğretmenler otomatik olarak doğru okula transfer edilir ve hatalı okul listeden silinir.</div>', unsafe_allow_html=True)
+            
+            col_b1, col_b2 = st.columns(2)
+            hatali_okul = col_b1.selectbox("Silinecek (Hatalı/Eski) Okul", ["— Seçiniz —"] + sorted(ayarlar["okullar"]))
+            hedef_okul  = col_b2.selectbox("Aktarılacak (Doğru/Yeni) Okul", ["— Seçiniz —"] + sorted(ayarlar["okullar"]))
+
+            if st.button("🔗 Okulları Birleştir ve Tüm Verileri Aktar", type="primary", use_container_width=True):
+                if hatali_okul == "— Seçiniz —" or hedef_okul == "— Seçiniz —" or hatali_okul == hedef_okul:
+                    st.error("Lütfen birleştirilecek iki farklı okulu seçin.")
+                else:
+                    with st.spinner("Veriler aktarılıyor..."):
+                        # 1. Veritabanındaki tüm görev ve karnelerin okulunu güncelle
+                        supabase.table('gorevler').update({'okul': hedef_okul}).eq('okul', hatali_okul).execute()
+                        
+                        # 2. Ayarlardaki öğretmenlerin okulunu güncelle
+                        for k, u in ayarlar["kullanicilar"].items():
+                            if u.get("okul") == hatali_okul:
+                                ayarlar["kullanicilar"][k]["okul"] = hedef_okul
+                        
+                        # 3. Hatalı okulu sistem listesinden tamamen sil
+                        if hatali_okul in ayarlar["okullar"]:
+                            ayarlar["okullar"].remove(hatali_okul)
+                        
+                        ayar_kaydet(ayarlar)
+                        st.cache_data.clear()
+                        st.success(f"✅ Başarılı! '{hatali_okul}' sistemden silindi ve tüm verileri '{hedef_okul}' üzerine aktarıldı.")
+                        time.sleep(2); st.rerun()
+
+            st.markdown("---")
+            st.markdown("#### ➕ Sisteme Manuel Yeni Okul Ekle")
+            c_il, c_ilce, c_ok = st.columns(3)
+            ekle_il = c_il.selectbox("İl Seçiniz", ["— Seçiniz —"] + TUM_ILLER, key="admin_ekle_il")
+            ekle_ilce = c_ilce.text_input("İlçe Adı", key="admin_ekle_ilce").strip().title()
+            ekle_okul = c_ok.text_input("Okul Adı", key="admin_ekle_okul").strip().title()
+            
+            if st.button("➕ Kurumu Ekle", type="primary"):
+                if ekle_il == "— Seçiniz —" or not ekle_ilce or not ekle_okul:
+                    st.error("Lütfen İl, İlçe ve Okul adını eksiksiz girin.")
+                else:
+                    tam_ad = f"{ekle_il} / {ekle_ilce} / {ekle_okul}"
+                    if tam_ad not in ayarlar["okullar"]:
+                        ayarlar["okullar"].append(tam_ad)
+                        ayar_kaydet(ayarlar)
+                        st.success(f"✅ '{tam_ad}' listeye eklendi!")
+                        time.sleep(1); st.rerun()
+                    else:
+                        st.warning("Bu okul zaten listede mevcut.")
+                        
+        st.markdown('</div>', unsafe_allow_html=True)
     # ══════════════════════════════════════════════════
     # SEKME: AYARLAR & PROFİL
     # ══════════════════════════════════════════════════
