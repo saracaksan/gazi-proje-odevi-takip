@@ -1429,7 +1429,7 @@ def yonetim_paneli(df, ayarlar):
                         excel_df = excel_df.fillna("") 
                         cols = excel_df.columns
                         no_col    = next((c for c in cols if "no" in str(c).lower()), cols[0])
-                        ad_col    = next((c for c in cols if "ad" in str(c).lower()), cols[1])
+                        ad_col    = next((c for c in cols if "ad" in str(c).lower()), cols[1] if len(cols) > 2 else cols[0])
                         sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols) > 2 else None)
 
                         db_records = []
@@ -1678,7 +1678,7 @@ def yonetim_paneli(df, ayarlar):
                     yorum = str(row.get('Genel Değerlendirme Yorumu', '')).strip()
                     
                     if is_muaf: return 2, "🚫 Muaf"
-                    elif puan > 0 or yorum != "": return 1, f"✅ Değerlendirildi"
+                    elif puan > 0 or yorum != "": return 1, f"✅ Değerlendirildi ({puan} Puan)"
                     else: return 0, "⏳ Bekliyor"
                 
                 df_g[['Sira', 'Durum_Icon']] = df_g.apply(detayli_durum, axis=1, result_type="expand")
@@ -1788,7 +1788,7 @@ def yonetim_paneli(df, ayarlar):
                                         dinamik_okunan[f"{k['id']}_aciklama"] = st.session_state[f"va_{k['id']}"]
                                     supabase.table('gorevler').update({
                                         'dinamik_json': dinamik_okunan, 'genel_degerlendirme_yorumu': gv, 'toplam_puan': toplam_h
-                                    }).eq('id', int(bilgi['id'])).execute() # Hata vermemesi için güvenli ID kullanımı
+                                    }).eq('id', int(bilgi['id'])).execute()
                                     st.cache_data.clear()
                                     st.success("✅ Kalıcı olarak kaydedildi!")
                                     time.sleep(1); st.rerun()
