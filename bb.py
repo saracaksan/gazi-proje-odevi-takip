@@ -1546,155 +1546,253 @@ def yonetim_paneli(df, ayarlar):
                 st.info("Bu okula ait öğrenci kaydı yok. Önce Excel ile yükleme yapın.")
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── KAPSAMLI YENİ: Geçmişi Düzenle ve Öğrenci Yönetimi ──
+        # ── YENİ VE HATASIZ: Geçmişi Düzenle (Sadece Silme ve Kontrol İçin) ──
         elif aktif_ogr == "gecmis_duzenle":
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-            st.markdown("<div class='section-header'>✏️ Öğrenci Yönetimi ve Güncelleme Merkezi</div>", unsafe_allow_html=True)
-            st.info("💡 Sınıfınızdaki öğrencilerin görev durumlarını (Değerlendirildi, Muaf, Bekliyor) görebilir, bilgilerini güncelleyebilir, değerlendirmeleri sıfırlayabilir veya listeden silebilirsiniz.")
+            st.markdown("<div class='section-header'>✏️ Değerlendirilen Öğrencileri Görüntüle ve Sil</div>", unsafe_allow_html=True)
+            st.info("💡 Öğrencilerin puanlarını veya yorumlarını YENİDEN DÜZENLEMEK veya YAPAY ZEKA ÇALIŞTIRMAK için üst menüden '🤖 AI Değerlendirme' sekmesini kullanınız. Oradaki listede değerlendirilmiş öğrenciler (✅) yeşil tik ile görünür.")
             
-            # Sadece proje/performans görevleri (Karne hariç)
             df_g = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
-            
+            if df_g.empty:
+                st.warning("Sisteme kayıtlı görev bulunmuyor.")
+            else:
+                c1, c2 = st.columns(2)
+                secili_sinif = c1.selectbox("1️⃣ Sınıf Seçin", ["— Tüm Sınıflar —"] + sorted(df_g['Sınıf'].dropna().unique().tolist()))
+                df_filt = df_g if secili_sinif == "— Tüm Sınıflar —" else df_g[df_g['Sınıf'] == secili_sinif]
+                
+                secili_gorev_isim = c2.selectbox("2️⃣ Görevi Seçin", ["— Seçiniz —"] + sorted(df_filt['Gorev_Adi'].dropna().unique().tolist()))
+                if secili_gorev_isim != "— Seçiniz —":
+                    df_secili = df_filt[df_filt['Gorev_Adi'] == secili_gorev_isim].copy()
+                    
+                    def durum_getir(row):
+                        try: is_m = json.loads(str(row.get('Dinamik_JSON', '{}'))).get("muaf", False)
+                        except: is_m = False
+                        p = pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')
+                        if is_m: return "🚫 Muaf"
+                        elif p > 0 or str(row.get('Genel Değerlendirme Yorumu', '')).strip() != "": return f"✅ {int(p)} Puan"
+                        else: return "⏳ Bekliyor"
+                        
+                    df_secili['Durum'] = df_secili.apply(durum_getir, axis=1)
+                    st.dataframe(df_secili[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Durum']], use_container_width=True, hide_index=True)
+                    
+                    st.markdown("#### 🗑️ Öğrenciyi Görevden Tamamen Sil")
+                    sil_ogr = st.selectbox("Silinecek Öğrenci", ["— Seçiniz —"] + df_secili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist())
+                    if sil_ogr != "— Seçiniz —" and st.button("🗑️ Görevden Sil", type="primary"):
+                        supabase.table('gorevler').delete().eq('okul_no', sil_ogr.split(" - ")[0].strip()).eq('gorev_adi', secili_gorev_isim).execute()
+                        st.cache_data.clear(); st.success("Silindi!"); time.sleep(1); st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Silme İşlemleri ──
+        elif aktif_ogr == "silme":
+            st.markdown('<div class="warn-banner">⚠️ Silme işlemleri geri alınamaz! Silmeden önce <b>Raporlar → Veri Yedekleme</b> bölümünden yedek alın.</div>', unsafe_allow_html=True)
+            render_nav_bar(ALT_MENU_SIL, "nav_sil_alt", is_main=False)
+            aktif_sil = st.session_state.get("nav_sil_alt", "tekil_sil")
+
+            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            if aktif_sil == "tekil_sil":
+                st.markdown("<div class='section-header'>📌 Tekil Kayıt Sil</div>", unsafe_allow_html=True)
+                if not df_yetkili.empty:
+                    s_liste    = df_yetkili.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']}", axis=1).tolist()
+                    silinecek  = st.selectbox("Silinecek Kayıt", ["— Seçiniz —"] + s_liste)
+                    if st.button("🗑️ Bu Kaydı Sil", type="primary") and silinecek != "— Seçiniz —":
+                        o_no = silinecek.split(" - ")[0].strip()
+                        g_ad = silinecek.split(" | ")[1].strip()
+                        supabase.table('gorevler').delete().eq('okul_no', o_no).eq('gorev_adi', g_ad).execute()
+                        st.cache_data.clear()
+                        st.success("Silindi.")
+                        time.sleep(1); st.rerun()
+                else:
+                    st.info("Silinecek kayıt yok.")
+
+            elif aktif_sil == "sinif_sil":
+                st.markdown("<div class='section-header'>🏫 Sınıf Toplu Sil</div>", unsafe_allow_html=True)
+                sil_okul2 = kb.get("okul") if (rol != "admin" or admin_bakis) else st.selectbox("Okul", sorted(ayarlar["okullar"]), key="sil_okul2")
+                mevcut_siniflar_sil = sorted(df[df['Okul'] == sil_okul2]['Sınıf'].dropna().unique().tolist()) if not df.empty else []
+                if mevcut_siniflar_sil:
+                    secilen_sinif_sil = st.multiselect("Silinecek Sınıflar", mevcut_siniflar_sil)
+                    secilen_gorev_sil = st.selectbox("Sadece Bu Görev (Opsiyonel)",
+                                                      ["Tüm Görevler"] + sorted(df[df['Okul'] == sil_okul2]['Gorev_Adi'].dropna().unique().tolist()))
+                    if secilen_sinif_sil:
+                        kac = len(df[(df['Okul'] == sil_okul2) & (df['Sınıf'].isin(secilen_sinif_sil))])
+                        st.warning(f"Bu işlem {kac} kaydı silecek!")
+                        onay = st.checkbox(f"Evet, {kac} kaydı silmek istiyorum.")
+                        if onay and st.button("🗑️ Sınıf Verilerini Sil", type="primary"):
+                            q = supabase.table('gorevler').delete().eq('okul', sil_okul2).in_('sinif', secilen_sinif_sil)
+                            if secilen_gorev_sil != "Tüm Görevler":
+                                q = supabase.table('gorevler').delete().eq('okul', sil_okul2).in_('sinif', secilen_sinif_sil).eq('gorev_adi', secilen_gorev_sil)
+                            q.execute()
+                            st.cache_data.clear()
+                            st.success("Silindi.")
+                            time.sleep(1); st.rerun()
+                else:
+                    st.info("Bu okulda sınıf verisi yok.")
+
+            elif aktif_sil == "okul_sil":
+                st.markdown("<div class='section-header'>🏢 Okul Toplu Sil</div>", unsafe_allow_html=True)
+                if rol != "admin":
+                    st.error("Bu işlem sadece yöneticiler tarafından yapılabilir.")
+                else:
+                    sil_okul3 = st.selectbox("Tüm Verileri Silinecek Okul", sorted(ayarlar["okullar"]), key="sil_okul3")
+                    kac3 = len(df[df['Okul'] == sil_okul3]) if not df.empty else 0
+                    if kac3 > 0:
+                        st.error(f"⛔ Bu işlem {sil_okul3} okuluna ait TÜM {kac3} kaydı silecek!")
+                        onay3 = st.checkbox(f"Evet, {sil_okul3} okulunun tüm {kac3} kaydını siliyorum.")
+                        if onay3 and st.button("⛔ Okul Verilerini Komple Sil", type="primary"):
+                            supabase.table('gorevler').delete().eq('okul', sil_okul3).execute()
+                            st.cache_data.clear()
+                            st.success("Silindi.")
+                            time.sleep(1); st.rerun()
+                    else:
+                        st.info("Bu okulda kayıt yok.")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # ══════════════════════════════════════════════════
+    # SEKME: AI DEĞERLENDİRME VE GÜNCELLEME MERKEZİ (TAM KONTROL)
+    # ══════════════════════════════════════════════════
+    elif aktif_ana == "ai_degerlendirme":
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown("<div class='section-header'>🤖 Yapay Zeka Destekli Puanlama & Yeniden Değerlendirme</div>", unsafe_allow_html=True)
+
+        if df_yetkili.empty:
+            st.warning("Değerlendirilecek görev bulunamadı.")
+        else:
+            df_g = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"].copy()
             if df_g.empty:
                 st.warning("Sisteme kayıtlı görev (sınav/proje) bulunmuyor.")
             else:
+                st.markdown("**🔍 Değerlendirilecek veya Güncellenecek Öğrenciyi Bul**")
                 col_f1, col_f2 = st.columns(2)
-                mevcut_siniflar = sorted(df_g['Sınıf'].dropna().unique().tolist())
-                secili_sinif = col_f1.selectbox("1️⃣ Sınıf Seçin", ["— Tüm Sınıflar —"] + mevcut_siniflar)
                 
-                df_filt = df_g if secili_sinif == "— Tüm Sınıflar —" else df_g[df_g['Sınıf'] == secili_sinif]
-                
-                mevcut_gorevler = sorted(df_filt['Gorev_Adi'].dropna().unique().tolist())
-                secili_gorev_isim = col_f2.selectbox("2️⃣ Görevi Seçin", ["— Seçiniz —"] + mevcut_gorevler)
-                
-                if secili_gorev_isim != "— Seçiniz —":
-                    df_secili_gorev = df_filt[df_filt['Gorev_Adi'] == secili_gorev_isim].copy()
+                secili_sinif = col_f1.selectbox("1️⃣ Sınıf Seçin", ["— Tümü —"] + sorted(df_g['Sınıf'].dropna().unique().tolist()))
+                if secili_sinif != "— Tümü —": df_g = df_g[df_g['Sınıf'] == secili_sinif]
                     
-                    # Öğrenci durumlarını analiz et ve sıralama puanı ata
-                    def durum_analiz_et(row):
-                        puan = pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')
-                        puan = int(puan) if pd.notna(puan) else 0
-                        
-                        is_muaf = False
-                        try:
-                            json_data = json.loads(str(row.get('Dinamik_JSON', '{}')))
-                            is_muaf = json_data.get("muaf", False)
-                        except: pass
-                        
-                        if is_muaf:
-                            return 2, "🚫 Muaf"
-                        elif puan > 0 or str(row.get('Genel Değerlendirme Yorumu', '')).strip() != "":
-                            return 1, f"✅ Değerlendirildi ({puan} Puan)"
-                        else:
-                            return 0, "⏳ Bekliyor"
+                secili_gorev_filtresi = col_f2.selectbox("2️⃣ Görev Seçin", ["— Tümü —"] + sorted(df_g['Gorev_Adi'].dropna().unique().tolist()))
+                if secili_gorev_filtresi != "— Tümü —": df_g = df_g[df_g['Gorev_Adi'] == secili_gorev_filtresi]
 
-                    # Durumları belirle ve DataFrame'e ekle
-                    df_secili_gorev[['Sira', 'Detayli_Durum']] = df_secili_gorev.apply(durum_analiz_et, axis=1, result_type="expand")
+                # --- YENİ: DURUM ANALİZİ VE İKON EKLEME ---
+                def detayli_durum(row):
+                    try: d_json = json.loads(str(row.get('Dinamik_JSON', '{}')))
+                    except: d_json = {}
+                    is_muaf = d_json.get("muaf", False)
+                    puan = int(pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')) if pd.notna(row.get('Toplam Puan', 0)) else 0
+                    yorum = str(row.get('Genel Değerlendirme Yorumu', '')).strip()
                     
-                    # Bekleyenler (0) üstte, Değerlendirilenler (1) ortada, Muaflar (2) en altta olacak şekilde sırala
-                    df_secili_gorev = df_secili_gorev.sort_values(by=['Sira', 'Okul No'])
+                    if is_muaf: return 2, "🚫 Muaf"
+                    elif puan > 0 or yorum != "": return 1, f"✅ Değerlendirildi"
+                    else: return 0, "⏳ Bekliyor"
+                
+                df_g[['Sira', 'Durum_Icon']] = df_g.apply(detayli_durum, axis=1, result_type="expand")
+                df_g = df_g.sort_values(by=['Sira', 'Okul No']) # Bekleyenler (0) en üstte görünsün diye sıralıyoruz
+                
+                puan_liste = df_g.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']} | {r['Durum_Icon']}", axis=1).tolist()
+                
+                st.markdown("---")
+                secili_gorev = st.selectbox("3️⃣ Öğrenciyi Seçin (Bekleyenler üsttedir, değerlendirilmişleri seçip güncelleyebilirsiniz)", ["— Seçiniz —"] + puan_liste)
+                
+                s_isimler = list(ayarlar.get("sablonlar", {}).keys())
+                sec_sablon_ismi = st.selectbox("📋 Kullanılacak Şablon", s_isimler)
+                aktif_sablon = ayarlar["sablonlar"].get(sec_sablon_ismi, CEKIRDEK_SABLON)
+
+                if secili_gorev != "— Seçiniz —":
+                    o_no = secili_gorev.split(" - ")[0].strip()
+                    g_ad = secili_gorev.split(" | ")[1].strip()
                     
-                    st.markdown(f"**📋 Sınıf Listesi Özeti ({len(df_secili_gorev)} Öğrenci)**")
-                    st.dataframe(df_secili_gorev[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Detayli_Durum']], use_container_width=True, hide_index=True)
-                    
-                    st.markdown("---")
-                    st.markdown("### 🎯 İşlem Yapılacak Öğrenciyi Seçin")
-                    
-                    # Selectbox içinde de öğrenci isminin yanına durumu yazalım
-                    ogr_secim_listesi = df_secili_gorev.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} ({r['Detayli_Durum']})", axis=1).tolist()
-                    secili_ogrenci = st.selectbox("Düzenle / Sıfırla / Sil", ["— Seçiniz —"] + ogr_secim_listesi)
-                    
-                    if secili_ogrenci != "— Seçiniz —":
-                        o_no = secili_ogrenci.split(" - ")[0].strip()
-                        satir = df_secili_gorev[df_secili_gorev['Okul No'] == o_no].iloc[0]
+                    idx_list = df[(df['Okul No'] == o_no) & (df['Gorev_Adi'] == g_ad)].index
+                    if len(idx_list) == 0:
+                        st.error("Kayıt bulunamadı.")
+                    else:
+                        idx = idx_list[0]
+                        bilgi = df.iloc[idx]
                         
-                        aktif_sablon = ayarlar["sablonlar"].get(SABLON_ADI, CEKIRDEK_SABLON)
-                        eski_json = {}
+                        dinamik_okunan = {}
                         try:
-                            if pd.notna(satir.get('Dinamik_JSON', '')):
-                                eski_json = json.loads(str(satir['Dinamik_JSON']))
+                            if pd.notna(bilgi.get('Dinamik_JSON', '')):
+                                dinamik_okunan = json.loads(str(bilgi['Dinamik_JSON']))
                         except: pass
                         
-                        is_muaf = eski_json.get("muaf", False)
-                        
-                        st.markdown(f"""
-                        <div style="background:#f8fafc; border: 1px solid #cbd5e1; border-radius:10px; padding:15px; margin-bottom: 20px;">
-                            <strong>Aktif Öğrenci:</strong> {satir['Öğrenci Adı Soyadı']} | <strong>Mevcut Durum:</strong> {satir['Detayli_Durum']}
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # --- HIZLI İŞLEM BUTONLARI ---
-                        col_islem1, col_islem2, col_islem3 = st.columns(3)
-                        
-                        if col_islem1.button("🔄 Değerlendirmeyi Sıfırla (Başa Dön)", use_container_width=True):
-                            eski_json["muaf"] = False
+                        is_muaf = dinamik_okunan.get("muaf", False)
+
+                        # Form state yönetimi
+                        if st.session_state.get("aktif_idx") != idx:
+                            st.session_state["aktif_idx"] = idx
                             for k in aktif_sablon:
-                                eski_json[f"{k['id']}_puan"] = 0
-                                eski_json[f"{k['id']}_aciklama"] = ""
-                            
-                            supabase.table('gorevler').update({
-                                'dinamik_json': eski_json,
-                                'genel_degerlendirme_yorumu': '',
-                                'toplam_puan': 0
-                            }).eq('id', satir['id']).execute()
-                            st.cache_data.clear()
-                            st.success("Öğrencinin değerlendirmesi ve muafiyet durumu sıfırlandı!")
-                            time.sleep(1); st.rerun()
-                            
-                        if col_islem2.button("🚫 Öğrenciyi Projeden Muaf Tut", use_container_width=True):
-                            eski_json["muaf"] = True
-                            supabase.table('gorevler').update({
-                                'dinamik_json': eski_json,
-                                'genel_degerlendirme_yorumu': 'Öğrenci projeden muaf tutulmuştur.',
-                                'toplam_puan': 0
-                            }).eq('id', satir['id']).execute()
-                            st.cache_data.clear()
-                            st.success("Öğrenci muaf tutuldu. Artık raporlarda görünmeyecek.")
-                            time.sleep(1); st.rerun()
-                            
-                        if col_islem3.button("🗑️ Görevden Tamamen Sil", type="primary", use_container_width=True):
-                            supabase.table('gorevler').delete().eq('id', satir['id']).execute()
-                            st.cache_data.clear()
-                            st.success("Öğrenci bu görev listesinden tamamen silindi!")
-                            time.sleep(1); st.rerun()
+                                st.session_state[f"vp_{k['id']}"] = int(dinamik_okunan.get(f"{k['id']}_puan", 0))
+                                st.session_state[f"va_{k['id']}"] = str(dinamik_okunan.get(f"{k['id']}_aciklama", ""))
+                            st.session_state["vg"] = str(bilgi.get('Genel Değerlendirme Yorumu', ""))
 
-                        # --- MANUEL DÜZENLEME FORMU ---
-                        st.markdown("#### ✏️ Puan ve Yorumları Manuel Güncelle")
+                        st.markdown(f"""
+                        <div style="background:#eff6ff;padding:14px;border-radius:10px;border-left:4px solid #3b82f6;margin-bottom:14px;">
+                            <strong>{bilgi.get('Öğrenci Adı Soyadı','')}</strong> &nbsp;|&nbsp;
+                            Sınıf: {bilgi.get('Sınıf','')} &nbsp;|&nbsp;
+                            Görev: {bilgi.get('Gorev_Adi','')} &nbsp;|&nbsp; No: {bilgi.get('Okul No','')}
+                        </div>""", unsafe_allow_html=True)
+
+                        # --- MUAFİYET VE SIFIRLAMA BUTONLARI ---
+                        c_m1, c_m2 = st.columns(2)
                         if is_muaf:
-                            st.warning("Bu öğrenci şu an MUAF olarak işaretli. Puan veya yorum girebilmek için önce yukarıdan 'Değerlendirmeyi Sıfırla' butonuna basınız.")
+                            st.error("🚫 Bu öğrenci bu projeden MUAF tutulmuştur. Raporlarda görünmez ve ortalamaya katılmaz.")
+                            if c_m1.button("🔄 Muafiyeti Kaldır (Öğrenciyi Yeniden Değerlendir)", use_container_width=True):
+                                dinamik_okunan["muaf"] = False
+                                supabase.table('gorevler').update({'dinamik_json': dinamik_okunan, 'toplam_puan': 0, 'genel_degerlendirme_yorumu': ""}).eq('id', int(bilgi['id'])).execute()
+                                st.cache_data.clear(); st.rerun()
                         else:
-                            with st.form("guncelleme_formu"):
-                                toplam_g = 0
-                                guncel_puanlar = eski_json.copy()
+                            if c_m1.button("🚫 Bu Öğrenciyi Projeden Muaf Tut", use_container_width=True):
+                                dinamik_okunan["muaf"] = True
+                                supabase.table('gorevler').update({'dinamik_json': dinamik_okunan, 'toplam_puan': 0, 'genel_degerlendirme_yorumu': "Projeyi almadı."}).eq('id', int(bilgi['id'])).execute()
+                                st.cache_data.clear(); st.rerun()
+                                
+                            if int(bilgi.get('Toplam Puan', 0)) > 0 or str(bilgi.get('Genel Değerlendirme Yorumu', '')) != "":
+                                if c_m2.button("🔄 Değerlendirmeyi Sıfırla (Başa Dön)", use_container_width=True):
+                                    for k in aktif_sablon:
+                                        dinamik_okunan[f"{k['id']}_puan"] = 0
+                                        dinamik_okunan[f"{k['id']}_aciklama"] = ""
+                                    supabase.table('gorevler').update({'dinamik_json': dinamik_okunan, 'toplam_puan': 0, 'genel_degerlendirme_yorumu': ""}).eq('id', int(bilgi['id'])).execute()
+                                    st.cache_data.clear(); st.rerun()
+
+                        # --- YAPAY ZEKA VE PUANLAMA FORMU ---
+                        if not is_muaf:
+                            st.markdown("**🤖 AI Modu Seçin:**")
+                            ai_modu = st.radio("AI Modu", ["A", "B", "C"], format_func=lambda x: {"A": "📝 Mod A — Yorum Gir, AI Puanlasın", "B": "🎯 Mod B — Hedef Puan Ver, AI Dağıtsın", "C": "✋ Mod C — Manuel Puan, AI Açıklasın"}[x], horizontal=True, label_visibility="collapsed")
+                            ham_metin, hedef_puan = "", 85
+                            if ai_modu == "A": ham_metin = st.text_area("Öğretmen notunuz:", placeholder="Öğrenci projeyi zamanında teslim etti...")
+                            elif ai_modu == "B": hedef_puan = st.slider("Hedef Puan", 0, 100, 85)
+
+                            if st.button("✨ Yapay Zekayı Çalıştır", use_container_width=True):
+                                with st.spinner("Yapay zeka isme özel analiz ediyor..."):
+                                    try:
+                                        m_p_d = {k['id']: st.session_state.get(f"vp_{k['id']}", 0) for k in aktif_sablon}
+                                        res   = ai_degerlendirme_yap(bilgi.to_dict(), aktif_sablon, ai_modu, ham_metin, hedef_puan, m_p_d, kb.get("ad",""), bilgi['Ders'])
+                                        for k in aktif_sablon:
+                                            if k['id'] in res.get("puanlar", {}): st.session_state[f"vp_{k['id']}"] = int(res["puanlar"][k['id']])
+                                            if k['id'] in res.get("aciklamalar", {}): st.session_state[f"va_{k['id']}"] = res["aciklamalar"][k['id']]
+                                        if "genel" in res: st.session_state["vg"] = res["genel"]
+                                        st.success("✅ Değerlendirme hazır! Aşağıdan kontrol edip kaydedin.")
+                                    except Exception as e:
+                                        st.error(f"AI hatası: {e}")
+
+                            st.markdown("#### 📝 Puanlama Formu")
+                            with st.form("kayit_formu"):
+                                toplam_h = 0
                                 for k in aktif_sablon:
                                     cc1, cc2 = st.columns([1, 3])
-                                    def_puan = int(eski_json.get(f"{k['id']}_puan", 0))
-                                    def_acik = str(eski_json.get(f"{k['id']}_aciklama", ""))
-                                    
-                                    pv = cc1.number_input(f"📌 {k['baslik']} (Max: {k['max']})", 0, k['max'], def_puan)
-                                    av = cc2.text_input(f"Açıklama ({k['baslik']})", def_acik)
-                                    toplam_g += pv
-                                    
-                                    guncel_puanlar[f"{k['id']}_puan"] = pv
-                                    guncel_puanlar[f"{k['id']}_aciklama"] = av
-                                    
-                                eski_genel = str(satir.get('Genel Değerlendirme Yorumu', ''))
-                                gv = st.text_area("💬 Genel Yorum / Karne Görüşü", value=eski_genel)
+                                    pv = cc1.number_input(f"📌 {k['baslik']} (Max: {k['max']})", 0, k['max'], key=f"vp_{k['id']}")
+                                    av = cc2.text_area("Açıklama", key=f"va_{k['id']}", height=68)
+                                    toplam_h += pv
+                                gv = st.text_area("💬 Genel Yorum", key="vg", height=90)
+                                st.info(f"Toplam Puan: {toplam_h} / 100")
                                 
-                                st.info(f"Hesaplanan Yeni Toplam Puan: **{toplam_g} / 100**")
-                                
-                                if st.form_submit_button("💾 Değişiklikleri Veritabanına Kaydet"):
-                                    guncel_puanlar["muaf"] = False
+                                if st.form_submit_button("💾 Veritabanına Kaydet", use_container_width=True):
+                                    dinamik_okunan["muaf"] = False
+                                    for k in aktif_sablon:
+                                        dinamik_okunan[f"{k['id']}_puan"] = st.session_state[f"vp_{k['id']}"]
+                                        dinamik_okunan[f"{k['id']}_aciklama"] = st.session_state[f"va_{k['id']}"]
                                     supabase.table('gorevler').update({
-                                        'dinamik_json': guncel_puanlar,
-                                        'genel_degerlendirme_yorumu': gv,
-                                        'toplam_puan': toplam_g
-                                    }).eq('id', satir['id']).execute()
+                                        'dinamik_json': dinamik_okunan, 'genel_degerlendirme_yorumu': gv, 'toplam_puan': toplam_h
+                                    }).eq('id', int(bilgi['id'])).execute() # Hata vermemesi için güvenli ID kullanımı
                                     st.cache_data.clear()
-                                    st.success("✅ Öğrenci verileri başarıyla güncellendi!")
-                                    time.sleep(1)
-                                    st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+                                    st.success("✅ Kalıcı olarak kaydedildi!")
+                                    time.sleep(1); st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # ── Silme İşlemleri ──
         elif aktif_ogr == "silme":
