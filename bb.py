@@ -973,92 +973,114 @@ Lütfen 'Sevgili {ogrenci_isim}' diye hitap eden, 3-4 cümlelik bir dönem sonu 
     return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 # ==========================================
-# 11. ÖĞRENCİ SORGULAMA EKRANI (İLK KODDAN GERİ YÜKLENDİ)
+# 11. ÖĞRENCİ SORGULAMA EKRANI (PREMIUM DASHBOARD)
 # ==========================================
 def ogrenci_sorgu_ekrani(df, ayarlar):
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("<div class='section-header'>🔍 Öğrenci Performans Sorgulama ve Karne İndirme</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 30px; border-radius: 15px; color: white; text-align: center; margin-bottom: 25px; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);">
+        <h1 style="margin:0; font-size: 2.2rem; font-weight: 800;">🎓 Öğrenci Gelişim ve Performans Paneli</h1>
+        <p style="font-size: 1.05rem; opacity: 0.9; margin-top: 5px;">Dönem sonu değerlendirmelerinize ve proje sonuçlarınıza buradan ulaşabilirsiniz.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 1])
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>🔍 Sisteme Giriş Yapın</div>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1.5, 1.5, 1])
     okul_listesi = sorted(df['Okul'].dropna().unique().tolist()) if not df.empty else []
     s_okul  = col1.selectbox("🏫 Okulunuz", ["— Okul Seçiniz —"] + okul_listesi)
-    sinif_listesi = sorted(df[df['Okul'] == s_okul]['Sınıf'].dropna().unique().tolist()) \
-        if s_okul != "— Okul Seçiniz —" else []
+    
+    sinif_listesi = sorted(df[df['Okul'] == s_okul]['Sınıf'].dropna().unique().tolist()) if s_okul != "— Okul Seçiniz —" else []
     s_sinif = col2.selectbox("📚 Sınıfınız", ["— Sınıf —"] + sinif_listesi if sinif_listesi else ["Önce okul seçin"])
-    s_no    = st.text_input("🔢 Okul Numaranız", placeholder="Okul numaranızı girin...")
+    
+    s_no = col3.text_input("🔢 Okul Numaranız", placeholder="Örn: 1453")
 
-    if st.button("🔍 Karnemi ve Sonuçlarımı Getir", use_container_width=True):
+    if st.button("🚀 Performans Sonuçlarımı Göster", use_container_width=True, type="primary"):
         if s_okul == "— Okul Seçiniz —" or not s_no.strip():
-            st.warning("Lütfen okul ve okul numaranızı girin.")
+            st.warning("Giriş yapabilmek için lütfen okulunuzu ve numaranızı eksiksiz girin.")
         else:
             filtre = (df['Okul'] == s_okul) & (df['Okul No'] == s_no.strip())
             if s_sinif not in ["— Sınıf —", "Önce okul seçin"]:
                 filtre = filtre & (df['Sınıf'] == s_sinif)
-            sonuclar = df[filtre]
+            
+            # Öğrenci "Muaf" işaretlenmişse sonuçlarda gösterme
+            def muaf_mi_ogrenci(json_str):
+                try: return json.loads(str(json_str)).get("muaf", False)
+                except: return False
+            
+            sonuclar = df[filtre].copy()
+            sonuclar = sonuclar[~sonuclar['Dinamik_JSON'].apply(muaf_mi_ogrenci)]
 
             if sonuclar.empty:
-                st.error("❌ Bu bilgilerle kayıt bulunamadı.")
+                st.error("❌ Sisteme kayıtlı, değerlendirilmiş bir göreviniz bulunamadı.")
             else:
                 ogrenci_adi = sonuclar.iloc[0]['Öğrenci Adı Soyadı']
                 st.markdown(f"""
-                <div class="success-banner">
-                    👋 Hoş geldin, <strong>{ogrenci_adi}</strong>!
-                    Sistemde <strong>{len(sonuclar)}</strong> adet görev ve performans kaydın bulunuyor.
-                </div>""", unsafe_allow_html=True)
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 5px solid #10b981;">
+                    <h3 style="margin: 0; color: #166534;">Hoş geldin, {ogrenci_adi}! 🌟</h3>
+                    <p style="margin: 5px 0 0; color: #15803d; font-size: 0.95rem;">Aşağıda değerlendirmesi tamamlanan <strong>{len(sonuclar)}</strong> adet proje ve performans görevin listelenmektedir.</p>
+                </div>
+                """, unsafe_allow_html=True)
 
+                col_dl1, col_dl2 = st.columns(2)
                 toplu_html = ogrenci_karnesi_html_uret(sonuclar, ayarlar)
-                st.download_button(
-                    "📥 Tüm Dönem Karnemi İndir (Toplu Rapor)",
-                    data=toplu_html,
-                    file_name=f"{ogrenci_adi}_Tüm_Karne.html",
-                    mime="text/html",
-                    use_container_width=True
-                )
-                st.markdown("---")
+                col_dl1.download_button("📥 Tüm Karnelerimi Tek Dosyada İndir", data=toplu_html, file_name=f"{ogrenci_adi}_Tum_Karneler.html", mime="text/html", use_container_width=True)
 
+                st.markdown("### 📊 Detaylı Değerlendirme Raporları")
+                
                 for idx, row in sonuclar.iterrows():
                     toplam_val = pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')
                     p = int(toplam_val) if pd.notna(toplam_val) else 0
-                    renk_cls = puan_renk(p)
-                    with st.expander(f"📌 {row['Ders']} — {row['Gorev_Adi']} — Puan: {p}/100"):
-                        st.markdown(f"""
-                        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;">
-                            <div><strong>Görev Türü:</strong> {row.get('Gorev_Turu','')}</div>
-                            <div><strong>Sınıf:</strong> {row.get('Sınıf','')}</div>
-                            <div><strong>Okul:</strong> {row.get('Okul','')}</div>
+                    
+                    renk = "#10b981" if p >= 85 else ("#f59e0b" if p >= 65 else "#ef4444")
+                    durum_metni = "Çok Başarılı" if p >= 85 else ("Gelişimi İyi" if p >= 65 else "Desteklenmeli")
+                    
+                    st.markdown(f"""
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
+                            <div>
+                                <div style="color: #64748b; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">{row['Ders']} | {row.get('Gorev_Turu','')}</div>
+                                <h3 style="margin: 5px 0 0; color: #0f172a;">{row['Gorev_Adi']}</h3>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 2.2rem; font-weight: 900; color: {renk}; line-height: 1;">{p}</div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 3px 10px; border-radius: 12px; margin-top: 5px;">{durum_metni}</div>
+                            </div>
                         </div>
-                        <div><span class="puan-rozet {renk_cls}">{p} / 100</span></div>
+                    """, unsafe_allow_html=True)
+                    
+                    if row.get('Genel Değerlendirme Yorumu'):
+                        st.markdown(f"""
+                        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <strong style="color: #b45309;">Öğretmen Görüşü:</strong><br>
+                            <span style="color: #78350f; font-style: italic;">"{row['Genel Değerlendirme Yorumu']}"</span>
+                        </div>
                         """, unsafe_allow_html=True)
 
-                        if row.get('Genel Değerlendirme Yorumu'):
-                            st.markdown(f"""
-                            <div class="warn-banner" style="margin-top:10px;">
-                                💬 <strong>Öğretmenin Karne Görüşü:</strong><br>{row['Genel Değerlendirme Yorumu']}
-                            </div>""", unsafe_allow_html=True)
+                    dinamik = {}
+                    try:
+                        if pd.notna(row.get('Dinamik_JSON', '')):
+                            dinamik = json.loads(str(row['Dinamik_JSON']))
+                    except: pass
 
-                        dinamik = {}
-                        try:
-                            if pd.notna(row.get('Dinamik_JSON', '')):
-                                dinamik = json.loads(str(row['Dinamik_JSON']))
-                        except:
-                            pass
-
-                        if dinamik:
-                            st.markdown("**📊 Kriter Puanları:**")
+                    if dinamik:
+                        with st.expander("🔍 Puan Detaylarını ve Kriterleri İncele"):
                             for k_id in [k.replace("_puan","") for k in dinamik if k.endswith("_puan")]:
-                                baslik, maks, _ = kriter_bul(k_id, ayarlar)
+                                baslik, maks, icon = kriter_bul(k_id, ayarlar)
                                 kp = dinamik.get(f"{k_id}_puan", 0)
-                                ka = dinamik.get(f"{k_id}_aciklama", "")
-                                st.markdown(f"- 📌 **{baslik}**: {kp}/{maks} — {ka}")
+                                ka = dinamik.get(f"{k_id}_aciklama", "-")
+                                st.markdown(f"""
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:8px 0; border-bottom:1px dashed #e2e8f0;">
+                                    <div style="flex:1;"><strong>{icon} {baslik}</strong><br><span style="font-size:0.85rem; color:#64748b;">{ka}</span></div>
+                                    <div style="font-weight:800; color:#2563eb; margin-left:15px;">{kp} <span style="font-size:0.75rem; color:#94a3b8;">/ {maks}</span></div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            tekil_html = ogrenci_karnesi_html_uret(sonuclar, ayarlar, tekil_gorev_idx=idx)
+                            st.download_button("📥 Bu Görevin Detaylı Çıktısını Al", data=tekil_html, file_name=f"{ogrenci_adi}_{row['Ders']}_Detay.html", mime="text/html", key=f"dl_tek_{idx}")
+                    
+                    st.markdown("</div>", unsafe_allow_html=True)
 
-                        tekil_html = ogrenci_karnesi_html_uret(sonuclar, ayarlar, tekil_gorev_idx=idx)
-                        st.download_button(
-                            "📥 Sadece Bu Görevin Karnesini İndir",
-                            data=tekil_html,
-                            file_name=f"{ogrenci_adi}_{row['Ders']}_Karnesi.html",
-                            mime="text/html",
-                            key=f"dl_{idx}"
-                        )
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
@@ -1710,27 +1732,47 @@ def yonetim_paneli(df, ayarlar):
     # ══════════════════════════════════════════════════
     elif aktif_ana == "ai_degerlendirme":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown("<div class='section-header'>🤖 Yapay Zeka Destekli Puanlama</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-header'>🤖 Yapay Zeka Destekli Proje/Performans Puanlama</div>", unsafe_allow_html=True)
 
         if df_yetkili.empty:
             st.warning("Değerlendirilecek görev bulunamadı.")
         else:
-            c_sec1, c_sec2 = st.columns([2, 1])
             df_g = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
-            puan_liste      = df_g.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']}", axis=1).tolist()
-            secili_gorev    = c_sec1.selectbox("🎯 Öğrenci ve Görevi Seçin", ["— Seçiniz —"] + puan_liste)
-            s_isimler       = list(ayarlar.get("sablonlar", {}).keys())
-            sec_sablon_ismi = c_sec2.selectbox("📋 Kullanılacak Şablon", s_isimler)
-            aktif_sablon    = ayarlar["sablonlar"].get(sec_sablon_ismi, CEKIRDEK_SABLON)
+            
+            # --- 1. Sınıf ve Görev Filtreleme ---
+            st.markdown("**🔍 Değerlendirilecek Öğrenciyi Bul**")
+            col_f1, col_f2, col_f3 = st.columns([1, 1.5, 2])
+            
+            mevcut_siniflar = sorted(df_g['Sınıf'].dropna().unique().tolist())
+            secili_sinif = col_f1.selectbox("1️⃣ Sınıf Seçin", ["— Tümü —"] + mevcut_siniflar)
+            
+            if secili_sinif != "— Tümü —":
+                df_g = df_g[df_g['Sınıf'] == secili_sinif]
+                
+            mevcut_gorevler = sorted(df_g['Gorev_Adi'].dropna().unique().tolist())
+            secili_gorev_filtresi = col_f2.selectbox("2️⃣ Görev Seçin", ["— Tümü —"] + mevcut_gorevler)
+            
+            if secili_gorev_filtresi != "— Tümü —":
+                df_g = df_g[df_g['Gorev_Adi'] == secili_gorev_filtresi]
+
+            puan_liste = df_g.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']}", axis=1).tolist()
+            secili_gorev = col_f3.selectbox("3️⃣ Öğrenciyi Seçin", ["— Seçiniz —"] + puan_liste)
+            
+            st.markdown("---")
+            
+            s_isimler = list(ayarlar.get("sablonlar", {}).keys())
+            sec_sablon_ismi = st.selectbox("📋 Kullanılacak Şablon", s_isimler)
+            aktif_sablon = ayarlar["sablonlar"].get(sec_sablon_ismi, CEKIRDEK_SABLON)
 
             if secili_gorev != "— Seçiniz —":
-                o_no     = secili_gorev.split(" - ")[0].strip()
-                g_ad     = secili_gorev.split(" | ")[1].strip()
+                o_no = secili_gorev.split(" - ")[0].strip()
+                g_ad = secili_gorev.split(" | ")[1].strip()
                 idx_list = df[(df['Okul No'] == o_no) & (df['Gorev_Adi'] == g_ad)].index
+                
                 if len(idx_list) == 0:
                     st.error("Kayıt bulunamadı.")
                 else:
-                    idx   = idx_list[0]
+                    idx = idx_list[0]
                     bilgi = df.iloc[idx]
 
                     if st.session_state.get("aktif_idx") != idx:
@@ -1739,8 +1781,8 @@ def yonetim_paneli(df, ayarlar):
                         try:
                             if pd.notna(bilgi.get('Dinamik_JSON', '')):
                                 e_puanlar = json.loads(str(bilgi['Dinamik_JSON']))
-                        except:
-                            pass
+                        except: pass
+                        
                         for k in aktif_sablon:
                             st.session_state[f"vp_{k['id']}"] = int(e_puanlar.get(f"{k['id']}_puan", 0))
                             st.session_state[f"va_{k['id']}"] = str(e_puanlar.get(f"{k['id']}_aciklama", ""))
@@ -1749,12 +1791,29 @@ def yonetim_paneli(df, ayarlar):
                     st.markdown(f"""
                     <div style="background:#eff6ff;padding:14px;border-radius:10px;border-left:4px solid #3b82f6;margin-bottom:14px;">
                         <strong>{bilgi.get('Öğrenci Adı Soyadı','')}</strong> &nbsp;|&nbsp;
-                        {bilgi.get('Sınıf','')} &nbsp;|&nbsp;
-                        {bilgi.get('Gorev_Adi','')} &nbsp;|&nbsp;
-                        No: {bilgi.get('Okul No','')}
+                        Sınıf: {bilgi.get('Sınıf','')} &nbsp;|&nbsp;
+                        Görev: {bilgi.get('Gorev_Adi','')} &nbsp;|&nbsp; No: {bilgi.get('Okul No','')}
                     </div>""", unsafe_allow_html=True)
 
-                    st.markdown("**🤖 AI Modu Seçin:**")
+                    # --- PROJEDEN MUAF / ALMADI BUTONU ---
+                    dinamik_okunan = json.loads(str(bilgi.get('Dinamik_JSON', '{}'))) if pd.notna(bilgi.get('Dinamik_JSON', '{}')) else {}
+                    is_muaf = st.checkbox("🚫 Bu öğrenci bu projeyi/performansı ALMADI (Öğrenciyi değerlendirmeden ve raporlardan muaf tut)", value=dinamik_okunan.get("muaf", False))
+                    
+                    if is_muaf:
+                        st.warning("⚠️ Öğrenci projeden muaf tutuldu. Aşağıdaki puanlama formu devre dışı bırakılmıştır. Raporlarda ve sınıf ortalamasında görünmeyecektir.")
+                        if st.button("💾 Muafiyet Durumunu Kaydet", type="primary"):
+                            dinamik_okunan["muaf"] = True
+                            supabase.table('gorevler').update({
+                                'dinamik_json': dinamik_okunan,
+                                'toplam_puan': 0,
+                                'genel_degerlendirme_yorumu': "Projeyi almadı."
+                            }).eq('okul_no', o_no).eq('gorev_adi', g_ad).execute()
+                            st.cache_data.clear()
+                            st.success("Kaydedildi!")
+                            time.sleep(1); st.rerun()
+                    else:
+                        st.markdown("**🤖 AI Modu Seçin:**")
+                        # (Buradan sonrası kodunuzdaki "ai_modu = st.radio..." ile tamamen aynı devam edecek)
                     ai_modu = st.radio(
                         "AI Modu", ["A", "B", "C"],
                         format_func=lambda x: {
@@ -1837,13 +1896,22 @@ def yonetim_paneli(df, ayarlar):
 
         if aktif_rapor == "sinif_rapor":
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-            st.markdown("<div class='section-header'>📊 Sınıf Raporları</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-header'>📊 Sınıf Raporları ve Analizler</div>", unsafe_allow_html=True)
+            
             if not df_yetkili.empty:
-                df_r_yetkili = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
+                df_r_yetkili = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"].copy()
+                
+                # --- YENİ: "Projeyi Almadı (Muaf)" İşaretli Öğrencileri Raporlardan Çıkar ---
+                def muaf_mi_kontrol(json_str):
+                    try: return json.loads(str(json_str)).get("muaf", False)
+                    except: return False
+                
+                df_r_yetkili = df_r_yetkili[~df_r_yetkili['Dinamik_JSON'].apply(muaf_mi_kontrol)]
                 
                 c_r1, c_r2 = st.columns([1, 1])
                 r_sinif = c_r1.selectbox("Sınıf Seçin", ["Tümü"] + sorted(df_r_yetkili['Sınıf'].dropna().unique()))
-                df_r    = df_r_yetkili if r_sinif == "Tümü" else df_r_yetkili[df_r_yetkili['Sınıf'] == r_sinif]
+                df_r = df_r_yetkili if r_sinif == "Tümü" else df_r_yetkili[df_r_yetkili['Sınıf'] == r_sinif]
+                
                 g_filtre = c_r2.selectbox("Görev Filtrele", ["Tümü"] + sorted(df_r['Gorev_Adi'].dropna().unique().tolist()))
                 if g_filtre != "Tümü":
                     df_r = df_r[df_r['Gorev_Adi'] == g_filtre]
