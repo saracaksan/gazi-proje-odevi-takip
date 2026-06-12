@@ -1426,21 +1426,19 @@ def yonetim_paneli(df, ayarlar):
                 else:
                     try:
                         excel_df = pd.read_excel(uploaded_file, dtype={"Okul No": str})
-                        # HATA ÇÖZÜMÜ: Boş/NaN hücreleri temizle
                         excel_df = excel_df.fillna("") 
-                        no_col    = next((c for c in excel_df.columns if "no" in str(c).lower()), excel_df.columns[0])
-                        ad_col    = next((c for c in excel_df.columns if "ad" in str(c).lower()), excel_df.columns[1])
-                        sinif_col = next((c for c in excel_df.columns if "sınıf" in str(c).lower() or "sinif" in str(c).lower()),
-                                          excel_df.columns[2] if len(excel_df.columns) > 2 else None)
+                        cols = excel_df.columns
+                        no_col    = next((c for c in cols if "no" in str(c).lower()), cols[0])
+                        ad_col    = next((c for c in cols if "ad" in str(c).lower()), cols[1])
+                        sinif_col = next((c for c in cols if "sınıf" in str(c).lower() or "sinif" in str(c).lower()), cols[2] if len(cols) > 2 else None)
 
                         db_records = []
                         for _, row in excel_df.iterrows():
                             o_no = str(row[no_col]).strip().replace('.0', '')
-                            # HATA ÇÖZÜMÜ: Boş veya tanımsız "nan" satırlarını atla
                             if not o_no or o_no.lower() == "nan": continue
                             
                             kontrol = df[(df['Okul'] == h_okul) & (df['Okul No'] == o_no) &
-                                          (df['Gorev_Adi'] == g_isim.strip()) & (df['Atanan_Ogretmen'] == hedef_ogrt_ex)]
+                                         (df['Gorev_Adi'] == g_isim.strip()) & (df['Atanan_Ogretmen'] == hedef_ogrt_ex)]
                             if kontrol.empty:
                                 target_ders = (kb_aktif.get("brans","Genel") if hedef_ogrt_ex == aktif_id
                                                else ayarlar["kullanicilar"].get(hedef_ogrt_ex,{}).get("brans","Genel"))
@@ -1454,145 +1452,11 @@ def yonetim_paneli(df, ayarlar):
                             supabase.table('gorevler').insert(db_records).execute()
                             st.cache_data.clear()
                             st.success(f"✅ {len(db_records)} öğrenciye '{g_isim}' görevi tanımlandı!")
-                            time.sleep(1)
-                            st.rerun()
+                            time.sleep(1); st.rerun()
                         else:
                             st.warning("Geçerli bir öğrenci bulunamadı veya görev daha önce bu öğrencilere atanmış.")
                     except Exception as e:
                         st.error(f"Hata: {e}")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        # ── Geçmişi Düzenle / Değerlendirilenler Kontrol Merkezi ──
-        elif aktif_ogr == "gecmis_duzenle":
-            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-            st.markdown("<div class='section-header'>✏️ Değerlendirilen Öğrencileri Yönet & Güncelle</div>", unsafe_allow_html=True)
-            st.info("💡 Notunu girdiğiniz, muaf tuttuğunuz veya deneme amaçlı değerlendirdiğiniz öğrencileri sınıf bazında buradan görebilir; puanlarını güncelleyebilir, değerlendirmeyi sıfırlayabilir veya listeden tamamen silebilirsiniz.")
-            
-            # Sadece proje/performans görevleri (Karne hariç)
-            df_g = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
-            
-            if df_g.empty:
-                st.warning("Sisteme kayıtlı görev (sınav/proje) bulunmuyor.")
-            else:
-                col_f1, col_f2 = st.columns(2)
-                mevcut_siniflar = sorted(df_g['Sınıf'].dropna().unique().tolist())
-                secili_sinif = col_f1.selectbox("1️⃣ Sınıf Seçin", ["— Tüm Sınıflar —"] + mevcut_siniflar)
-                
-                df_filt = df_g if secili_sinif == "— Tüm Sınıflar —" else df_g[df_g['Sınıf'] == secili_sinif]
-                
-                mevcut_gorevler = sorted(df_filt['Gorev_Adi'].dropna().unique().tolist())
-                secili_gorev_isim = col_f2.selectbox("2️⃣ Görevi Seçin", ["— Seçiniz —"] + mevcut_gorevler)
-                
-                if secili_gorev_isim != "— Seçiniz —":
-                    df_secili_gorev = df_filt[df_filt['Gorev_Adi'] == secili_gorev_isim].copy()
-                    df_secili_gorev['Toplam Puan'] = pd.to_numeric(df_secili_gorev['Toplam Puan'], errors='coerce').fillna(0)
-                    
-                    def muaf_mi_kontrol(json_str):
-                        try: return json.loads(str(json_str)).get("muaf", False)
-                        except: return False
-                    
-                    df_secili_gorev['Muaf'] = df_secili_gorev['Dinamik_JSON'].apply(muaf_mi_kontrol)
-                    
-                    # Sadece Değerlendirilmiş (Puanı > 0) VEYA Muaf tutulmuş VEYA yorum girilmiş öğrenciler listelenir
-                    df_islem_gorenler = df_secili_gorev[(df_secili_gorev['Toplam Puan'] > 0) | (df_secili_gorev['Muaf'] == True) | (df_secili_gorev['Genel Değerlendirme Yorumu'] != "")]
-                    
-                    st.markdown(f"**✅ İşlem Gören (Değerlendirilen veya Muaf) Öğrenciler ({len(df_islem_gorenler)} Kişi)**")
-                    if not df_islem_gorenler.empty:
-                        gosterim_df = df_islem_gorenler[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Toplam Puan', 'Muaf']].copy()
-                        gosterim_df['Durum'] = gosterim_df.apply(lambda x: "🚫 Muaf Tutuldu" if x['Muaf'] else f"✅ Değerlendirildi ({x['Toplam Puan']} Puan)", axis=1)
-                        st.dataframe(gosterim_df[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Durum']], use_container_width=True, hide_index=True)
-                    else:
-                        st.info("Bu görev ve sınıf için henüz değerlendirilmiş bir öğrenci yok.")
-                        
-                    st.markdown("---")
-                    st.markdown("### 📝 Öğrenci Güncelleme / Silme Alanı")
-                    
-                    # Tüm liste arasından seçim yaptırıyoruz ki deneme yapılıp puan girilmeyenleri de silebilesiniz
-                    ogr_liste = df_secili_gorev.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']}", axis=1).tolist()
-                    secili_ogrenci = st.selectbox("🎯 İşlem Yapılacak Öğrenciyi Seçin", ["— Seçiniz —"] + ogr_liste)
-                    
-                    if secili_ogrenci != "— Seçiniz —":
-                        o_no = secili_ogrenci.split(" - ")[0].strip()
-                        satir = df_secili_gorev[df_secili_gorev['Okul No'] == o_no].iloc[0]
-                        
-                        aktif_sablon = ayarlar["sablonlar"].get(SABLON_ADI, CEKIRDEK_SABLON)
-                        eski_json = {}
-                        try:
-                            if pd.notna(satir.get('Dinamik_JSON', '')):
-                                eski_json = json.loads(str(satir['Dinamik_JSON']))
-                        except: pass
-                        
-                        is_muaf = eski_json.get("muaf", False)
-                        
-                        col_btn1, col_btn2, col_btn3 = st.columns(3)
-                        
-                        if col_btn1.button("🔄 Değerlendirmeyi Sıfırla (Başa Dön)", use_container_width=True):
-                            eski_json["muaf"] = False
-                            for k in aktif_sablon:
-                                eski_json[f"{k['id']}_puan"] = 0
-                                eski_json[f"{k['id']}_aciklama"] = ""
-                            
-                            supabase.table('gorevler').update({
-                                'dinamik_json': eski_json,
-                                'genel_degerlendirme_yorumu': '',
-                                'toplam_puan': 0
-                            }).eq('okul_no', o_no).eq('gorev_adi', secili_gorev_isim).execute()
-                            st.cache_data.clear()
-                            st.success("Öğrencinin değerlendirmesi sıfırlandı. Tekrar baştan puanlayabilirsiniz.")
-                            time.sleep(1.5); st.rerun()
-                            
-                        if col_btn2.button("🚫 Projeden Muaf Tut", use_container_width=True):
-                            eski_json["muaf"] = True
-                            supabase.table('gorevler').update({
-                                'dinamik_json': eski_json,
-                                'genel_degerlendirme_yorumu': 'Projeyi almadı.',
-                                'toplam_puan': 0
-                            }).eq('okul_no', o_no).eq('gorev_adi', secili_gorev_isim).execute()
-                            st.cache_data.clear()
-                            st.success("Öğrenci muaf tutuldu (Raporlara yansımayacak).")
-                            time.sleep(1.5); st.rerun()
-                            
-                        if col_btn3.button("🗑️ Görevden Tamamen Sil", type="primary", use_container_width=True):
-                            supabase.table('gorevler').delete().eq('okul_no', o_no).eq('gorev_adi', secili_gorev_isim).execute()
-                            st.cache_data.clear()
-                            st.success("Öğrenci bu görev listesinden tamamen silindi!")
-                            time.sleep(1.5); st.rerun()
-
-                        st.markdown("#### ✏️ Puan ve Yorumları Manuel Güncelle")
-                        if is_muaf:
-                            st.warning("Bu öğrenci şu an MUAF olarak işaretli. Puan girmek istiyorsanız önce yukarıdan 'Değerlendirmeyi Sıfırla' butonuna basınız.")
-                        else:
-                            with st.form("guncelleme_formu"):
-                                toplam_g = 0
-                                guncel_puanlar = eski_json.copy()
-                                for k in aktif_sablon:
-                                    cc1, cc2 = st.columns([1, 3])
-                                    def_puan = int(eski_json.get(f"{k['id']}_puan", 0))
-                                    def_acik = str(eski_json.get(f"{k['id']}_aciklama", ""))
-                                    
-                                    pv = cc1.number_input(f"📌 {k['baslik']} (Max: {k['max']})", 0, k['max'], def_puan)
-                                    av = cc2.text_input(f"Açıklama ({k['baslik']})", def_acik)
-                                    toplam_g += pv
-                                    
-                                    guncel_puanlar[f"{k['id']}_puan"] = pv
-                                    guncel_puanlar[f"{k['id']}_aciklama"] = av
-                                    
-                                eski_genel = str(satir.get('Genel Değerlendirme Yorumu', ''))
-                                gv = st.text_area("💬 Genel Yorum / Karne Görüşü", value=eski_genel)
-                                
-                                st.info(f"Güncel Toplam Puan: **{toplam_g} / 100**")
-                                
-                                if st.form_submit_button("💾 Değişiklikleri Veritabanına Kaydet"):
-                                    guncel_puanlar["muaf"] = False
-                                    supabase.table('gorevler').update({
-                                        'dinamik_json': guncel_puanlar,
-                                        'genel_degerlendirme_yorumu': gv,
-                                        'toplam_puan': toplam_g
-                                    }).eq('okul_no', o_no).eq('gorev_adi', secili_gorev_isim).execute()
-                                    st.cache_data.clear()
-                                    st.success("✅ Başarıyla Güncellendi!")
-                                    time.sleep(1.5)
-                                    st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
         # ── Tekil Ekle ──
@@ -1615,6 +1479,7 @@ def yonetim_paneli(df, ayarlar):
                 m_sinif = col_m3.text_input("Sınıf")
                 m_gtur  = st.selectbox("Görev Türü", ["Proje", "Performans"])
                 m_gadi  = st.text_input("Görev Adı")
+                
                 if st.form_submit_button("➕ Ekle ve Kaydet"):
                     if m_no and m_ad and m_gadi:
                         target_ders_man = (kb.get("brans","") if hedef_ogrt_man == aktif_id
@@ -1661,7 +1526,7 @@ def yonetim_paneli(df, ayarlar):
                         for _, row in pool_students.iterrows():
                             o_no    = row['Okul No']
                             kontrol = df[(df['Okul'] == islem_okul) & (df['Okul No'] == o_no) &
-                                          (df['Gorev_Adi'] == g_isim_h.strip()) & (df['Atanan_Ogretmen'] == h_ogrt)]
+                                         (df['Gorev_Adi'] == g_isim_h.strip()) & (df['Atanan_Ogretmen'] == h_ogrt)]
                             if kontrol.empty:
                                 t_ders = (kb.get("brans","Genel") if h_ogrt == aktif_id
                                           else ayarlar["kullanicilar"].get(h_ogrt,{}).get("brans","Genel"))
@@ -1679,6 +1544,156 @@ def yonetim_paneli(df, ayarlar):
                             st.warning("Bu görev zaten atanmış. Mükerrer kayıt engellendi.")
             else:
                 st.info("Bu okula ait öğrenci kaydı yok. Önce Excel ile yükleme yapın.")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── KAPSAMLI YENİ: Geçmişi Düzenle ve Öğrenci Yönetimi ──
+        elif aktif_ogr == "gecmis_duzenle":
+            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            st.markdown("<div class='section-header'>✏️ Öğrenci Yönetimi ve Güncelleme Merkezi</div>", unsafe_allow_html=True)
+            st.info("💡 Sınıfınızdaki öğrencilerin görev durumlarını (Değerlendirildi, Muaf, Bekliyor) görebilir, bilgilerini güncelleyebilir, değerlendirmeleri sıfırlayabilir veya listeden silebilirsiniz.")
+            
+            # Sadece proje/performans görevleri (Karne hariç)
+            df_g = df_yetkili[df_yetkili['Gorev_Turu'] != "Karne Gorusu"]
+            
+            if df_g.empty:
+                st.warning("Sisteme kayıtlı görev (sınav/proje) bulunmuyor.")
+            else:
+                col_f1, col_f2 = st.columns(2)
+                mevcut_siniflar = sorted(df_g['Sınıf'].dropna().unique().tolist())
+                secili_sinif = col_f1.selectbox("1️⃣ Sınıf Seçin", ["— Tüm Sınıflar —"] + mevcut_siniflar)
+                
+                df_filt = df_g if secili_sinif == "— Tüm Sınıflar —" else df_g[df_g['Sınıf'] == secili_sinif]
+                
+                mevcut_gorevler = sorted(df_filt['Gorev_Adi'].dropna().unique().tolist())
+                secili_gorev_isim = col_f2.selectbox("2️⃣ Görevi Seçin", ["— Seçiniz —"] + mevcut_gorevler)
+                
+                if secili_gorev_isim != "— Seçiniz —":
+                    df_secili_gorev = df_filt[df_filt['Gorev_Adi'] == secili_gorev_isim].copy()
+                    
+                    # Öğrenci durumlarını analiz et ve sıralama puanı ata
+                    def durum_analiz_et(row):
+                        puan = pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')
+                        puan = int(puan) if pd.notna(puan) else 0
+                        
+                        is_muaf = False
+                        try:
+                            json_data = json.loads(str(row.get('Dinamik_JSON', '{}')))
+                            is_muaf = json_data.get("muaf", False)
+                        except: pass
+                        
+                        if is_muaf:
+                            return 2, "🚫 Muaf"
+                        elif puan > 0 or str(row.get('Genel Değerlendirme Yorumu', '')).strip() != "":
+                            return 1, f"✅ Değerlendirildi ({puan} Puan)"
+                        else:
+                            return 0, "⏳ Bekliyor"
+
+                    # Durumları belirle ve DataFrame'e ekle
+                    df_secili_gorev[['Sira', 'Detayli_Durum']] = df_secili_gorev.apply(durum_analiz_et, axis=1, result_type="expand")
+                    
+                    # Bekleyenler (0) üstte, Değerlendirilenler (1) ortada, Muaflar (2) en altta olacak şekilde sırala
+                    df_secili_gorev = df_secili_gorev.sort_values(by=['Sira', 'Okul No'])
+                    
+                    st.markdown(f"**📋 Sınıf Listesi Özeti ({len(df_secili_gorev)} Öğrenci)**")
+                    st.dataframe(df_secili_gorev[['Okul No', 'Öğrenci Adı Soyadı', 'Sınıf', 'Detayli_Durum']], use_container_width=True, hide_index=True)
+                    
+                    st.markdown("---")
+                    st.markdown("### 🎯 İşlem Yapılacak Öğrenciyi Seçin")
+                    
+                    # Selectbox içinde de öğrenci isminin yanına durumu yazalım
+                    ogr_secim_listesi = df_secili_gorev.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} ({r['Detayli_Durum']})", axis=1).tolist()
+                    secili_ogrenci = st.selectbox("Düzenle / Sıfırla / Sil", ["— Seçiniz —"] + ogr_secim_listesi)
+                    
+                    if secili_ogrenci != "— Seçiniz —":
+                        o_no = secili_ogrenci.split(" - ")[0].strip()
+                        satir = df_secili_gorev[df_secili_gorev['Okul No'] == o_no].iloc[0]
+                        
+                        aktif_sablon = ayarlar["sablonlar"].get(SABLON_ADI, CEKIRDEK_SABLON)
+                        eski_json = {}
+                        try:
+                            if pd.notna(satir.get('Dinamik_JSON', '')):
+                                eski_json = json.loads(str(satir['Dinamik_JSON']))
+                        except: pass
+                        
+                        is_muaf = eski_json.get("muaf", False)
+                        
+                        st.markdown(f"""
+                        <div style="background:#f8fafc; border: 1px solid #cbd5e1; border-radius:10px; padding:15px; margin-bottom: 20px;">
+                            <strong>Aktif Öğrenci:</strong> {satir['Öğrenci Adı Soyadı']} | <strong>Mevcut Durum:</strong> {satir['Detayli_Durum']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # --- HIZLI İŞLEM BUTONLARI ---
+                        col_islem1, col_islem2, col_islem3 = st.columns(3)
+                        
+                        if col_islem1.button("🔄 Değerlendirmeyi Sıfırla (Başa Dön)", use_container_width=True):
+                            eski_json["muaf"] = False
+                            for k in aktif_sablon:
+                                eski_json[f"{k['id']}_puan"] = 0
+                                eski_json[f"{k['id']}_aciklama"] = ""
+                            
+                            supabase.table('gorevler').update({
+                                'dinamik_json': eski_json,
+                                'genel_degerlendirme_yorumu': '',
+                                'toplam_puan': 0
+                            }).eq('id', satir['id']).execute()
+                            st.cache_data.clear()
+                            st.success("Öğrencinin değerlendirmesi ve muafiyet durumu sıfırlandı!")
+                            time.sleep(1); st.rerun()
+                            
+                        if col_islem2.button("🚫 Öğrenciyi Projeden Muaf Tut", use_container_width=True):
+                            eski_json["muaf"] = True
+                            supabase.table('gorevler').update({
+                                'dinamik_json': eski_json,
+                                'genel_degerlendirme_yorumu': 'Öğrenci projeden muaf tutulmuştur.',
+                                'toplam_puan': 0
+                            }).eq('id', satir['id']).execute()
+                            st.cache_data.clear()
+                            st.success("Öğrenci muaf tutuldu. Artık raporlarda görünmeyecek.")
+                            time.sleep(1); st.rerun()
+                            
+                        if col_islem3.button("🗑️ Görevden Tamamen Sil", type="primary", use_container_width=True):
+                            supabase.table('gorevler').delete().eq('id', satir['id']).execute()
+                            st.cache_data.clear()
+                            st.success("Öğrenci bu görev listesinden tamamen silindi!")
+                            time.sleep(1); st.rerun()
+
+                        # --- MANUEL DÜZENLEME FORMU ---
+                        st.markdown("#### ✏️ Puan ve Yorumları Manuel Güncelle")
+                        if is_muaf:
+                            st.warning("Bu öğrenci şu an MUAF olarak işaretli. Puan veya yorum girebilmek için önce yukarıdan 'Değerlendirmeyi Sıfırla' butonuna basınız.")
+                        else:
+                            with st.form("guncelleme_formu"):
+                                toplam_g = 0
+                                guncel_puanlar = eski_json.copy()
+                                for k in aktif_sablon:
+                                    cc1, cc2 = st.columns([1, 3])
+                                    def_puan = int(eski_json.get(f"{k['id']}_puan", 0))
+                                    def_acik = str(eski_json.get(f"{k['id']}_aciklama", ""))
+                                    
+                                    pv = cc1.number_input(f"📌 {k['baslik']} (Max: {k['max']})", 0, k['max'], def_puan)
+                                    av = cc2.text_input(f"Açıklama ({k['baslik']})", def_acik)
+                                    toplam_g += pv
+                                    
+                                    guncel_puanlar[f"{k['id']}_puan"] = pv
+                                    guncel_puanlar[f"{k['id']}_aciklama"] = av
+                                    
+                                eski_genel = str(satir.get('Genel Değerlendirme Yorumu', ''))
+                                gv = st.text_area("💬 Genel Yorum / Karne Görüşü", value=eski_genel)
+                                
+                                st.info(f"Hesaplanan Yeni Toplam Puan: **{toplam_g} / 100**")
+                                
+                                if st.form_submit_button("💾 Değişiklikleri Veritabanına Kaydet"):
+                                    guncel_puanlar["muaf"] = False
+                                    supabase.table('gorevler').update({
+                                        'dinamik_json': guncel_puanlar,
+                                        'genel_degerlendirme_yorumu': gv,
+                                        'toplam_puan': toplam_g
+                                    }).eq('id', satir['id']).execute()
+                                    st.cache_data.clear()
+                                    st.success("✅ Öğrenci verileri başarıyla güncellendi!")
+                                    time.sleep(1)
+                                    st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
         # ── Silme İşlemleri ──
