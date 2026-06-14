@@ -1798,11 +1798,23 @@ def yonetim_paneli(df, ayarlar):
                                     try:
                                         m_p_d = {k['id']: st.session_state.get(f"vp_{k['id']}", 0) for k in aktif_sablon}
                                         res   = ai_degerlendirme_yap(bilgi.to_dict(), aktif_sablon, ai_modu, ham_metin, hedef_puan, m_p_d, kb.get("ad",""), bilgi['Ders'])
+                                        
+                                        ai_toplam = 0 # Yapay zekanın verdiği puanları toplayacağımız değişken
+                                        
                                         for k in aktif_sablon:
-                                            if k['id'] in res.get("puanlar", {}): st.session_state[f"vp_{k['id']}"] = int(res["puanlar"][k['id']])
-                                            if k['id'] in res.get("aciklamalar", {}): st.session_state[f"va_{k['id']}"] = res["aciklamalar"][k['id']]
+                                            if k['id'] in res.get("puanlar", {}): 
+                                                gelen_puan = int(res["puanlar"][k['id']])
+                                                st.session_state[f"vp_{k['id']}"] = gelen_puan
+                                                ai_toplam += gelen_puan # Puanı toplama ekliyoruz
+                                                
+                                            if k['id'] in res.get("aciklamalar", {}): 
+                                                st.session_state[f"va_{k['id']}"] = res["aciklamalar"][k['id']]
+                                                
                                         if "genel" in res: st.session_state["vg"] = res["genel"]
-                                        st.success("✅ Değerlendirme hazır! Aşağıdan kontrol edip kaydedin.")
+                                        
+                                        # Ekrana çıkacak mesajı güncelledik
+                                        st.success(f"✅ Değerlendirme hazır! 🎯 Yapay Zekanın Önerdiği Toplam Puan: **{ai_toplam} / 100**")
+                                        
                                     except Exception as e:
                                         st.error(f"AI hatası: {e}")
 
