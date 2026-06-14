@@ -1708,6 +1708,9 @@ def yonetim_paneli(df, ayarlar):
                 df_g[['Sira', 'Durum_Icon']] = df_g.apply(detayli_durum, axis=1, result_type="expand")
                 df_g = df_g.sort_values(by=['Sira', 'Okul No']) # Bekleyenler (0) en üstte görünsün diye sıralıyoruz
                 
+                # --- YENİ EKLENEN KOD: Eğer veritabanında çift kayıt varsa sadece birini göster ---
+                df_g = df_g.drop_duplicates(subset=['Okul No', 'Gorev_Adi'], keep='last')
+                
                 puan_liste = df_g.apply(lambda r: f"{r['Okul No']} - {r['Öğrenci Adı Soyadı']} | {r['Gorev_Adi']} | {r['Durum_Icon']}", axis=1).tolist()
                 
                 st.markdown("---")
@@ -1857,6 +1860,9 @@ def yonetim_paneli(df, ayarlar):
                     df_r = df_r[df_r['Gorev_Adi'] == g_filtre]
 
                 if not df_r.empty:
+                    # --- YENİ EKLENEN KOD: Raporlarda ve çıktılarda çift isimleri teke düşür ---
+                    df_r = df_r.drop_duplicates(subset=['Okul No', 'Gorev_Adi'], keep='last')
+                    
                     df_r_copy = df_r.copy()
                     df_r_copy['Toplam Puan'] = pd.to_numeric(df_r_copy['Toplam Puan'], errors='coerce').fillna(0)
                     col_s1, col_s2, col_s3, col_s4 = st.columns(4)
