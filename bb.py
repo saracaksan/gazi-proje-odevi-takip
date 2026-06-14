@@ -1790,13 +1790,22 @@ def yonetim_paneli(df, ayarlar):
                             ham_metin = st.text_area("Hangi konu işlendi, nelerde eksiklik var veya neye göre değerlendirilecek?", placeholder="Örn: Açılar ve çokgenler projesi. Geometrik çizimleri çok iyi ama formüllerde ufak hatalar yapmış...", label_visibility="collapsed")
                             
                             hedef_puan = 85
+                            mod_c_puanlari = {}
+                            
                             if ai_modu == "B":
                                 hedef_puan = st.slider("Hedef Puan Belirleyin", 0, 100, 85)
+                            elif ai_modu == "C":
+                                st.info("👇 Lütfen yapay zekanın pedagojik açıklama yazmasını istediğiniz puanları buraya girin:")
+                                sutunlar = st.columns(len(aktif_sablon))
+                                for i, k in enumerate(aktif_sablon):
+                                    mod_c_puanlari[k['id']] = sutunlar[i % len(sutunlar)].number_input(f"{k['baslik'][:15]}...", 0, k['max'], int(st.session_state.get(f"vp_{k['id']}", k['max'])), key=f"tmp_{k['id']}")
 
                             if st.button("✨ Yapay Zekayı Çalıştır", use_container_width=True):
                                 with st.spinner("Yapay zeka isme özel analiz ediyor..."):
                                     try:
-                                        m_p_d = {k['id']: st.session_state.get(f"vp_{k['id']}", 0) for k in aktif_sablon}
+                                        # DÜZELTME: Mod C ise form dışındaki yeni kutulardan oku, değilse eski usul devam et
+                                        m_p_d = mod_c_puanlari if ai_modu == "C" else {k['id']: st.session_state.get(f"vp_{k['id']}", 0) for k in aktif_sablon}
+                                        
                                         res   = ai_degerlendirme_yap(bilgi.to_dict(), aktif_sablon, ai_modu, ham_metin, hedef_puan, m_p_d, kb.get("ad",""), bilgi['Ders'])
                                         
                                         ai_toplam = 0 
@@ -1804,15 +1813,15 @@ def yonetim_paneli(df, ayarlar):
                                             if k['id'] in res.get("puanlar", {}): 
                                                 gelen_puan = int(res["puanlar"][k['id']])
                                                 st.session_state[f"vp_{k['id']}"] = gelen_puan
-                                                ai_toplam += gelen_puan # Puanı toplama ekliyoruz
+                                                ai_toplam += gelen_puan 
                                                 
                                             if k['id'] in res.get("aciklamalar", {}): 
                                                 st.session_state[f"va_{k['id']}"] = res["aciklamalar"][k['id']]
                                                 
                                         if "genel" in res: st.session_state["vg"] = res["genel"]
                                         
-                                        # YENİ KOD: Puanları hafızaya alıp sayfayı zorla yeniliyoruz ki aşağıdaki FORM anında dolsun!
-                                        st.session_state["ai_basari_mesaji"] = f"✅ Değerlendirme hazır! 🎯 Yapay Zekanın Atadığı Toplam Puan: **{ai_toplam} / 100**"
+                                        # Sistemi yeniliyoruz ki aşağıdaki asıl puanlama formu anında dolsun
+                                        st.session_state["ai_basari_mesaji"] = f"✅ Değerlendirme hazır! 🎯 İşlenen Toplam Puan: **{ai_toplam} / 100**"
                                         st.rerun()
                                         
                                     except Exception as e:
