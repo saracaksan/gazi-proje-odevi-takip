@@ -528,7 +528,7 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
             <table>
                 <tr>
                   <th style="width:30%">Kriter</th>
-                  <th style="text-align:center;width:10%">Alınan Puan</th>
+                  <th style="text-align:center;width:15%">Alınan Puan</th>
                   <th>Öğretmen Açıklaması</th>
                 </tr>"""
 
@@ -538,11 +538,17 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
             p_val = dinamik.get(f"{k_id}_puan", 0)
             a_val = dinamik.get(f"{k_id}_aciklama", "-")
             html += f"""
-            <tr>
-                <td><strong>{icon} {baslik}</strong><br>
-                    <small style="color:#94a3b8;">Max: {maks}</small></td>
-                <td class="puan-sutun">{p_val}</td>
-                <td>{a_val}</td>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <td style="padding: 15px; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size: 1.1rem; color: #1e3a8a;"><strong>{icon} {baslik}</strong></div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Maksimum: {maks} Puan</div>
+                </td>
+                <td style="text-align: center; vertical-align: middle; padding: 15px; border-right: 1px solid #e2e8f0;">
+                    <div style="background-color: #dbeafe; color: #1d4ed8; padding: 10px; border-radius: 8px; font-size: 1.3rem; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: inline-block; min-width: 40px;">{p_val}</div>
+                </td>
+                <td style="padding: 15px; color: #334155; line-height: 1.6; font-size: 0.95rem;">
+                    {a_val}
+                </td>
             </tr>"""
 
         html += f"""
@@ -664,11 +670,15 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
             p = dinamik.get(f"{k['id']}_puan", 0)
             a = dinamik.get(f"{k['id']}_aciklama", "-")
             html += f"""
-            <tr>
-                <td><span class="kriter-ikon">{k.get('icon','📌')}</span><span class="kriter-ad">{k['baslik']}</span></td>
-                <td class="td-max">{k['max']}</td>
-                <td class="td-puan">{p}</td>
-                <td>{a}</td>
+            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <td style="padding: 15px; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size: 1.1rem; color: #1e3a8a;"><span class="kriter-ikon">{k.get('icon','📌')}</span><strong>{k['baslik']}</strong></div>
+                </td>
+                <td class="td-max" style="vertical-align: middle; padding: 15px; border-right: 1px solid #e2e8f0;">{k['max']}</td>
+                <td style="text-align: center; vertical-align: middle; padding: 15px; border-right: 1px solid #e2e8f0;">
+                    <div style="background: #dbeafe; color: #1d4ed8; padding: 8px 12px; border-radius: 8px; font-weight: 900; font-size: 1.2rem; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-width: 35px;">{p}</div>
+                </td>
+                <td style="padding: 15px; color: #334155; line-height: 1.6;">{a}</td>
             </tr>"""
 
         html += f"""
