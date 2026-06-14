@@ -928,15 +928,18 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
 
     prompt = f"""Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencin sevgili {ogrenci_isim}'i değerlendiriyorsun.
 Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap ederek şefkatli, pedagojik ve motive edici konuş. (Öğrencinin soyadını asla kullanma).
+
+DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: "{ham_metin}"
+Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.
 Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
 
     if mod == "A":
-        prompt += f"""YORUMDAN PUAN ÜRETME. Öğretmenin notu: "{ham_metin}"\nBu nota göre pedagojik açıklamalar yaz ve mantıklı puanlar belirle."""
+        prompt += f"""YORUMDAN PUAN ÜRETME. Yukarıda verilen nota göre pedagojik açıklamalar yaz ve mantıklı puanlar belirle."""
     elif mod == "B":
-        prompt += f"""HEDEF PUANDAN YORUM ÜRETME. Hedef: {hedef_puan}/100\nBu puana ulaşacak şekilde kriterlere puan dağıt ve açıklamalar yaz."""
+        prompt += f"""HEDEF PUANDAN YORUM ÜRETME. Hedef: {hedef_puan}/100\nBu puana ulaşacak şekilde kriterlere puan dağıt ve yukarıdaki konuya uygun açıklamalar yaz."""
     else:
         ozet = "\n".join([f"  - {k['id']}: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
-        prompt += f"""MANUEL PUANLAMA. Öğretmen puanları verdi:\n{ozet}\nSadece pedagojik açıklamalar yaz. PUANLARI DEĞİŞTİRME."""
+        prompt += f"""MANUEL PUANLAMA. Öğretmen puanları verdi:\n{ozet}\nSadece yukarıdaki konuya uygun pedagojik açıklamalar yaz. PUANLARI DEĞİŞTİRME."""
 
     prompt += """\nEKSTRA: "genel" anahtarında öğrenciye ("Sevgili İsim, ...") hitap eden motive edici genel bir yorum yaz.
 SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel": "Sevgili..." }"""
@@ -1768,10 +1771,14 @@ def yonetim_paneli(df, ayarlar):
                         # --- YAPAY ZEKA VE PUANLAMA FORMU ---
                         if not is_muaf:
                             st.markdown("**🤖 AI Modu Seçin:**")
-                            ai_modu = st.radio("AI Modu", ["A", "B", "C"], format_func=lambda x: {"A": "📝 Mod A — Yorum Gir, AI Puanlasın", "B": "🎯 Mod B — Hedef Puan Ver, AI Dağıtsın", "C": "✋ Mod C — Manuel Puan, AI Açıklasın"}[x], horizontal=True, label_visibility="collapsed")
-                            ham_metin, hedef_puan = "", 85
-                            if ai_modu == "A": ham_metin = st.text_area("Öğretmen notunuz:", placeholder="Öğrenci projeyi zamanında teslim etti...")
-                            elif ai_modu == "B": hedef_puan = st.slider("Hedef Puan", 0, 100, 85)
+                            ai_modu = st.radio("AI Modu", ["A", "B", "C"], format_func=lambda x: {"A": "📝 Mod A — Yorumdan Puan Üret", "B": "🎯 Mod B — Hedef Puandan Dağıt", "C": "✋ Mod C — Manuel Puanı Açıkla"}[x], horizontal=True, label_visibility="collapsed")
+                            
+                            st.markdown("**📚 Görevin Konusu / Değerlendirme Notlarınız (Tüm modlar için)**")
+                            ham_metin = st.text_area("Hangi konu işlendi, nelerde eksiklik var veya neye göre değerlendirilecek?", placeholder="Örn: Açılar ve çokgenler projesi. Geometrik çizimleri çok iyi ama formüllerde ufak hatalar yapmış...", label_visibility="collapsed")
+                            
+                            hedef_puan = 85
+                            if ai_modu == "B":
+                                hedef_puan = st.slider("Hedef Puan Belirleyin", 0, 100, 85)
 
                             if st.button("✨ Yapay Zekayı Çalıştır", use_container_width=True):
                                 with st.spinner("Yapay zeka isme özel analiz ediyor..."):
