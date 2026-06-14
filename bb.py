@@ -1799,8 +1799,7 @@ def yonetim_paneli(df, ayarlar):
                                         m_p_d = {k['id']: st.session_state.get(f"vp_{k['id']}", 0) for k in aktif_sablon}
                                         res   = ai_degerlendirme_yap(bilgi.to_dict(), aktif_sablon, ai_modu, ham_metin, hedef_puan, m_p_d, kb.get("ad",""), bilgi['Ders'])
                                         
-                                        ai_toplam = 0 # Yapay zekanın verdiği puanları toplayacağımız değişken
-                                        
+                                        ai_toplam = 0 
                                         for k in aktif_sablon:
                                             if k['id'] in res.get("puanlar", {}): 
                                                 gelen_puan = int(res["puanlar"][k['id']])
@@ -1812,11 +1811,17 @@ def yonetim_paneli(df, ayarlar):
                                                 
                                         if "genel" in res: st.session_state["vg"] = res["genel"]
                                         
-                                        # Ekrana çıkacak mesajı güncelledik
-                                        st.success(f"✅ Değerlendirme hazır! 🎯 Yapay Zekanın Önerdiği Toplam Puan: **{ai_toplam} / 100**")
+                                        # YENİ KOD: Puanları hafızaya alıp sayfayı zorla yeniliyoruz ki aşağıdaki FORM anında dolsun!
+                                        st.session_state["ai_basari_mesaji"] = f"✅ Değerlendirme hazır! 🎯 Yapay Zekanın Atadığı Toplam Puan: **{ai_toplam} / 100**"
+                                        st.rerun()
                                         
                                     except Exception as e:
                                         st.error(f"AI hatası: {e}")
+                                        
+                            # YENİ KOD: Sayfa yenilendikten sonra başarı mesajını formun hemen üstünde göstermek için
+                            if "ai_basari_mesaji" in st.session_state:
+                                st.success(st.session_state["ai_basari_mesaji"])
+                                del st.session_state["ai_basari_mesaji"] # Gösterdikten sonra siliyoruz
 
                             st.markdown("#### 📝 Puanlama Formu")
                             with st.form("kayit_formu"):
