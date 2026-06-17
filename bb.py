@@ -2030,7 +2030,8 @@ def yonetim_paneli(df, ayarlar):
                 
                 df_r_yetkili = df_r_yetkili[~df_r_yetkili['Dinamik_JSON'].apply(muaf_mi_kontrol)]
                 
-                c_r1, c_r2 = st.columns([1, 1])
+                # DÜZELTME 1: 3 Sütun yapıldı. Sınıf, Görev ve Şablon Seçici yan yana
+                c_r1, c_r2, c_r3 = st.columns([1, 1, 1.2])
                 r_sinif = c_r1.selectbox("Sınıf Seçin", ["Tümü"] + sorted(df_r_yetkili['Sınıf'].dropna().unique()))
                 df_r = df_r_yetkili if r_sinif == "Tümü" else df_r_yetkili[df_r_yetkili['Sınıf'] == r_sinif]
                 
@@ -2038,8 +2039,12 @@ def yonetim_paneli(df, ayarlar):
                 if g_filtre != "Tümü":
                     df_r = df_r[df_r['Gorev_Adi'] == g_filtre]
 
+                # DÜZELTME 2: Raporun hangi ölçeğe göre basılacağını öğretmenden alıyoruz
+                s_isimler = list(ayarlar.get("sablonlar", {}).keys())
+                secili_sablon_ismi = c_r3.selectbox("📋 Çıktı İçin Kullanılacak Ölçek", s_isimler)
+                s_aktif = ayarlar["sablonlar"].get(secili_sablon_ismi, CEKIRDEK_SABLON)
+
                 if not df_r.empty:
-                    # --- YENİ EKLENEN KOD: Raporlarda ve çıktılarda çift isimleri teke düşür ---
                     df_r = df_r.drop_duplicates(subset=['Okul No', 'Gorev_Adi'], keep='last')
                     
                     df_r_copy = df_r.copy()
@@ -2055,34 +2060,25 @@ def yonetim_paneli(df, ayarlar):
                         use_container_width=True, hide_index=True
                     )
 
-                    # Eski 3 sütunluk yapı yerine 4 sütunluk yapı
                     c_btn1, c_btn2, c_btn3, c_btn4 = st.columns(4)
-                    
-                    # 1. Excel Çizelgesi
                     out_xls = io.BytesIO()
                     with pd.ExcelWriter(out_xls, engine='xlsxwriter') as writer:
                         df_r[['Okul No','Öğrenci Adı Soyadı','Sınıf','Gorev_Turu','Gorev_Adi','Toplam Puan']].to_excel(writer, index=False, sheet_name='Cizelge')
                     c_btn1.download_button("📊 Excel Çizelgesi", data=out_xls.getvalue(),
-                                           file_name=f"{r_sinif}_Cizelge.xlsx", use_container_width=True)
+                                            file_name=f"{r_sinif}_Cizelge.xlsx", use_container_width=True)
 
-                    # 2. Kişisel Karneler
+                    # DÜZELTME 3: Sabit ilk ölçek zorunluluğu kalktı, seçilen 's_aktif' gönderiliyor
                     if c_btn2.button("🖨️ Kişisel Karneler (HTML)", use_container_width=True):
-                        s_aktif = ayarlar["sablonlar"].get(list(ayarlar["sablonlar"].keys())[0], CEKIRDEK_SABLON)
                         h_cikti = toplu_karne_html_dosyasi_uret(df_r, kb.get("ad",""), kb.get("brans",""), s_aktif)
                         st.download_button("📥 HTML Karneleri İndir", data=h_cikti,
                                            file_name=f"{r_sinif}_Karneler.html", mime="text/html", use_container_width=True)
 
-                    # 3. Sınıf Analiz Raporu
                     if c_btn3.button("📈 Sınıf Analiz Raporu", use_container_width=True):
                         analiz_html = sinif_analiz_raporu(df_r, r_sinif, kb.get("ad",""))
                         st.download_button("📥 Analiz Raporunu İndir", data=analiz_html,
                                            file_name=f"{r_sinif}_Analiz.html", mime="text/html", use_container_width=True)
 
-                    # 4. YENİ EKLENEN: İDARE RAPORU (ÇAPRAZ TABLO)
                     if c_btn4.button("📋 İdare Raporu (Toplu Liste)", type="primary", use_container_width=True):
-                        # Gerekli parametreleri hazırlayıp gönderiyoruz
-                        s_aktif = ayarlar["sablonlar"].get(list(ayarlar["sablonlar"].keys())[0], CEKIRDEK_SABLON)
-                        # df_r içindeki ilk satırdan görev adını alıyoruz
                         g_adi_aktif = df_r.iloc[0]['Gorev_Adi'] if not df_r.empty else "Proje" 
                         idare_html = toplu_kriterli_liste_html(df_r, r_sinif, kb.get("brans",""), kb.get("ad",""), s_aktif, g_adi_aktif)
                         st.download_button("📥 İdare Raporunu İndir", data=idare_html,
