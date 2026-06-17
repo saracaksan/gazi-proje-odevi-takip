@@ -1091,6 +1091,7 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
 
     return html
 # ==========================================
+# ==========================================
 # 10. YAPAY ZEKA BAĞLANTILARI
 # ==========================================
 def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans, ogrt_api_key=""):
@@ -1136,71 +1137,6 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
     r.raise_for_status()
     raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     return json.loads(raw.replace("```json", "").replace("```", "").strip())
-DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: "{ham_metin}"
-Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.
-Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
-
-    if mod == "A":
-        prompt += f"""YORUMDAN PUAN ÜRETME. Yukarıda verilen nota göre pedagojik açıklamalar yaz ve mantıklı puanlar belirle."""
-    elif mod == "B":
-        prompt += f"""HEDEF PUANDAN YORUM ÜRETME. Hedef: {hedef_puan}/100\nBu puana ulaşacak şekilde kriterlere puan dağıt ve yukarıdaki konuya uygun açıklamalar yaz."""
-    else:
-        ozet = "\n".join([f"  - {k['id']}: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
-        prompt += f"""MANUEL PUANLAMA. Öğretmen puanları verdi:\n{ozet}\nSadece yukarıdaki konuya uygun pedagojik açıklamalar yaz. PUANLARI DEĞİŞTİRME."""
-
-    prompt += """\nEKSTRA: "genel" anahtarında öğrenciye ("Sevgili İsim, ...") hitap eden motive edici genel bir yorum yaz.
-SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel": "Sevgili..." }"""
-
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
-    r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-    r.raise_for_status()
-    raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    return json.loads(raw.replace("```json", "").replace("```", "").strip())
-DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: "{ham_metin}"
-Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.
-Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
-
-    if mod == "A":
-        prompt += f"""YORUMDAN PUAN ÜRETME. Yukarıda verilen nota göre pedagojik açıklamalar yaz ve mantıklı puanlar belirle."""
-    elif mod == "B":
-        prompt += f"""HEDEF PUANDAN YORUM ÜRETME. Hedef: {hedef_puan}/100\nBu puana ulaşacak şekilde kriterlere puan dağıt ve yukarıdaki konuya uygun açıklamalar yaz."""
-    else:
-        ozet = "\n".join([f"  - {k['id']}: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
-        prompt += f"""MANUEL PUANLAMA. Öğretmen puanları verdi:\n{ozet}\nSadece yukarıdaki konuya uygun pedagojik açıklamalar yaz. PUANLARI DEĞİŞTİRME."""
-
-    prompt += """\nEKSTRA: "genel" anahtarında öğrenciye ("Sevgili İsim, ...") hitap eden motive edici genel bir yorum yaz.
-SADECE JSON:\n{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel": "Sevgili..." }"""
-
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
-    r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-    r.raise_for_status()
-    raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-    return json.loads(raw.replace("```json", "").replace("```", "").strip())
-
-def ai_karne_gorusu_yaz(tam_isim, sinifi, notlar_sozlugu, ekstra_gozlem, ogrt_ad, ogrt_api_key=""):
-    api_url = get_gemini_api_url(ogrt_api_key)
-    if not api_url: return "Sistemde API Anahtarı bulunamadı."
-
-    ogrenci_isim = isme_hitap_et(tam_isim)
-    notlar_metni = "\n".join([f"- {ders}: {notu}" for ders, notu in notlar_sozlugu.items() if str(notu).strip() != ""])
-    
-    davranis_puani = notlar_sozlugu.get("Davranış", 100)
-    try: d_puan = float(str(davranis_puani).replace(",", "."))
-    except: d_puan = 100.0
-        
-    davranis_uyarisi = "Öğrencinin davranış notu 50'nin altında. Lütfen yapıcı ve pedagojik bir uyarıda bulun." if d_puan < 50 else "Öğrencinin davranış notu gayet iyi. Bu olumlu tutumunu takdir et."
-
-    prompt = f"""Sınıf öğretmeni {ogrt_ad} olarak {sinifi} sınıfından {ogrenci_isim} adlı öğrenciye e-okul karne görüşü yaz.
-Öğrencinin Ders Notları ve Davranış Puanı (Hepsi 100 Üzerindendir):
-{notlar_metni}
-Ekstra Öğretmen Gözlemi: {ekstra_gozlem}
-ÖZEL TALİMAT: {davranis_uyarisi}
-Lütfen 'Sevgili {ogrenci_isim}' diye hitap eden, 3-4 cümlelik bir dönem sonu karne görüşü üret."""
-    
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "text/plain"}}
-    r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
-    r.raise_for_status()
-    return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 # ==========================================
 # 11. ÖĞRENCİ SORGULAMA EKRANI (PREMIUM DASHBOARD)
