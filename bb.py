@@ -527,10 +527,10 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
             <h2 class="gorev-baslik">Kriter Bazlı Değerlendirme</h2>
             <table>
                 <tr>
-                  <th style="width:30%">Kriter</th>
-                  <th style="text-align:center;width:15%">Alınan Puan</th>
-                  <th>Öğretmen Açıklaması</th>
-                </tr>"""
+                  <th style="width:20%">Kriter</th>
+                  <th style="text-align:center;width:10%">Puan</th>
+                  <th style="width:70%">Öğretmen Açıklaması</th>
+                </tr>
 
         kriter_idler = [k.replace("_puan", "") for k in dinamik.keys() if k.endswith("_puan")]
         for k_id in kriter_idler:
@@ -658,10 +658,10 @@ def toplu_karne_html_dosyasi_uret(df_sinif, ogrt_ad, ogrt_brans, aktif_kriterler
     <table>
         <thead>
             <tr>
-                <th style="width: 35%;">Değerlendirme Kriteri</th>
-                <th style="width: 10%; text-align: center;">Maks.</th>
-                <th style="width: 15%; text-align: center;">Kazanılan</th>
-                <th style="width: 40%;">Öğretmen Açıklaması</th>
+                <th style="width: 20%;">Kriter</th>
+                <th style="width: 5%; text-align: center;">Max</th>
+                <th style="width: 5%; text-align: center;">Puan</th>
+                <th style="width: 70%;">Öğretmen Açıklaması</th>
             </tr>
         </thead>
         <tbody>"""
@@ -1026,6 +1026,32 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
 </style>
 </head>
 <body>
+<div class="no-print" style="text-align:center; padding:12px; background:#f1f5f9; margin-bottom:15px; border-radius:8px; border:1px solid #cbd5e1;">
+    <strong style="color:#1e293b; margin-right:15px;">⚙️ Sayfa Sığdırma Ayarları:</strong>
+    <button onclick="ayarla('font', 1)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">A+ Yazıyı Büyüt</button>
+    <button onclick="ayarla('font', -1)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">A- Yazıyı Küçült</button>
+    <button onclick="ayarla('pad', 2)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">↕️ Satır Genişlet</button>
+    <button onclick="ayarla('pad', -2)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">>< Satır Daralt</button>
+</div>
+<script>
+    let vals = { font: 12, pad: 10 };
+    function ayarla(tip, yon) {
+        vals[tip] += yon;
+        if(vals.pad < 0) vals.pad = 0;
+        let elements = document.querySelectorAll('td, th, .yorum-metin, .bilgi-deger, .kriter-ad');
+        elements.forEach(el => {
+            if(tip === 'font') el.style.fontSize = vals.font + 'px';
+            if(tip === 'pad' && (el.tagName === 'TD' || el.tagName === 'TH')) {
+                el.style.paddingTop = vals.pad + 'px';
+                el.style.paddingBottom = vals.pad + 'px';
+            }
+        });
+    }
+</script>
+<style>
+    @media print { .no-print { display: none !important; } }
+    table { table-layout: auto; width: 100%; word-wrap: break-word; }
+</style>
     <div class="header">
         <h2>{sinif_adi} SINIFI TOPLU PROJE/PERFORMANS DEĞERLENDİRME ÇİZELGESİ</h2>
         <p><strong>Ders:</strong> {ders_adi} &nbsp;|&nbsp; <strong>Görev:</strong> {gorev_adi}</p>
