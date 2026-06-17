@@ -1090,11 +1090,26 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
 </html>"""
 
     return html
-# ==========================================
+
 # ==========================================
 # 10. YAPAY ZEKA BAĞLANTILARI
 # ==========================================
 def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manuel_puanlar, ogrt_ad, ogrt_brans, ogrt_api_key=""):
+    
+    # --- YENİ: 0 PUAN / TESLİM ETMEYEN ÖĞRENCİ KISAYOLU ---
+    # Öğrenci ödevi getirmediyse API'ye istek atmadan anında hazır "teslim etmedi" JSON'u döndürür.
+    ham_kucuk = str(ham_metin).lower().strip()
+    if (mod == "B" and hedef_puan == 0) or \
+       (mod == "C" and sum(manuel_puanlar.get(k['id'], 0) for k in kriterler) == 0) or \
+       (mod == "A" and ("getirmedi" in ham_kucuk or "teslim etmedi" in ham_kucuk or ham_kucuk == "0" or ham_kucuk == "yok")):
+        
+        return {
+            "puanlar": {k['id']: 0 for k in kriterler},
+            "aciklamalar": {k['id']: "Ödev/Proje teslim edilmedi." for k in kriterler},
+            "genel": "Öğrenci, verilen proje/performans görevini teslim etmediği için değerlendirme yapılamamış ve sonuç 0 (sıfır) puan olarak işlenmiştir."
+        }
+
+    # Eğer 0 değilse normal yapay zeka işleyişine devam eder
     api_url = get_gemini_api_url(ogrt_api_key)
     if not api_url: return {"genel": "Sistemde API Anahtarı bulunamadı."}
 
@@ -1103,7 +1118,6 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
     ogrenci_isim = isme_hitap_et(bilgi_dict.get('Öğrenci Adı Soyadı', 'Öğrenci'))
     kriter_ozeti = "\n".join([f"  - {k['id']}: {k['baslik']} (Max: {k['max']} Puan)" for k in kriterler])
 
-    # Hataları önlemek için metinler liste halinde tanımlandı
     prompt_satirlari = [
         f"Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencin sevgili {ogrenci_isim}'i değerlendiriyorsun.",
         f"Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap ederek şefkatli, pedagojik ve motive edici konuş. (Öğrencinin soyadını asla kullanma).",
