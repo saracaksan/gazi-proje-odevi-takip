@@ -1116,7 +1116,7 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
     </table>
 
     <div class="analiz-kutusu">
-        <strong>📈 İdare İçin Dönem Sonu Performans Analizi:</strong><br>
+        <strong>İdare İçin Dönem Sonu Performans Analizi:</strong><br>
         {analiz_metni}
     </div>
 
