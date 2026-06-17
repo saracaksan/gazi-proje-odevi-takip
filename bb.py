@@ -1090,51 +1090,6 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
 </html>"""
 
     return html
-</script>
-<style>
-    @media print { .no-print { display: none !important; } }
-    table { table-layout: auto; width: 100%; word-wrap: break-word; }
-</style>
-    <div class="header">
-        <h2>{sinif_adi} SINIFI TOPLU PROJE/PERFORMANS DEĞERLENDİRME ÇİZELGESİ</h2>
-        <p><strong>Ders:</strong> {ders_adi} &nbsp;|&nbsp; <strong>Görev:</strong> {gorev_adi}</p>
-    </div>
-    
-    <table>
-        <thead>
-            <tr>
-                <th style="width:3%; text-align:center;">#</th>
-                <th style="width:5%; text-align:center;">No</th>
-                <th style="width:auto; text-align:left;">Öğrenci Adı Soyadı</th>
-                {kriter_basliklari}
-                <th style="width:7%; text-align:center;">Toplam</th>
-                <th style="width:12%; text-align:center;">Durum</th>
-            </tr>
-        </thead>
-        <tbody>
-            {tablo_satirlari}
-        </tbody>
-    </table>
-
-    <div class="analiz-kutusu">
-        <strong>İdare İçin Dönem Sonu Performans Analizi:</strong><br>
-        {analiz_metni}
-    </div>
-
-    <div class="imza-alani">
-        <div class="imza-kutu">
-            <br>Öğretmen
-            <br><strong>{ogrt_ad}</strong>
-        </div>
-        <div class="imza-kutu">
-            Tasdik Olunur<br>Okul Müdürü<br>
-            <strong>........................................</strong>
-        </div>
-    </div>
-</body>
-</html>"""
-    
-    return html
 # ==========================================
 # 10. YAPAY ZEKA BAĞLANTILARI
 # ==========================================
