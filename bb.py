@@ -1017,36 +1017,78 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
     .header {{ text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e293b; padding-bottom: 10px; }}
     .header h2 {{ margin: 0; font-size: 1.4rem; color: #1e3a8a; text-transform: uppercase; }}
     .header p {{ margin: 5px 0 0; color: #475569; font-size: 1rem; }}
-    table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
+    table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: auto; word-wrap: break-word; }}
     th, td {{ border: 1px solid #cbd5e1; padding: 6px; }}
     th {{ background: #f8fafc; color: #1e293b; font-weight: 800; }}
     .analiz-kutusu {{ background: #f0f9ff; border-left: 5px solid #2563eb; padding: 15px; border-radius: 8px; font-size: 1rem; line-height: 1.5; color: #1e3a8a; margin-bottom: 30px; }}
     .imza-alani {{ display: flex; justify-content: space-between; margin-top: 40px; font-size: 1.1rem; }}
     .imza-kutu {{ text-align: center; width: 30%; }}
+    @media print {{ .no-print {{ display: none !important; }} }}
 </style>
 </head>
 <body>
-<div class="no-print" style="text-align:center; padding:12px; background:#f1f5f9; margin-bottom:15px; border-radius:8px; border:1px solid #cbd5e1;">
-    <strong style="color:#1e293b; margin-right:15px;">⚙️ Sayfa Sığdırma Ayarları:</strong>
-    <button onclick="ayarla('font', 1)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">A+ Yazıyı Büyüt</button>
-    <button onclick="ayarla('font', -1)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">A- Yazıyı Küçült</button>
-    <button onclick="ayarla('pad', 2)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">↕️ Satır Genişlet</button>
-    <button onclick="ayarla('pad', -2)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">>< Satır Daralt</button>
-</div>
-<script>
-    let vals = { font: 12, pad: 10 };
-    function ayarla(tip, yon) {
-        vals[tip] += yon;
-        if(vals.pad < 0) vals.pad = 0;
-        let elements = document.querySelectorAll('td, th, .yorum-metin, .bilgi-deger, .kriter-ad');
-        elements.forEach(el => {
-            if(tip === 'font') el.style.fontSize = vals.font + 'px';
-            if(tip === 'pad' && (el.tagName === 'TD' || el.tagName === 'TH')) {
-                el.style.paddingTop = vals.pad + 'px';
-                el.style.paddingBottom = vals.pad + 'px';
-            }
-        });
-    }
+    <div class="no-print" style="text-align:center; padding:12px; background:#f1f5f9; margin-bottom:15px; border-radius:8px; border:1px solid #cbd5e1;">
+        <strong style="color:#1e293b; margin-right:15px;">⚙️ Sayfa Sığdırma Ayarları:</strong>
+        <button onclick="ayarla('font', 1)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">A+ Yazıyı Büyüt</button>
+        <button onclick="ayarla('font', -1)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">A- Yazıyı Küçült</button>
+        <button onclick="ayarla('pad', 2)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">↕️ Satır Genişlet</button>
+        <button onclick="ayarla('pad', -2)" style="cursor:pointer; padding:5px 10px; margin:0 3px;">>< Satır Daralt</button>
+    </div>
+    <script>
+        let vals = {{ font: 11, pad: 6 }};
+        function ayarla(tip, yon) {{
+            vals[tip] += yon;
+            if(vals.pad < 0) vals.pad = 0;
+            let elements = document.querySelectorAll('td, th, .yorum-metin, .bilgi-deger, .kriter-ad');
+            elements.forEach(el => {{
+                if(tip === 'font') el.style.fontSize = vals.font + 'px';
+                if(tip === 'pad' && (el.tagName === 'TD' || el.tagName === 'TH')) {{
+                    el.style.paddingTop = vals.pad + 'px';
+                    el.style.paddingBottom = vals.pad + 'px';
+                }}
+            }});
+        }}
+    </script>
+    
+    <div class="header">
+        <h2>{sinif_adi} SINIFI TOPLU PROJE/PERFORMANS DEĞERLENDİRME ÇİZELGESİ</h2>
+        <p><strong>Ders:</strong> {ders_adi} &nbsp;|&nbsp; <strong>Görev:</strong> {gorev_adi}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="width:3%; text-align:center;">#</th>
+                <th style="width:5%; text-align:center;">No</th>
+                <th style="width:auto; text-align:left;">Öğrenci Adı Soyadı</th>
+                {kriter_basliklari}
+                <th style="width:7%; text-align:center;">Toplam</th>
+                <th style="width:12%; text-align:center;">Durum</th>
+            </tr>
+        </thead>
+        <tbody>
+            {tablo_satirlari}
+        </tbody>
+    </table>
+
+    <div class="analiz-kutusu">
+        <strong>📈 İdare İçin Dönem Sonu Performans Analizi:</strong><br>
+        {analiz_metni}
+    </div>
+
+    <div class="imza-alani">
+        <div class="imza-kutu">
+            <br>Öğretmen
+            <br><strong>{ogrt_ad}</strong>
+        </div>
+        <div class="imza-kutu">
+            Tasdik Olunur<br>Okul Müdürü<br>
+            <strong>........................................</strong>
+        </div>
+    </div>
+</body>
+</html>"""
+    return html
 </script>
 <style>
     @media print { .no-print { display: none !important; } }
