@@ -1151,6 +1151,12 @@ Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap eder
 
 DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: "{ham_metin}"
 Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.
+Değerlendirme Kriterleri:
+{kriter_ozeti}
+GÖREV MODU: """
+
+DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: "{ham_metin}"
+Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.
 Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
 
     if mod == "A":
