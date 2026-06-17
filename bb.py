@@ -923,7 +923,148 @@ def proje_teslim_tutanagi_html(df_sinif, gorev_adi, sinif_adi, ders_adi, ogrt_ad
 </html>
 """
     return html
+def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_kriterler, gorev_adi):
+    toplam_ogrenci = len(df_sinif)
+    teslim_etmeyenler = 0
+    elli_alti = 0
+    elli_ustu = 0
+    muaf_sayisi = 0
 
+    # 1. Tablo Satırlarını ve Analiz Verilerini Hazırlama
+    tablo_satirlari = ""
+    for i, (_, row) in enumerate(df_sinif.sort_values(by="Okul No").iterrows(), 1):
+        ad_soyad = row.get('Öğrenci Adı Soyadı', '')
+        okul_no = row.get('Okul No', '')
+        
+        # Güvenli puan okuma
+        toplam_puan_ham = pd.to_numeric(row.get('Toplam Puan', 0), errors='coerce')
+        puan = int(toplam_puan_ham) if pd.notna(toplam_puan_ham) else 0
+        
+        try:
+            dinamik = json.loads(str(row.get('Dinamik_JSON', '{}')))
+        except:
+            dinamik = {}
+            
+        is_muaf = dinamik.get("muaf", False)
+        
+        # İlk kriterin puanlanıp puanlanmadığına bakarak teslim/değerlendirme durumunu anlama
+        ilk_kriter_id = aktif_kriterler[0]['id'] if aktif_kriterler else "k1"
+        degerlendirilmis_mi = f"{ilk_kriter_id}_puan" in dinamik or str(row.get('Genel Değerlendirme Yorumu', '')).strip() != ""
+
+        kriter_hucreleri = ""
+        if is_muaf:
+            durum = "🚫 Muaf"
+            renk = "#64748b"
+            kriter_hucreleri = "".join(["<td style='text-align:center; color:#94a3b8;'>-</td>" for _ in aktif_kriterler])
+            muaf_sayisi += 1
+        elif not degerlendirilmis_mi:
+            durum = "❌ Teslim Etmedi / Puanlanmadı"
+            renk = "#ef4444"
+            kriter_hucreleri = "".join(["<td style='text-align:center; color:#ef4444;'>0</td>" for _ in aktif_kriterler])
+            teslim_etmeyenler += 1
+        else:
+            if puan >= 50:
+                durum = "✅ Başarılı"
+                renk = "#10b981"
+                elli_ustu += 1
+            else:
+                durum = "⚠️ Geliştirilmeli (<50)"
+                renk = "#f59e0b"
+                elli_alti += 1
+                
+            for k in aktif_kriterler:
+                k_puan = dinamik.get(f"{k['id']}_puan", 0)
+                kriter_hucreleri += f"<td style='text-align:center;'>{k_puan}</td>"
+
+        tablo_satirlari += f"""
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="text-align:center;">{i}</td>
+            <td style="text-align:center;">{okul_no}</td>
+            <td><strong>{ad_soyad}</strong></td>
+            {kriter_hucreleri}
+            <td style="text-align:center; font-weight:900; color:{renk}; font-size:1.1rem;">{puan}</td>
+            <td style="color:{renk}; font-weight:bold;">{durum}</td>
+        </tr>
+        """
+
+    # 2. Rapor Analiz Metnini Üretme
+    degerlendirilen = elli_ustu + elli_alti
+    basari_yuzdesi = round((elli_ustu / degerlendirilen * 100)) if degerlendirilen > 0 else 0
+    
+    analiz_metni = f"Bu rapora göre, <strong>{sinif_adi}</strong> sınıfındaki toplam <strong>{toplam_ogrenci}</strong> öğrenciden <strong>{teslim_etmeyenler}</strong> öğrenci ödev/proje teslim etmemiştir. "
+    if muaf_sayisi > 0: analiz_metni += f"<strong>{muaf_sayisi}</strong> öğrenci görevden muaf tutulmuştur. "
+    
+    if degerlendirilen > 0:
+        analiz_metni += f"Değerlendirmeye katılan {degerlendirilen} öğrencinin <strong>{elli_alti}</strong> tanesi 50 puanlık başarı barajının altında kalmıştır. Sınıfın projeye/göreve dayalı genel başarı oranı <strong>%{basari_yuzdesi}</strong> olarak gerçekleşmiştir. "
+        
+        if basari_yuzdesi >= 80: analiz_metni += "Sınıf genel olarak yüksek bir performans sergilemiş ve hedeflenen kazanımlara ulaşılmıştır."
+        elif basari_yuzdesi >= 50: analiz_metni += "Sınıf ortalama bir performans sergilemiş olup, 50 puan altı alan öğrenciler için telafi veya destekleyici çalışmalar planlanmalıdır."
+        else: analiz_metni += "Sınıfın büyük çoğunluğu barajın altında kalmıştır. Konunun genel tekrarı veya proje/performans yönergelerinin gözden geçirilmesi pedagojik olarak tavsiye edilir."
+    else:
+        analiz_metni += "Henüz puanlanmış bir öğrenci bulunmamaktadır."
+
+    # 3. HTML Kodu
+    kriter_basliklari = "".join([f"<th style='text-align:center; width:8%; font-size:0.8rem;'>{k['baslik']}<br><span style='color:#64748b; font-weight:normal;'>(Maks: {k['max']})</span></th>" for k in aktif_kriterler])
+
+    html = f"""<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>{sinif_adi} - Toplu Kriter Dağılım Listesi</title>
+<style>
+    @page {{ size: landscape; margin: 15mm; }}
+    body {{ font-family: 'Segoe UI', Arial, sans-serif; background: white; color: #0f172a; font-size: 11px; }}
+    .header {{ text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e293b; padding-bottom: 10px; }}
+    .header h2 {{ margin: 0; font-size: 1.4rem; color: #1e3a8a; text-transform: uppercase; }}
+    .header p {{ margin: 5px 0 0; color: #475569; font-size: 1rem; }}
+    table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
+    th, td {{ border: 1px solid #cbd5e1; padding: 6px; }}
+    th {{ background: #f8fafc; color: #1e293b; font-weight: 800; }}
+    .analiz-kutusu {{ background: #f0f9ff; border-left: 5px solid #2563eb; padding: 15px; border-radius: 8px; font-size: 1rem; line-height: 1.5; color: #1e3a8a; margin-bottom: 30px; }}
+    .imza-alani {{ display: flex; justify-content: space-between; margin-top: 40px; font-size: 1.1rem; }}
+    .imza-kutu {{ text-align: center; width: 30%; }}
+</style>
+</head>
+<body>
+    <div class="header">
+        <h2>{sinif_adi} SINIFI TOPLU PROJE/PERFORMANS DEĞERLENDİRME ÇİZELGESİ</h2>
+        <p><strong>Ders:</strong> {ders_adi} &nbsp;|&nbsp; <strong>Görev:</strong> {gorev_adi}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="width:3%;">#</th>
+                <th style="width:6%;">Okul No</th>
+                <th style="width:15%; text-align:left;">Öğrenci Adı Soyadı</th>
+                {kriter_basliklari}
+                <th style="width:8%;">Toplam Puan</th>
+                <th style="width:15%;">Genel Durum (Baraj: 50)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {tablo_satirlari}
+        </tbody>
+    </table>
+
+    <div class="analiz-kutusu">
+        <strong>📈 İdare İçin Dönem Sonu Performans Analizi:</strong><br>
+        {analiz_metni}
+    </div>
+
+    <div class="imza-alani">
+        <div class="imza-kutu">
+            <br>Öğretmen
+            <br><strong>{ogrt_ad}</strong>
+        </div>
+        <div class="imza-kutu">
+            Tasdik Olunur<br>Okul Müdürü<br>
+            <strong>........................................</strong>
+        </div>
+    </div>
+</body>
+</html>"""
+    return html
 # ==========================================
 # 10. YAPAY ZEKA BAĞLANTILARI
 # ==========================================
@@ -1902,23 +2043,38 @@ def yonetim_paneli(df, ayarlar):
                         use_container_width=True, hide_index=True
                     )
 
-                    c_btn1, c_btn2, c_btn3 = st.columns(3)
+                    # Eski 3 sütunluk yapı yerine 4 sütunluk yapı
+                    c_btn1, c_btn2, c_btn3, c_btn4 = st.columns(4)
+                    
+                    # 1. Excel Çizelgesi
                     out_xls = io.BytesIO()
                     with pd.ExcelWriter(out_xls, engine='xlsxwriter') as writer:
                         df_r[['Okul No','Öğrenci Adı Soyadı','Sınıf','Gorev_Turu','Gorev_Adi','Toplam Puan']].to_excel(writer, index=False, sheet_name='Cizelge')
                     c_btn1.download_button("📊 Excel Çizelgesi", data=out_xls.getvalue(),
-                                            file_name=f"{r_sinif}_Cizelge.xlsx", use_container_width=True)
+                                           file_name=f"{r_sinif}_Cizelge.xlsx", use_container_width=True)
 
+                    # 2. Kişisel Karneler
                     if c_btn2.button("🖨️ Kişisel Karneler (HTML)", use_container_width=True):
                         s_aktif = ayarlar["sablonlar"].get(list(ayarlar["sablonlar"].keys())[0], CEKIRDEK_SABLON)
                         h_cikti = toplu_karne_html_dosyasi_uret(df_r, kb.get("ad",""), kb.get("brans",""), s_aktif)
                         st.download_button("📥 HTML Karneleri İndir", data=h_cikti,
                                            file_name=f"{r_sinif}_Karneler.html", mime="text/html", use_container_width=True)
 
-                    if c_btn3.button("📈 Sınıf Analiz Raporu (HTML)", use_container_width=True):
+                    # 3. Sınıf Analiz Raporu
+                    if c_btn3.button("📈 Sınıf Analiz Raporu", use_container_width=True):
                         analiz_html = sinif_analiz_raporu(df_r, r_sinif, kb.get("ad",""))
                         st.download_button("📥 Analiz Raporunu İndir", data=analiz_html,
                                            file_name=f"{r_sinif}_Analiz.html", mime="text/html", use_container_width=True)
+
+                    # 4. YENİ EKLENEN: İDARE RAPORU (ÇAPRAZ TABLO)
+                    if c_btn4.button("📋 İdare Raporu (Toplu Liste)", type="primary", use_container_width=True):
+                        # Gerekli parametreleri hazırlayıp gönderiyoruz
+                        s_aktif = ayarlar["sablonlar"].get(list(ayarlar["sablonlar"].keys())[0], CEKIRDEK_SABLON)
+                        # df_r içindeki ilk satırdan görev adını alıyoruz
+                        g_adi_aktif = df_r.iloc[0]['Gorev_Adi'] if not df_r.empty else "Proje" 
+                        idare_html = toplu_kriterli_liste_html(df_r, r_sinif, kb.get("brans",""), kb.get("ad",""), s_aktif, g_adi_aktif)
+                        st.download_button("📥 İdare Raporunu İndir", data=idare_html,
+                                           file_name=f"{r_sinif}_Idare_Liste_Raporu.html", mime="text/html", use_container_width=True)
                 else:
                     st.info("Rapor oluşturmak için veri bulunamadı.")
             st.markdown('</div>', unsafe_allow_html=True)
