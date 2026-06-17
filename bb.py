@@ -530,7 +530,7 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
                   <th style="width:20%">Kriter</th>
                   <th style="text-align:center;width:10%">Puan</th>
                   <th style="width:70%">Öğretmen Açıklaması</th>
-                </tr>
+                </tr>"""
 
         kriter_idler = [k.replace("_puan", "") for k in dinamik.keys() if k.endswith("_puan")]
         for k_id in kriter_idler:
@@ -538,7 +538,7 @@ def ogrenci_karnesi_html_uret(df_ogrenci, ayarlar, tekil_gorev_idx=None):
             p_val = dinamik.get(f"{k_id}_puan", 0)
             a_val = dinamik.get(f"{k_id}_aciklama", "-")
             html += f"""
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                 <td style="padding: 15px; border-right: 1px solid #e2e8f0;">
                     <div style="font-size: 1.1rem; color: #1e3a8a;"><strong>{icon} {baslik}</strong></div>
                     <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Maksimum: {maks} Puan</div>
