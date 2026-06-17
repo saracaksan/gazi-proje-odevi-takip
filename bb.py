@@ -713,31 +713,34 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
 
     ortalama  = round(df_p['Toplam Puan'].mean(), 1) if len(df_p) > 0 else 0
     en_yuksek = int(df_p['Toplam Puan'].max())       if len(df_p) > 0 else 0
-    en_dusuk  = int(df_p['Toplam Puan'].min())        if len(df_p) > 0 else 0
+    
+    # 0 Puanları (Teslim Etmeyenleri) ayırıyoruz
     puan_0    = len(df_p[df_p['Toplam Puan'] == 0])
     puan_plus = len(df_p[df_p['Toplam Puan'] > 0])
-    yukarida  = len(df_p[df_p['Toplam Puan'] >= 85])
-    orta_grp  = len(df_p[(df_p['Toplam Puan'] >= 65) & (df_p['Toplam Puan'] < 85)])
-    asagida   = len(df_p[df_p['Toplam Puan'] < 65])
-    toplam_d  = max(1, puan_plus)
     
+    # Barajları 50 Geçme Notuna Göre Ayarladık
+    yukarida  = len(df_p[df_p['Toplam Puan'] >= 85])
+    orta_grp  = len(df_p[(df_p['Toplam Puan'] >= 50) & (df_p['Toplam Puan'] < 85)])
+    asagida   = len(df_p[(df_p['Toplam Puan'] < 50) & (df_p['Toplam Puan'] > 0)])
+    
+    toplam_d  = max(1, puan_plus)
     yuzde_basari = round((yukarida + orta_grp) / toplam_d * 100) if toplam_d > 0 else 0
 
     if ortalama >= 80:
         analiz_renk = "#10b981" 
         analiz_ikon = "🌟"
         analiz_baslik = "Kazanımlar Yüksek Oranda İçselleştirilmiş"
-        analiz_metin = f"{sinif_adi} sınıfı, bu görev/konu kapsamında {ortalama} genel ortalama ile üstün bir performans göstermiştir. Öğrencilerin büyük çoğunluğu (%{yuzde_basari}) temel kazanımları başarıyla kavramış ve konuyu öğrenmiştir. Sınıf genelinde öğrenme hedeflerine ulaşılmıştır."
-    elif ortalama >= 65:
+        analiz_metin = f"{sinif_adi} sınıfı, bu görev/konu kapsamında {ortalama} genel ortalama ile üstün bir performans göstermiştir. Teslim eden öğrencilerin büyük çoğunluğu (%{yuzde_basari}) 50 barajını geçerek temel kazanımları başarıyla kavramış ve konuyu öğrenmiştir. Sınıf genelinde öğrenme hedeflerine ulaşılmıştır."
+    elif ortalama >= 50:
         analiz_renk = "#f59e0b" 
         analiz_ikon = "📈"
         analiz_baslik = "Kabul Edilebilir Öğrenme Düzeyi, Kısmi Eksikler Var"
-        analiz_metin = f"{sinif_adi} sınıfı, bu görevde {ortalama} ortalama ile yeterli bir başarı sergilemiştir. Sınıfın %{yuzde_basari}'lik kesimi konuyu kavramış görünse de, {asagida} öğrencinin kazanımlara ulaşmakta zorlandığı tespit edilmiştir. Alt gruptaki öğrencilere yönelik telafi çalışmaları pekişmeyi sağlayacaktır."
+        analiz_metin = f"{sinif_adi} sınıfı, bu görevde {ortalama} ortalama ile yeterli bir başarı sergilemiştir. Sınıfın %{yuzde_basari}'lik kesimi konuyu kavramış görünse de, ödev/proje teslim edenler arasında {asagida} öğrencinin 50 başarı barajına ulaşmakta zorlandığı tespit edilmiştir. Alt gruptaki öğrencilere yönelik telafi çalışmaları pekişmeyi sağlayacaktır."
     else:
         analiz_renk = "#ef4444" 
         analiz_ikon = "⚠️"
         analiz_baslik = "Kazanımlarda Eksiklikler ve Anlaşılmayan Noktalar Mevcut"
-        analiz_metin = f"{sinif_adi} sınıfının genel ortalamasının {ortalama} düzeyinde kalması, bu konudaki temel kazanımların sınıf genelinde henüz tam olarak yapılandırılamadığını işaret etmektedir. Konunun öğretim stratejisi gözden geçirilerek genel bir konu tekrarı yapılması faydalı olacaktır."
+        analiz_metin = f"{sinif_adi} sınıfının genel ortalamasının {ortalama} düzeyinde (barajın altında) kalması, bu konudaki temel kazanımların sınıf genelinde henüz tam olarak yapılandırılamadığını işaret etmektedir. Konunun öğretim stratejisi gözden geçirilerek genel bir konu tekrarı yapılması faydalı olacaktır."
 
     html = f"""<!DOCTYPE html>
 <html lang="tr">
@@ -778,6 +781,7 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
   .bg-basarili {{ background: #10b981; }}
   .bg-orta {{ background: #f59e0b; }}
   .bg-gelisim {{ background: #ef4444; }}
+  .bg-teslim-etmedi {{ background: #64748b; }}
 </style>
 </head>
 <body>
@@ -793,7 +797,7 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
         <div class="kutu"><div class="kutu-sayi">{len(df_sinif)}</div><div class="kutu-etiket">Sınıf Mevcudu</div></div>
         <div class="kutu green"><div class="kutu-sayi">{ortalama}</div><div class="kutu-etiket">Sınıf Ortalaması</div></div>
         <div class="kutu"><div class="kutu-sayi">{en_yuksek}</div><div class="kutu-etiket">En Yüksek Puan</div></div>
-        <div class="kutu red"><div class="kutu-sayi">{en_dusuk}</div><div class="kutu-etiket">En Düşük Puan</div></div>
+        <div class="kutu red"><div class="kutu-sayi">{puan_0}</div><div class="kutu-etiket">Teslim Etmeyen</div></div>
     </div>
 
     <div class="analiz-paneli">
@@ -812,14 +816,14 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
         </div>
         
         <div class="bar-row">
-            <div class="bar-etiket">🟡 Yeterli Düzey (65-84)</div>
+            <div class="bar-etiket">🟡 Yeterli Düzey (50-84)</div>
             <div class="bar-bg">
                 <div class="bar-fill" style="width: {round(orta_grp/toplam_d*100) if toplam_d else 0}%; background: #f59e0b;">{orta_grp} Öğrenci (%{round(orta_grp/toplam_d*100) if toplam_d else 0})</div>
             </div>
         </div>
         
         <div class="bar-row">
-            <div class="bar-etiket">🔴 Destek Gereken (<65)</div>
+            <div class="bar-etiket">🔴 Destek Gereken (<50)</div>
             <div class="bar-bg">
                 <div class="bar-fill" style="width: {round(asagida/toplam_d*100) if toplam_d else 0}%; background: #ef4444;">{asagida} Öğrenci (%{round(asagida/toplam_d*100) if toplam_d else 0})</div>
             </div>
@@ -839,15 +843,22 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
 
     for i, (_, row) in enumerate(df_sorted.iterrows(), 1):
         p = int(row.get('Toplam Puan', 0))
-        if p >= 85:
+        if p == 0:
+            badge_class = "bg-teslim-etmedi"
+            durum_text = "❌ Proje Teslim Etmedi"
+            puan_renk = "#64748b"
+        elif p >= 85:
             badge_class = "bg-basarili"
             durum_text = "İleri Düzey"
-        elif p >= 65:
+            puan_renk = "#10b981"
+        elif p >= 50:
             badge_class = "bg-orta"
             durum_text = "Yeterli Düzey"
+            puan_renk = "#f59e0b"
         else:
             badge_class = "bg-gelisim"
             durum_text = "Destek Gerekiyor"
+            puan_renk = "#ef4444"
             
         html += f"""
         <tr>
@@ -855,7 +866,7 @@ def sinif_analiz_raporu(df_sinif, sinif_adi, ogrt_ad):
             <td>{row.get('Okul No','')}</td>
             <td><strong>{row.get('Öğrenci Adı Soyadı','')}</strong></td>
             <td>{row.get('Gorev_Adi','')}</td>
-            <td class="puan" style="color: {'#10b981' if p>=85 else ('#f59e0b' if p>=65 else '#ef4444')}">{p}</td>
+            <td class="puan" style="color: {puan_renk}">{p}</td>
             <td><span class="durum-badge {badge_class}">{durum_text}</span></td>
         </tr>"""
 
