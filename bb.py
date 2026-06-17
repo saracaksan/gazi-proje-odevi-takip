@@ -1060,12 +1060,12 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
     <table>
         <thead>
             <tr>
-                <th style="width:3%;">#</th>
-                <th style="width:6%;">Okul No</th>
-                <th style="width:15%; text-align:left;">Öğrenci Adı Soyadı</th>
+                <th style="width:3%; text-align:center;">#</th>
+                <th style="width:5%; text-align:center;">No</th>
+                <th style="width:auto; text-align:left;">Öğrenci Adı Soyadı</th>
                 {kriter_basliklari}
-                <th style="width:8%;">Toplam Puan</th>
-                <th style="width:15%;">Genel Durum (Baraj: 50)</th>
+                <th style="width:7%; text-align:center;">Toplam</th>
+                <th style="width:12%; text-align:center;">Durum</th>
             </tr>
         </thead>
         <tbody>
