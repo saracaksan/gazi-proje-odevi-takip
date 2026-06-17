@@ -1102,14 +1102,18 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
     ogrenci_isim = isme_hitap_et(bilgi_dict.get('Öğrenci Adı Soyadı', 'Öğrenci'))
     kriter_ozeti = "\n".join([f"  - {k['id']}: {k['baslik']} (Max: {k['max']} Puan)" for k in kriterler])
 
-    # Hata veren üçlü tırnaklar kaldırıldı, güvenli parantez yapısı eklendi
-    prompt = (
-        f"Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencin sevgili {ogrenci_isim}'i değerlendiriyorsun.\n"
-        f"Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap ederek şefkatli, pedagojik ve motive edici konuş. (Öğrencinin soyadını asla kullanma).\n\n"
-        f"DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: \"{ham_metin}\"\n"
-        f"Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.\n"
-        f"Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: "
-    )
+    # Hataları önlemek için metinler liste halinde tanımlandı
+    prompt_satirlari = [
+        f"Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencin sevgili {ogrenci_isim}'i değerlendiriyorsun.",
+        f"Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap ederek şefkatli, pedagojik ve motive edici konuş. (Öğrencinin soyadını asla kullanma).",
+        "",
+        f"DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: {ham_metin}",
+        "Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.",
+        "Değerlendirme Kriterleri:",
+        kriter_ozeti,
+        "GÖREV MODU: "
+    ]
+    prompt = "\n".join(prompt_satirlari)
 
     if mod == "A":
         prompt += "YORUMDAN PUAN ÜRETME. Yukarıda verilen nota göre pedagojik açıklamalar yaz ve mantıklı puanlar belirle."
@@ -1119,10 +1123,13 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
         ozet = "\n".join([f"  - {k['id']}: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
         prompt += f"MANUEL PUANLAMA. Öğretmen puanları verdi:\n{ozet}\nSadece yukarıdaki konuya uygun pedagojik açıklamalar yaz. PUANLARI DEĞİŞTİRME."
 
-    prompt += (
-        "\nEKSTRA: \"genel\" anahtarında öğrenciye (\"Sevgili İsim, ...\") hitap eden motive edici genel bir yorum yaz.\n"
-        "SADECE JSON:\n{ \"puanlar\": { \"k1\": 40 }, \"aciklamalar\": { \"k1\": \"...\" }, \"genel\": \"Sevgili...\" }"
-    )
+    prompt_sonu = [
+        "",
+        'EKSTRA: "genel" anahtarında öğrenciye ("Sevgili İsim, ...") hitap eden motive edici genel bir yorum yaz.',
+        'SADECE JSON:',
+        '{ "puanlar": { "k1": 40 }, "aciklamalar": { "k1": "..." }, "genel": "Sevgili..." }'
+    ]
+    prompt += "\n".join(prompt_sonu)
 
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
