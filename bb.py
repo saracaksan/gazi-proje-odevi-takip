@@ -1088,7 +1088,7 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
     </div>
 </body>
 </html>"""
-    
+
     return html
 </script>
 <style>
