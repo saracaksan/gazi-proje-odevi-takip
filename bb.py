@@ -947,18 +947,15 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
             
         is_muaf = dinamik.get("muaf", False)
         
-        # İlk kriterin puanlanıp puanlanmadığına bakarak teslim/değerlendirme durumunu anlama
-        ilk_kriter_id = aktif_kriterler[0]['id'] if aktif_kriterler else "k1"
-        degerlendirilmis_mi = f"{ilk_kriter_id}_puan" in dinamik or str(row.get('Genel Değerlendirme Yorumu', '')).strip() != ""
-
         kriter_hucreleri = ""
+        # YENİ MANTIK: Puan 0 ise doğrudan teslim etmedi sayılır
         if is_muaf:
             durum = "🚫 Muaf"
             renk = "#64748b"
             kriter_hucreleri = "".join(["<td style='text-align:center; color:#94a3b8;'>-</td>" for _ in aktif_kriterler])
             muaf_sayisi += 1
-        elif not degerlendirilmis_mi:
-            durum = "❌ Teslim Etmedi / Puanlanmadı"
+        elif puan == 0:
+            durum = "❌ Teslim Etmedi"
             renk = "#ef4444"
             kriter_hucreleri = "".join(["<td style='text-align:center; color:#ef4444;'>0</td>" for _ in aktif_kriterler])
             teslim_etmeyenler += 1
@@ -1001,10 +998,10 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
         elif basari_yuzdesi >= 50: analiz_metni += "Sınıf ortalama bir performans sergilemiş olup, 50 puan altı alan öğrenciler için telafi veya destekleyici çalışmalar planlanmalıdır."
         else: analiz_metni += "Sınıfın büyük çoğunluğu barajın altında kalmıştır. Konunun genel tekrarı veya proje/performans yönergelerinin gözden geçirilmesi pedagojik olarak tavsiye edilir."
     else:
-        analiz_metni += "Henüz puanlanmış bir öğrenci bulunmamaktadır."
+        analiz_metni += "Henüz puanlanmış/teslim etmiş bir öğrenci bulunmamaktadır."
 
     # 3. HTML Kodu
-    kriter_basliklari = "".join([f"<th style='text-align:center; width:8%; font-size:0.8rem;'>{k['baslik']}<br><span style='color:#64748b; font-weight:normal;'>(Maks: {k['max']})</span></th>" for k in aktif_kriterler])
+    kriter_basliklari = "".join([f"<th style='text-align:center; font-size:0.8rem;'>{k['baslik']}<br><span style='color:#64748b; font-weight:normal;'>(Maks: {k['max']})</span></th>" for k in aktif_kriterler])
 
     html = f"""<!DOCTYPE html>
 <html lang="tr">
@@ -1060,7 +1057,7 @@ def toplu_kriterli_liste_html(df_sinif, sinif_adi, ders_adi, ogrt_ad, aktif_krit
             <tr>
                 <th style="width:3%; text-align:center;">#</th>
                 <th style="width:5%; text-align:center;">No</th>
-                <th style="width:auto; text-align:left;">Öğrenci Adı Soyadı</th>
+                <th style="width:25%; text-align:left;">Öğrenci Adı Soyadı</th>
                 {kriter_basliklari}
                 <th style="width:7%; text-align:center;">Toplam</th>
                 <th style="width:12%; text-align:center;">Durum</th>
