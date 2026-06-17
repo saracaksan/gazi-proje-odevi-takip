@@ -1146,9 +1146,33 @@ def ai_degerlendirme_yap(bilgi_dict, kriterler, mod, ham_metin, hedef_puan, manu
     ogrenci_isim = isme_hitap_et(bilgi_dict.get('Öğrenci Adı Soyadı', 'Öğrenci'))
     kriter_ozeti = "\n".join([f"  - {k['id']}: {k['baslik']} (Max: {k['max']} Puan)" for k in kriterler])
 
-    prompt = f"""Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencin sevgili {ogrenci_isim}'i değerlendiriyorsun.
-Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap ederek şefkatli, pedagojik ve motive edici konuş. (Öğrencinin soyadını asla kullanma).
+    # Hata veren üçlü tırnaklar kaldırıldı, güvenli parantez yapısı eklendi
+    prompt = (
+        f"Sen profesyonel bir {ogrt_brans} öğretmenisin. Adın {ogrt_ad}. {seviye}. Sınıf öğrencin sevgili {ogrenci_isim}'i değerlendiriyorsun.\n"
+        f"Lütfen öğrenciye doğrudan 'Sevgili {ogrenci_isim}, ...' şeklinde hitap ederek şefkatli, pedagojik ve motive edici konuş. (Öğrencinin soyadını asla kullanma).\n\n"
+        f"DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: \"{ham_metin}\"\n"
+        f"Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.\n"
+        f"Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: "
+    )
 
+    if mod == "A":
+        prompt += "YORUMDAN PUAN ÜRETME. Yukarıda verilen nota göre pedagojik açıklamalar yaz ve mantıklı puanlar belirle."
+    elif mod == "B":
+        prompt += f"HEDEF PUANDAN YORUM ÜRETME. Hedef: {hedef_puan}/100\nBu puana ulaşacak şekilde kriterlere puan dağıt ve yukarıdaki konuya uygun açıklamalar yaz."
+    else:
+        ozet = "\n".join([f"  - {k['id']}: {manuel_puanlar.get(k['id'], 0)}/{k['max']}" for k in kriterler])
+        prompt += f"MANUEL PUANLAMA. Öğretmen puanları verdi:\n{ozet}\nSadece yukarıdaki konuya uygun pedagojik açıklamalar yaz. PUANLARI DEĞİŞTİRME."
+
+    prompt += (
+        "\nEKSTRA: \"genel\" anahtarında öğrenciye (\"Sevgili İsim, ...\") hitap eden motive edici genel bir yorum yaz.\n"
+        "SADECE JSON:\n{ \"puanlar\": { \"k1\": 40 }, \"aciklamalar\": { \"k1\": \"...\" }, \"genel\": \"Sevgili...\" }"
+    )
+
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    r = requests.post(api_url, headers={"Content-Type": "application/json"}, json=payload, timeout=45)
+    r.raise_for_status()
+    raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    return json.loads(raw.replace("```json", "").replace("```", "").strip())
 DEĞERLENDİRİLEN KONU / ÖĞRETMENİN NOTU: "{ham_metin}"
 Bu konuyu ve öğretmenin notunu dikkate alarak açıklamaları yaz.
 Değerlendirme Kriterleri:\n{kriter_ozeti}\nGÖREV MODU: """
